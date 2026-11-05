@@ -1,0 +1,26 @@
+/* رنگ‌ها و اندازه‌ها یک‌جا تعریف می‌شوند تا تغییرشان راحت باشد.
+   حالت تیره و انتخاب فونت در مرحلهٔ تنظیمات اضافه می‌شود. */
+:root {
+  --bg: #f7f7f5;
+  --text: #1f2328;
+  --muted: #6b7280;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  /* فعلاً فونت سیستم. Vazirmatn بعداً داخل پروژه قرار می‌گیرد. */
+  font-family: system-ui, -apple-system, Tahoma, sans-serif;
+  line-height: 1.8;
+}
+
+main {
+  max-width: 720px;
+  margin: 64px auto;
+  padding: 0 16px;
+}
+
+.note {
+  color: var(--muted);
+}
