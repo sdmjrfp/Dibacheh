@@ -8,6 +8,7 @@
 """
 
 import json
+import re
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
@@ -211,6 +212,77 @@ def get_settings(conn):
     for row in conn.execute("SELECT key, value FROM settings"):
         result[row["key"]] = json.loads(row["value"])
     return result
+
+
+def _int_in(value, low, high, name):
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} باید عدد باشد.")
+    if not low <= number <= high:
+        raise ValueError(f"{name} باید بین {low} و {high} باشد.")
+    return number
+
+
+def clean_setting(key, value):
+    """یک تنظیم را بررسی می‌کند و مقدار درست‌شده‌اش را برمی‌گرداند. مقدار نامعتبر → ValueError.
+
+    این بررسی جلوی مقدارهایی را می‌گیرد که موتور چینش را خراب می‌کنند (مثل فاصلهٔ لایتنر صفر).
+    """
+    if key not in DEFAULT_SETTINGS:
+        raise ValueError(f"تنظیم ناشناخته: {key}")
+    if key == "default_cap_minutes":
+        return _int_in(value, 0, 1440, "سقف پیش‌فرض")
+    if key == "cap_tolerance_minutes":
+        return _int_in(value, 0, 600, "مقدار مجاز بیشتر از سقف")
+    if key == "default_review_ratio":
+        from fractions import Fraction
+        try:
+            ratio = Fraction(str(value).strip())
+        except (ValueError, ZeroDivisionError):
+            raise ValueError("نسبت مرور نامعتبر است. مثال: 1/3 یا 0.5")
+        if ratio <= 0:
+            raise ValueError("نسبت مرور باید بیشتر از صفر باشد.")
+        return str(value).strip()
+    if key == "review_intervals":
+        if not isinstance(value, list) or not 1 <= len(value) <= 20:
+            raise ValueError("فاصله‌های لایتنر باید بین 1 تا 20 عدد باشند.")
+        return [_int_in(v, 1, 3650, "فاصلهٔ لایتنر") for v in value]
+    if key == "weekday_caps":
+        if not isinstance(value, dict):
+            raise ValueError("سقف روزهای هفته نامعتبر است.")
+        return {str(_int_in(k, 0, 6, "روز هفته")): _int_in(v, 0, 1440, "سقف روز هفته")
+                for k, v in value.items() if v not in (None, "")}
+    if key == "weekly_days_off":
+        return sorted({_int_in(v, 0, 6, "روز تعطیل") for v in (value or [])})
+    if key == "day_start_hour":
+        return _int_in(value, 0, 23, "ساعت شروع روز")
+    if key == "new_item_defaults":
+        value = value or {}
+        category = value.get("category_id")
+        return {
+            "session_minutes": _int_in(value.get("session_minutes", 60), 1, 1440, "زمان جلسهٔ پیش‌فرض"),
+            "max_new_sessions_per_day": _int_in(value.get("max_new_sessions_per_day", 1), 1, 50, "سرعت پیش‌فرض"),
+            "category_id": int(category) if category not in (None, "") else None,
+        }
+    if key == "review_cap_percent":
+        return None if value in (None, "") else _int_in(value, 1, 100, "سقف زمان مرور")
+    if key == "theme":
+        if value not in ("light", "dark"):
+            raise ValueError("حالت نمایش نامعتبر است.")
+        return value
+    if key == "font_family":
+        name = str(value or "").strip() or "Vazirmatn"
+        # فقط حرف، عدد، فاصله و خط تیره، چون این نام مستقیم در CSS قرار می‌گیرد
+        if len(name) > 80 or not re.fullmatch(r"[\w \-.]+", name):
+            raise ValueError("نام فونت نامعتبر است.")
+        return name
+    if key == "font_size":
+        return _int_in(value, 10, 32, "اندازهٔ فونت")
+    if key == "backup_retention":
+        return _int_in(value, 1, 365, "تعداد backup")
+    # آدرس‌ها: vault_path، export_folder، backup_folder
+    return str(value or "").strip()
 
 
 def set_setting(conn, key, value):

@@ -241,3 +241,36 @@ def section_text(item, session):
     if unit == "heading" and a:
         return f"از «{a}» تا «{b}»" if b and b != a else f"«{a}»"
     return session.get("section_label") or ""
+
+
+# ---------------------------------------------------------------------------
+# فونت‌های نصب‌شده روی Mac
+# ---------------------------------------------------------------------------
+
+FONT_FOLDERS = ["/System/Library/Fonts", "/Library/Fonts", "~/Library/Fonts"]
+_font_cache = None
+
+
+def installed_fonts():
+    """نام خانوادهٔ فونت‌های نصب‌شده روی Mac (یک بار خوانده و نگه داشته می‌شود)."""
+    global _font_cache
+    if _font_cache is not None:
+        return _font_cache
+    from PIL import ImageFont  # Pillow نام فونت را از خود فایل می‌خواند
+
+    names = set()
+    for folder in FONT_FOLDERS:
+        root = Path(folder).expanduser()
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.suffix.lower() not in (".ttf", ".otf", ".ttc"):
+                continue
+            try:
+                family = ImageFont.truetype(str(path), 12).getname()[0]
+            except Exception:
+                continue
+            if family and not family.startswith("."):
+                names.add(family)
+    _font_cache = sorted(names, key=str.lower)
+    return _font_cache

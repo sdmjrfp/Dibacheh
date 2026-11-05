@@ -333,3 +333,10 @@ input.num { width: 5em; }
 .workload .bars .v { background: var(--review); }
 .target.ahead { color: var(--accent); }
 .target.behind { color: var(--danger); }
+
+/* ---------- تنظیمات ---------- */
+#settings-dialog fieldset { margin-bottom: 12px; }
+.weekday-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.weekday-grid .wd { display: flex; flex-direction: column; gap: 2px; font-size: 0.9em; }
+.weekday-grid input[type="number"] { width: 100%; }
+.path-setting { display: grid; grid-template-columns: 9em 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }

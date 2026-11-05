@@ -812,6 +812,10 @@ def api_browse():
     """
     conn = get_db()
     kind = _body().get("kind", "file")
+    if kind == "folder":
+        # برای پوشهٔ خروجی و backup در تنظیمات: فقط آدرس برمی‌گردد، ذخیره با دکمهٔ «ذخیره»
+        path = sources.browse("folder", "یک پوشه انتخاب کنید")
+        return jsonify({"cancelled": True} if path is None else {"path": path})
     if kind == "vault":
         path = sources.browse("folder", "پوشهٔ والت Obsidian را انتخاب کنید")
         if path is None:
@@ -855,12 +859,23 @@ def api_delete_category(category_id):
 
 @app.route("/api/settings", methods=["PATCH"])
 def api_settings():
+    """چند تنظیم را با هم ذخیره می‌کند. هر مقدار اول بررسی می‌شود؛ اگر یکی نامعتبر بود، هیچ‌کدام ذخیره نمی‌شود."""
     conn = get_db()
+    cleaned = {}
     for key, value in _body().items():
-        if key not in database.DEFAULT_SETTINGS:
-            raise UserError(f"تنظیم ناشناخته: {key}")
+        try:
+            cleaned[key] = database.clean_setting(key, value)
+        except ValueError as error:
+            raise UserError(str(error))
+    for key, value in cleaned.items():
         database.set_setting(conn, key, value)
     return state_response()
+
+
+@app.route("/api/fonts")
+def api_fonts():
+    """فونت‌های نصب‌شده روی Mac، برای انتخاب در تنظیمات."""
+    return jsonify(sources.installed_fonts())
 
 
 if __name__ == "__main__":

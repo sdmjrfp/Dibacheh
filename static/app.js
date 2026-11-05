@@ -112,6 +112,10 @@ function render() {
   $("#vault-path").textContent = vault ? vault.split("/").filter(Boolean).pop() : "ثبت نشده";
   $("#vault-button").title = vault ? `مسیر والت: ${vault}\nبرای تغییر کلیک کنید` : "انتخاب پوشهٔ والت Obsidian";
   document.documentElement.dataset.theme = state.settings.theme || "light";
+  // فونت و اندازهٔ فونت از تنظیمات
+  const root = document.documentElement.style;
+  root.setProperty("--font", `"${state.settings.font_family || "Vazirmatn"}", "Vazirmatn", system-ui, Tahoma, sans-serif`);
+  root.setProperty("--font-size", `${state.settings.font_size || 16}px`);
   renderTabs();
   renderCategoryFilter();
   renderItems();
@@ -657,3 +661,97 @@ function currentSourcesWidth() {
   // اگر پنجره کوچک شد، ستون برنامه از حداقل کمتر نشود
   window.addEventListener("resize", () => setSourcesWidth(currentSourcesWidth(), false));
 })();
+
+
+// ---------------------------------------------------------------------------
+// تنظیمات
+// ---------------------------------------------------------------------------
+
+const settingsForm = $("#settings-form");
+const sf = settingsForm.elements;
+let fontsLoaded = false;
+
+function openSettings() {
+  const s = state.settings;
+  sf.default_cap_minutes.value = s.default_cap_minutes;
+  sf.cap_tolerance_minutes.value = s.cap_tolerance_minutes;
+  sf.day_start_hour.value = s.day_start_hour;
+  sf.review_cap_percent.value = s.review_cap_percent ?? "";
+  sf.default_review_ratio.value = s.default_review_ratio;
+  sf.review_intervals.value = s.review_intervals.join("، ");
+  const d = s.new_item_defaults || {};
+  sf.default_session_minutes.value = d.session_minutes || 60;
+  sf.default_max_new.value = d.max_new_sessions_per_day || 1;
+  sf.default_category.replaceChildren(...categoryOptions(d.category_id, "بدون دسته"));
+  sf.theme.value = s.theme;
+  sf.font_size.value = s.font_size;
+  sf.font_family.value = s.font_family;
+  sf.vault_path.value = s.vault_path || "";
+  sf.export_folder.value = s.export_folder || "";
+  sf.backup_folder.value = s.backup_folder || "";
+  sf.backup_retention.value = s.backup_retention;
+
+  const caps = s.weekday_caps || {};
+  const off = s.weekly_days_off || [];
+  $("#weekday-settings").replaceChildren(...WEEKDAYS.map(([num, name]) =>
+    el("div", { class: "wd" },
+      el("strong", {}, name),
+      el("input", { type: "number", min: 0, max: 1440, "data-cap": num, value: caps[num] ?? "", placeholder: "پیش‌فرض" }),
+      el("label", {}, el("input", { type: "checkbox", "data-off": num, checked: off.includes(num) }), " تعطیل"))));
+
+  if (!fontsLoaded) {
+    fetch("/api/fonts").then((r) => r.json()).then((fonts) => {
+      $("#font-list").replaceChildren(...["Vazirmatn", ...fonts.filter((f) => f !== "Vazirmatn")]
+        .map((f) => el("option", { value: f })));
+      fontsLoaded = true;
+    });
+  }
+  $("#settings-dialog").showModal();
+}
+
+function collectSettings() {
+  const intervals = sf.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
+  const weekdayCaps = {};
+  for (const input of $$("[data-cap]", settingsForm)) {
+    if (input.value !== "") weekdayCaps[input.dataset.cap] = Number(input.value);
+  }
+  return {
+    default_cap_minutes: Number(sf.default_cap_minutes.value),
+    cap_tolerance_minutes: Number(sf.cap_tolerance_minutes.value),
+    day_start_hour: Number(sf.day_start_hour.value),
+    review_cap_percent: sf.review_cap_percent.value === "" ? null : Number(sf.review_cap_percent.value),
+    default_review_ratio: sf.default_review_ratio.value.trim(),
+    review_intervals: intervals,
+    weekday_caps: weekdayCaps,
+    weekly_days_off: $$("[data-off]:checked", settingsForm).map((x) => Number(x.dataset.off)),
+    new_item_defaults: {
+      session_minutes: Number(sf.default_session_minutes.value),
+      max_new_sessions_per_day: Number(sf.default_max_new.value),
+      category_id: sf.default_category.value ? Number(sf.default_category.value) : null,
+    },
+    theme: sf.theme.value,
+    font_size: Number(sf.font_size.value),
+    font_family: sf.font_family.value.trim(),
+    vault_path: sf.vault_path.value.trim(),
+    export_folder: sf.export_folder.value.trim(),
+    backup_folder: sf.backup_folder.value.trim(),
+    backup_retention: Number(sf.backup_retention.value),
+  };
+}
+
+settingsForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await api("PATCH", "/api/settings", collectSettings());
+  $("#settings-dialog").close();
+  showMessage("تنظیمات ذخیره شد و برنامه از نو چیده شد.", false);
+});
+
+for (const button of $$("[data-browse]", settingsForm)) {
+  button.addEventListener("click", async () => {
+    const result = await api("POST", "/api/browse", { kind: "folder" });
+    if (!result.cancelled) sf[button.dataset.browse].value = result.path;
+  });
+}
+
+$("#settings-button").addEventListener("click", openSettings);
+$("#close-settings").addEventListener("click", () => $("#settings-dialog").close());
