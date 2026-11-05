@@ -105,7 +105,12 @@ function itemById(id) {
 // کشیدن صفحه
 // ---------------------------------------------------------------------------
 
+/** کل صفحه را دوباره می‌کشد؛ هر جابه‌جایی با انیمیشن دیده می‌شود (static/motion.js). */
 function render() {
+  Motion.wrap(renderNow);
+}
+
+function renderNow() {
   $("#today").textContent = `امروز: ${Jalali.weekday(state.today)} ${Jalali.format(state.today)}`;
   // فقط نام پوشهٔ والت نشان داده می‌شود؛ آدرس کامل با نگه داشتن ماوس روی آن
   const vault = state.settings.vault_path;
@@ -116,16 +121,28 @@ function render() {
   const root = document.documentElement.style;
   root.setProperty("--font", `"${state.settings.font_family || "Vazirmatn"}", "Vazirmatn", system-ui, Tahoma, sans-serif`);
   root.setProperty("--font-size", `${state.settings.font_size || 16}px`);
+  // رنگ کارها در تقویم، از تنظیمات
+  const colors = state.settings.colors || {};
+  for (const kind of ["read", "review", "routine"]) if (colors[kind]) root.setProperty(`--c-${kind}`, colors[kind]);
+  renderCustomFonts();
+  renderAddButtons();
+  renderCategoryTabs();
   renderTabs();
-  renderCategoryFilter();
   renderItems();
   renderWorkload();
   for (const warning of state.plan.warnings) showMessage(warning);
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
+  // دکمه‌های برگرداندن و بازگرداندن، با تعداد مرحله‌ها
   const undo = $("#undo-button");
+  const redo = $("#redo-button");
   undo.disabled = !state.undo.count;
+  redo.disabled = !state.undo.redo_count;
+  undo.querySelector(".count").textContent = state.undo.count ? fa(state.undo.count) : "";
+  redo.querySelector(".count").textContent = state.undo.redo_count ? fa(state.undo.redo_count) : "";
   undo.title = state.undo.count
-    ? `برگرداندن: ${state.undo.label} (${fa(state.undo.count)} مرحله قابل برگشت)` : "تغییری برای برگرداندن نیست";
+    ? `برگرداندن «${state.undo.label}» · ${fa(state.undo.count)} مرحله قابل برگشت` : "تغییری برای برگرداندن نیست";
+  redo.title = state.undo.redo_count
+    ? `بازگرداندن «${state.undo.redo_label}» · ${fa(state.undo.redo_count)} مرحله برگشته‌اید` : "مرحله‌ای برگشته نیست";
   if (typeof renderCalendar === "function") renderCalendar();  // در calendar.js
 }
 
@@ -142,7 +159,7 @@ function renderWorkload() {
   box.className = "workload";
   box.replaceChildren(
     el("strong", {}, `حجم کار منتظر: ${minutesText(total)}`),
-    el("div", { class: "bars", title: "سبز: خواندن · آبی: مرور" },
+    el("div", { class: "bars", title: "رنگ خواندن و رنگ مرور، به نسبت حجم هرکدام" },
       el("span", { class: "r", style: `width:${readShare}%` }),
       el("span", { class: "v", style: `width:${100 - readShare}%` })),
     el("div", {}, `خواندن ${minutesText(w.read_minutes)} · مرور ${minutesText(w.review_minutes)}`),
@@ -183,8 +200,97 @@ function categoryOptions(selected, emptyLabel) {
   ];
 }
 
-function renderCategoryFilter() {
-  $("#category-filter").replaceChildren(...categoryOptions(filterCategory, "همهٔ دسته‌ها"));
+// ---------------------------------------------------------------------------
+// تب‌های دسته. دوبار کلیک = تغییر نام، × = حذف، + = دستهٔ تازه، کشیدن = جابه‌جایی
+// ---------------------------------------------------------------------------
+
+let addingCategory = false;
+
+function renderCategoryTabs() {
+  const box = $("#category-tabs");
+  if (box.querySelector("input:focus")) return;  // وسط تایپ نام، دوباره کشیده نشود
+  const tab = (id, label, count) => {
+    const selected = String(filterCategory) === String(id);
+    const node = el("div", {
+      class: `cat-tab${selected ? " selected" : ""}`, role: "tab", "aria-selected": String(selected),
+      "data-id": id, "data-flip": `cat-${id || "all"}`,
+      onclick: (e) => { if (!e.target.closest(".x")) { filterCategory = String(id); render(); } },
+    }, el("span", { class: "name" }, label), el("span", { class: "count" }, fa(count)));
+    return node;
+  };
+  const counts = new Map();
+  for (const item of state.items) counts.set(item.category_id, (counts.get(item.category_id) || 0) + 1);
+  const all = tab("", "همه", state.items.length);
+  all.dataset.fixed = "";
+  const tabs = state.categories.map((c) => {
+    const node = tab(c.id, c.name, counts.get(c.id) || 0);
+    node.title = "دوبار کلیک: تغییر نام · کشیدن: جابه‌جایی";
+    node.addEventListener("dblclick", () => renameCategoryInline(node, c));
+    node.append(el("button", {
+      class: "x", title: "حذف دسته",
+      onclick: () => {
+        if (confirm(`دستهٔ «${c.name}» حذف شود؟ درس‌هایش می‌مانند و بدون دسته می‌شوند.`)) {
+          if (String(filterCategory) === String(c.id)) filterCategory = "";
+          api("DELETE", `/api/categories/${c.id}`);
+        }
+      },
+    }, "×"));
+    return node;
+  });
+  const plus = addingCategory
+    ? el("div", { class: "cat-tab adding", "data-fixed": "" }, categoryNameInput("", async (name) => {
+        addingCategory = false;
+        if (name) await api("POST", "/api/categories", { name });
+        else render();
+      }))
+    : el("button", { class: "cat-tab plus", "data-fixed": "", title: "دستهٔ جدید",
+        onclick: () => { addingCategory = true; render(); $("#category-tabs input").focus(); } }, "+");
+  box.replaceChildren(all, ...tabs, plus);
+}
+
+/** ورودی نام دسته: Enter = ثبت، Esc = لغو */
+function categoryNameInput(value, done) {
+  let finished = false;
+  const input = el("input", { value, placeholder: "نام دسته", size: 10 });
+  const end = (name) => { if (!finished) { finished = true; done(name); } };
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") end(input.value.trim());
+    if (e.key === "Escape") end("");
+  });
+  input.addEventListener("blur", () => end(input.value.trim()));
+  return input;
+}
+
+function renameCategoryInline(node, category) {
+  const input = categoryNameInput(category.name, (name) => {
+    if (name && name !== category.name) api("PATCH", `/api/categories/${category.id}`, { name });
+    else render();
+  });
+  node.replaceChildren(input);
+  input.focus();
+  input.select();
+}
+
+sortable($("#category-tabs"), {
+  items: ".cat-tab", axis: "x",
+  onDrop: (ids) => api("POST", "/api/categories/reorder", { ids: ids.filter(Boolean).map(Number) }),
+});
+
+// ---------------------------------------------------------------------------
+// دکمه‌های افزودن: درس، کار روتین، نوع‌های ساخت کاربر، و «+» برای نوع تازه
+// ---------------------------------------------------------------------------
+
+function renderAddButtons() {
+  $("#custom-add-buttons").replaceChildren(...state.types.map((t) =>
+    el("button", {
+      class: "type-button", style: `--c:${t.color}`,
+      title: t.behavior === "study" ? "مثل درس، با مرور لایتنر" : "مثل کار روتین، بدون مرور",
+      onclick: () => openItemDialog(null, t.behavior, null, t),
+    }, `+ ${t.name}`)));
+}
+
+function typeOf(item) {
+  return state.types.find((t) => t.id === item.custom_type_id) || null;
 }
 
 function renderItems() {
@@ -202,10 +308,12 @@ function renderItems() {
 
 function itemCard(item) {
   const category = state.categories.find((c) => c.id === item.category_id);
+  const custom = typeOf(item);
   const p = item.progress;
   const meta = [];
   if (category) meta.push(el("span", { class: "chip" }, category.name));
-  if (item.item_type === "routine") meta.push(el("span", { class: "chip routine" }, "روتین"));
+  if (custom) meta.push(el("span", { class: "chip typed", style: `--c:${custom.color}` }, custom.name));
+  else if (item.item_type === "routine") meta.push(el("span", { class: "chip routine" }, "روتین"));
   meta.push(el("span", {}, `${fa(item.sessions.length)} جلسه`));
   meta.push(el("span", {}, `خواندن ${fa(p.read_percent)}٪`));
   if (p.reviews_total) meta.push(el("span", {}, `مرور ${fa(p.reviews_done)} از ${fa(p.reviews_total)}`));
@@ -225,7 +333,7 @@ function itemCard(item) {
 
   const card = el("li", {
     class: `item${item.is_active ? "" : " inactive"}${item.id === selectedItemId ? " selected" : ""}`,
-    "data-id": item.id,
+    "data-id": item.id, "data-flip": `item-${item.id}`,
   },
     el("span", { class: "handle", title: "برای جابه‌جایی بکشید" }, "⋮⋮"),
     el("input", {
@@ -247,7 +355,6 @@ function itemCard(item) {
     el("div", { class: "meta" }, meta),
     item.source_problem && el("div", { class: "problem" }, `⚠ ${item.source_problem}`),
   );
-  enableDrag(card);
   return card;
 }
 
@@ -255,40 +362,20 @@ function itemCard(item) {
 // Drag-and-drop صف
 // ---------------------------------------------------------------------------
 
-// کشیدن با رویدادهای pointer انجام می‌شود (نه drag-and-drop خود HTML)،
-// چون ساده‌تر و در همهٔ مرورگرها یکسان است.
-let drag = null;   // { id, card, target } در حین کشیدن
+// کشیدن کارت درس: خود کارت همراه ماوس حرکت می‌کند و بقیه کنار می‌روند (static/motion.js)
+sortable($("#item-list"), {
+  items: ".item", handle: ".handle", axis: "y",
+  onDrop: (visibleIds) => reorderVisible(visibleIds.map(Number)),
+});
 
-function enableDrag(card) {
-  const handle = $(".handle", card);
-  handle.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    handle.setPointerCapture(e.pointerId);
-    drag = { id: Number(card.dataset.id), card, target: undefined };
-    card.classList.add("dragging");
-  });
-  handle.addEventListener("pointermove", (e) => {
-    if (!drag) return;
-    $$(".drop-before").forEach((n) => n.classList.remove("drop-before"));
-    const under = document.elementFromPoint(e.clientX, e.clientY);
-    const target = under && under.closest(".item");
-    if (target && target !== drag.card) {
-      target.classList.add("drop-before");
-      drag.target = Number(target.dataset.id);
-    } else if (under && under.closest("#item-list") && !target) {
-      drag.target = null;  // پایین فهرست: انتهای صف
-    } else {
-      drag.target = undefined;  // بیرون فهرست: لغو
-    }
-  });
-  handle.addEventListener("pointerup", () => {
-    if (!drag) return;
-    const { id, target } = drag;
-    drag.card.classList.remove("dragging");
-    $$(".drop-before").forEach((n) => n.classList.remove("drop-before"));
-    drag = null;
-    if (target !== undefined && target !== id) moveItem(id, target);
-  });
+/** ترتیب تازهٔ کارت‌های دیده‌شده را در کل صف اعمال می‌کند.
+ *  اگر فیلتری روشن است، درس‌های پنهان سر جای خودشان در صف می‌مانند. */
+function reorderVisible(visibleIds) {
+  const visible = new Set(visibleIds);
+  const queue = [...visibleIds];
+  const ids = state.items.map((item) => (visible.has(item.id) ? queue.shift() : item.id));
+  state.items.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+  api("POST", "/api/items/reorder", { ids });
 }
 
 /** درس را درست قبل از درس مقصد در کل صف قرار می‌دهد. beforeId=null یعنی انتهای صف. */
@@ -336,16 +423,18 @@ const form = $("#item-form");
 // form.elements به‌جای form: چون form.title خودِ عنوان فرم است، نه فیلد title
 const fields = form.elements;
 
-/** پنجرهٔ درس. firstDate: وقتی درس از روی یک روز تقویم اضافه می‌شود. */
-function openItemDialog(item, type = "study", firstDate = null) {
-  editing = { id: item ? item.id : null, type: item ? item.item_type : type, firstDate };
+/** پنجرهٔ درس.
+ *  firstDate: وقتی درس از روی یک روز تقویم اضافه می‌شود.
+ *  customType: وقتی از دکمهٔ یکی از نوع‌های ساخت کاربر (مثلاً «+ پروژه») باز می‌شود. */
+function openItemDialog(item, type = "study", firstDate = null, customType = null) {
+  customType = customType || (item ? typeOf(item) : null);
+  editing = { id: item ? item.id : null, type: item ? item.item_type : type, firstDate, customType };
   pickedSource = null;
   headingsCache = [];
   const isRoutine = editing.type === "routine";
-  $("#item-dialog-title").textContent = item
-    ? (isRoutine ? "ویرایش کار روتین" : "ویرایش درس")
-    : (isRoutine ? "کار روتین جدید" : "درس جدید")
-      + (firstDate ? ` از ${Jalali.format(firstDate)}` : "");
+  const typeName = customType ? customType.name : (isRoutine ? "کار روتین" : "درس");
+  $("#item-dialog-title").textContent = (item ? `ویرایش ${typeName}` : `${typeName} جدید`)
+    + (!item && firstDate ? ` از ${Jalali.format(firstDate)}` : "");
 
   const defaults = state.settings.new_item_defaults || {};
   fields.title.value = item ? item.title : "";
@@ -446,6 +535,7 @@ function collectForm() {
     data.session_count = Number(fields.session_count.value);
     data.session_minutes = Number(fields.session_minutes.value);
     if (editing.firstDate) data.first_date = editing.firstDate;
+    if (editing.customType) data.custom_type_id = editing.customType.id;
   }
   return data;
 }
@@ -547,43 +637,31 @@ function renderSessions() {
 }
 
 // ---------------------------------------------------------------------------
-// دسته‌ها
+// نوع کار تازه (دکمهٔ «+» کنار «+ درس» و «+ کار روتین»)
 // ---------------------------------------------------------------------------
 
-function renderCategoryDialog() {
-  $("#category-list").replaceChildren(...state.categories.map((c) =>
-    el("li", {},
-      el("input", {
-        value: c.name,
-        onchange: (e) => api("PATCH", `/api/categories/${c.id}`, { name: e.target.value }).then(renderCategoryDialog),
-      }),
-      el("button", {
-        class: "danger",
-        onclick: () => {
-          if (confirm(`دستهٔ «${c.name}» حذف شود؟ درس‌هایش بدون دسته می‌مانند.`)) {
-            api("DELETE", `/api/categories/${c.id}`).then(renderCategoryDialog);
-          }
-        },
-      }, "حذف"))));
+function openTypeDialog() {
+  const f = $("#type-form").elements;
+  f.name.value = "";
+  f.behavior.value = "study";
+  f.color.value = "#8b5cf6";
+  $("#type-dialog").showModal();
+  f.name.focus();
 }
 
-$("#manage-categories").addEventListener("click", () => {
-  renderCategoryDialog();
-  $("#category-dialog").showModal();
-});
-$("#close-categories").addEventListener("click", () => $("#category-dialog").close());
-$("#category-form").addEventListener("submit", async (e) => {
+$("#type-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  await api("POST", "/api/categories", { name: e.target.name.value });
-  e.target.reset();
-  renderCategoryDialog();
+  const f = e.target.elements;
+  await api("POST", "/api/types", { name: f.name.value.trim(), behavior: f.behavior.value, color: f.color.value });
+  $("#type-dialog").close();
 });
+$("#close-type").addEventListener("click", () => $("#type-dialog").close());
+$("#add-type").addEventListener("click", openTypeDialog);
 
 // ---------------------------------------------------------------------------
 // شروع
 // ---------------------------------------------------------------------------
 
-$("#category-filter").addEventListener("change", (e) => { filterCategory = e.target.value; render(); });
 $("#add-study").addEventListener("click", () => openItemDialog(null, "study"));
 $("#add-routine").addEventListener("click", () => openItemDialog(null, "routine"));
 $("#vault-button").addEventListener("click", () => api("POST", "/api/browse", { kind: "vault" }));
@@ -594,6 +672,22 @@ $("#undo-button").addEventListener("click", async () => {
   const result = await api("POST", "/api/undo", {});
   if (result.undone) showMessage(`برگشت: ${result.undone}`, false);
 });
+$("#redo-button").addEventListener("click", async () => {
+  const result = await api("POST", "/api/redo", {});
+  if (result.redone) showMessage(`دوباره انجام شد: ${result.redone}`, false);
+});
+
+/** فونت‌هایی که کاربر اضافه کرده، از پوشهٔ data/fonts بار می‌شوند. */
+function renderCustomFonts() {
+  let style = $("#custom-font-faces");
+  if (!style) {
+    style = el("style", { id: "custom-font-faces" });
+    document.head.append(style);
+  }
+  const css = (state.settings.custom_fonts || []).map((f) =>
+    `@font-face { font-family: "${f.family}"; src: url("/fonts/${encodeURIComponent(f.file)}"); }`).join("\n");
+  if (style.textContent !== css) style.textContent = css;
+}
 
 // ---------------------------------------------------------------------------
 // جداکنندهٔ بین منابع درسی و برنامه
@@ -670,6 +764,8 @@ function currentSourcesWidth() {
 const settingsForm = $("#settings-form");
 const sf = settingsForm.elements;
 let fontsLoaded = false;
+let intervalDraft = [];   // فاصله‌های لایتنر در حال ویرایش (به روز)
+let chartMax = 120;       // آخرین روزِ نمودار لایتنر
 
 function openSettings() {
   const s = state.settings;
@@ -677,12 +773,17 @@ function openSettings() {
   sf.cap_tolerance_minutes.value = s.cap_tolerance_minutes;
   sf.day_start_hour.value = s.day_start_hour;
   sf.review_cap_percent.value = s.review_cap_percent ?? "";
-  sf.default_review_ratio.value = s.default_review_ratio;
-  sf.review_intervals.value = s.review_intervals.join("، ");
+  sf.ratio_percent.value = ratioToPercent(s.default_review_ratio);
+  intervalDraft = [...s.review_intervals];
+  chartMax = niceChartMax(intervalDraft);
   const d = s.new_item_defaults || {};
   sf.default_session_minutes.value = d.session_minutes || 60;
   sf.default_max_new.value = d.max_new_sessions_per_day || 1;
   sf.default_category.replaceChildren(...categoryOptions(d.category_id, "بدون دسته"));
+  const colors = s.colors || {};
+  sf.color_read.value = colors.read || "#e5484d";
+  sf.color_review.value = colors.review || "#3b82f6";
+  sf.color_routine.value = colors.routine || "#f5b400";
   sf.theme.value = s.theme;
   sf.font_size.value = s.font_size;
   sf.font_family.value = s.font_family;
@@ -696,21 +797,233 @@ function openSettings() {
   $("#weekday-settings").replaceChildren(...WEEKDAYS.map(([num, name]) =>
     el("div", { class: "wd" },
       el("strong", {}, name),
-      el("input", { type: "number", min: 0, max: 1440, "data-cap": num, value: caps[num] ?? "", placeholder: "پیش‌فرض" }),
+      el("span", { class: "with-unit" },
+        el("input", { type: "number", min: 0, max: 1440, class: "num", "data-cap": num, value: caps[num] ?? "", placeholder: "پیش‌فرض" }),
+        "دقیقه"),
       el("label", {}, el("input", { type: "checkbox", "data-off": num, checked: off.includes(num) }), " تعطیل"))));
 
+  renderTypeSettings();
+  renderFontSettings();
+  $("#settings-dialog").showModal();
+  updateRatioExplain();
+  renderIntervalChart();
+}
+
+// ---------- نسبت مرور (اسلایدر)
+
+function ratioToPercent(text) {
+  const value = String(text || "1/3").trim();
+  const [a, b] = value.includes("/") ? value.split("/").map(Number) : [Number(value), 1];
+  return Math.round((100 * a) / (b || 1)) || 33;
+}
+
+function percentToRatio(percent) {
+  // یک‌سوم و دوسوم دقیق نگه داشته می‌شوند تا گرد کردن درست باشد
+  if (percent === 33) return "1/3";
+  if (percent === 67) return "2/3";
+  return `${percent}/100`;
+}
+
+function reviewMinutesFor(minutes, percent) {
+  const ratio = percentToRatio(percent);
+  const [a, b] = ratio.split("/").map(Number);
+  return Math.ceil((minutes * a) / b);
+}
+
+function updateRatioExplain() {
+  const percent = Number(sf.ratio_percent.value);
+  $("#ratio-value").textContent = `${fa(percent)}٪`;
+  const reviews = intervalDraft.length;
+  const each = reviewMinutesFor(60, percent);
+  const total = 60 + reviews * each;
+  const cap = Number(sf.default_cap_minutes.value) || 120;
+  const forNew = Math.round(cap * 60 / total);
+  $("#ratio-explain").replaceChildren(
+    el("div", {}, `هر مرور ${fa(percent)}٪ زمان خواندن همان جلسه است و رو به بالا گرد می‌شود.`),
+    el("div", {}, `مثال: جلسهٔ ۶۰ دقیقه‌ای ← هر مرور ${fa(each)} دقیقه. با ${fa(reviews)} مرور، کل وقتی که این جلسه می‌گیرد: `
+      + `۶۰ + ${fa(reviews)} × ${fa(each)} = ${fa(total)} دقیقه.`),
+    el("div", {}, `یعنی در بلندمدت، از سقف روزانهٔ ${fa(cap)} دقیقه حدود ${fa(forNew)} دقیقه به مطلب جدید می‌رسد و بقیه صرف مرور می‌شود.`),
+    el("div", { class: "muted" }, "درس‌هایی که نسبت مرور اختصاصی دارند، از نسبت خودشان استفاده می‌کنند. برای یک جلسهٔ خاص هم می‌شود زمان مرور را دستی گذاشت."),
+  );
+}
+
+sf.ratio_percent.addEventListener("input", updateRatioExplain);
+sf.default_cap_minutes.addEventListener("input", updateRatioExplain);
+
+// ---------- نمودار فاصله‌های لایتنر
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs = {}, ...children) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  node.append(...children);
+  return node;
+}
+
+function cumulative(intervals) {
+  let sum = 0;
+  return intervals.map((d) => (sum += d));
+}
+
+function niceChartMax(intervals) {
+  const last = cumulative(intervals).at(-1) || 30;
+  return [30, 60, 90, 120, 180, 365, 730, 1825, 3650].find((m) => m >= last * 1.25) || last * 1.25;
+}
+
+/** محور زمان: روز صفر (خواندن) سمت راست است و زمان به چپ جلو می‌رود.
+ *  مقیاس جذری است تا فاصله‌های کوتاه (۱ و ۳ روز) هم جا داشته باشند. */
+function chartGeometry() {
+  const box = $("#interval-chart");
+  const width = Math.max(box.clientWidth, 400);
+  const pad = 36;
+  const x = (day) => width - pad - (width - 2 * pad) * Math.sqrt(day / chartMax);
+  const dayAt = (px) => {
+    const frac = Math.min(1, Math.max(0, (width - pad - px) / (width - 2 * pad)));
+    return Math.round(chartMax * frac * frac);
+  };
+  return { width, x, dayAt };
+}
+
+function renderIntervalChart() {
+  const box = $("#interval-chart");
+  const { width, x } = chartGeometry();
+  const axisY = 70;
+  const points = cumulative(intervalDraft);
+  const ticks = [1, 3, 7, 14, 30, 60, 90, 180, 365, 730, 1825, 3650].filter((d) => d <= chartMax);
+  const chart = svg("svg", { viewBox: `0 0 ${width} 130` },
+    svg("line", { class: "axis", x1: x(0), y1: axisY, x2: x(chartMax), y2: axisY }),
+    ...ticks.map((d) => svg("g", { class: "tick" },
+      svg("line", { x1: x(d), y1: axisY + 8, x2: x(d), y2: axisY + 14 }),
+      svg("text", { x: x(d), y: axisY + 28 }, fa(d)))),
+    svg("text", { x: x(chartMax), y: axisY + 46, class: "tick", "text-anchor": "middle", fill: "currentColor", "font-size": 11 }, "روز"),
+    ...points.map((day, i) => svg("line", { class: "span", x1: x(i ? points[i - 1] : 0), y1: axisY, x2: x(day), y2: axisY })),
+    svg("g", { class: "start" }, svg("circle", { cx: x(0), cy: axisY, r: 8 }),
+      svg("text", { x: x(0), y: axisY - 16, "text-anchor": "middle", "font-size": 11, fill: "currentColor" }, "خواندن")),
+    ...points.map((day, i) => svg("g", { class: "point", "data-index": i },
+      svg("text", { x: x(day), y: axisY - 18 }, `مرور ${fa(i + 1)}`),
+      svg("circle", { cx: x(day), cy: axisY, r: 10 }))),
+  );
+  box.replaceChildren(chart);
+  $("#interval-explain").replaceChildren(...intervalDraft.map((d, i) =>
+    el("li", {}, `${fa(d)} روز بعد از ${i ? `مرور ${fa(i)}` : "خواندن"}`
+      + ` (یعنی روز ${fa(points[i])} بعد از خواندن)`)));
+  updateRatioExplain();
+}
+
+(function setupIntervalChart() {
+  const box = $("#interval-chart");
+  let dragIndex = null;
+  box.addEventListener("pointerdown", (e) => {
+    const point = e.target.closest(".point");
+    if (!point) return;
+    e.preventDefault();
+    dragIndex = Number(point.dataset.index);
+    try { box.setPointerCapture(e.pointerId); } catch (error) { /* رویداد ساختگی */ }
+    point.classList.add("active");
+  });
+  box.addEventListener("pointermove", (e) => {
+    if (dragIndex === null) return;
+    const { dayAt } = chartGeometry();
+    const rect = box.getBoundingClientRect();
+    const scale = chartGeometry().width / rect.width;
+    const points = cumulative(intervalDraft);
+    const low = (dragIndex ? points[dragIndex - 1] : 0) + 1;
+    const high = dragIndex < points.length - 1 ? points[dragIndex + 1] - 1 : chartMax;
+    const day = Math.min(high, Math.max(low, dayAt((e.clientX - rect.left) * scale)));
+    // فقط همین مرور جابه‌جا می‌شود؛ مرورهای بعدی سر روز خودشان می‌مانند
+    points[dragIndex] = day;
+    intervalDraft = points.map((p, i) => p - (i ? points[i - 1] : 0));
+    renderIntervalChart();
+    box.querySelector(`.point[data-index="${dragIndex}"]`).classList.add("active");
+  });
+  const stop = () => {
+    if (dragIndex === null) return;
+    dragIndex = null;
+    const before = chartMax;
+    chartMax = niceChartMax(intervalDraft);
+    if (chartMax !== before) renderIntervalChart();
+    else box.querySelectorAll(".point.active").forEach((n) => n.classList.remove("active"));
+  };
+  box.addEventListener("pointerup", stop);
+  box.addEventListener("pointercancel", stop);
+  box.addEventListener("dblclick", (e) => {
+    const point = e.target.closest(".point");
+    if (!point || intervalDraft.length <= 1) return;
+    const i = Number(point.dataset.index);
+    // با حذف یک مرور، مرورهای بعدی سر روز خودشان می‌مانند
+    const points = cumulative(intervalDraft).filter((_, j) => j !== i);
+    intervalDraft = points.map((p, j) => p - (j ? points[j - 1] : 0));
+    renderIntervalChart();
+  });
+})();
+
+$("#interval-add").addEventListener("click", () => {
+  const last = intervalDraft.at(-1) || 1;
+  intervalDraft.push(Math.min(last * 2, 365));
+  chartMax = niceChartMax(intervalDraft);
+  renderIntervalChart();
+});
+$("#interval-reset").addEventListener("click", () => {
+  intervalDraft = [1, 3, 7, 30];
+  chartMax = niceChartMax(intervalDraft);
+  renderIntervalChart();
+});
+
+// ---------- نوع‌های کار و فونت‌ها
+
+function renderTypeSettings() {
+  $("#type-settings").replaceChildren(...state.types.map((t) =>
+    el("li", { "data-type": t.id },
+      el("input", { type: "color", value: t.color, "data-field": "color" }),
+      el("input", { type: "text", value: t.name, maxlength: 40, "data-field": "name" }),
+      el("span", { class: "muted small" }, t.behavior === "study" ? "مثل درس، با مرور" : "مثل روتین، بدون مرور"),
+      el("button", {
+        type: "button", class: "danger",
+        onclick: async () => {
+          if (!confirm(`نوع «${t.name}» حذف شود؟ کارهای این نوع می‌مانند و درس یا روتین معمولی می‌شوند.`)) return;
+          await api("DELETE", `/api/types/${t.id}`);
+          renderTypeSettings();
+        },
+      }, "حذف"))));
+  if (!state.types.length) {
+    $("#type-settings").append(el("li", { class: "muted small" }, "نوع کار ساخت شما هنوز نیست. با دکمهٔ «+» کنار «+ کار روتین» بسازید."));
+  }
+}
+
+function renderFontSettings() {
+  const custom = state.settings.custom_fonts || [];
+  $("#custom-font-list").replaceChildren(...custom.map((f) =>
+    el("li", {},
+      el("span", { style: `font-family:"${f.family}"` }, `${f.family} — نمونهٔ متن فارسی`),
+      el("button", {
+        type: "button", class: "danger",
+        onclick: async () => {
+          await api("POST", "/api/fonts/remove", { family: f.family });
+          fontsLoaded = false;
+          renderFontSettings();
+        },
+      }, "حذف"))));
   if (!fontsLoaded) {
     fetch("/api/fonts").then((r) => r.json()).then((fonts) => {
-      $("#font-list").replaceChildren(...["Vazirmatn", ...fonts.filter((f) => f !== "Vazirmatn")]
-        .map((f) => el("option", { value: f })));
+      const names = ["Vazirmatn", ...custom.map((f) => f.family), ...fonts];
+      $("#font-list").replaceChildren(...[...new Set(names)].map((f) => el("option", { value: f })));
       fontsLoaded = true;
     });
   }
-  $("#settings-dialog").showModal();
 }
 
+$("#font-add").addEventListener("click", async () => {
+  const result = await api("POST", "/api/fonts/add", {});
+  if (result.cancelled) return;
+  sf.font_family.value = result.added_font;
+  fontsLoaded = false;
+  renderFontSettings();
+  showMessage(`فونت «${result.added_font}» اضافه شد. برای استفاده، «ذخیره» را بزنید.`, false);
+});
+
+// ---------- ذخیره
+
 function collectSettings() {
-  const intervals = sf.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
   const weekdayCaps = {};
   for (const input of $$("[data-cap]", settingsForm)) {
     if (input.value !== "") weekdayCaps[input.dataset.cap] = Number(input.value);
@@ -720,8 +1033,8 @@ function collectSettings() {
     cap_tolerance_minutes: Number(sf.cap_tolerance_minutes.value),
     day_start_hour: Number(sf.day_start_hour.value),
     review_cap_percent: sf.review_cap_percent.value === "" ? null : Number(sf.review_cap_percent.value),
-    default_review_ratio: sf.default_review_ratio.value.trim(),
-    review_intervals: intervals,
+    default_review_ratio: percentToRatio(Number(sf.ratio_percent.value)),
+    review_intervals: intervalDraft,
     weekday_caps: weekdayCaps,
     weekly_days_off: $$("[data-off]:checked", settingsForm).map((x) => Number(x.dataset.off)),
     new_item_defaults: {
@@ -729,6 +1042,7 @@ function collectSettings() {
       max_new_sessions_per_day: Number(sf.default_max_new.value),
       category_id: sf.default_category.value ? Number(sf.default_category.value) : null,
     },
+    colors: { read: sf.color_read.value, review: sf.color_review.value, routine: sf.color_routine.value },
     theme: sf.theme.value,
     font_size: Number(sf.font_size.value),
     font_family: sf.font_family.value.trim(),
@@ -741,6 +1055,13 @@ function collectSettings() {
 
 settingsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  // نام و رنگ نوع‌های کار که عوض شده‌اند
+  for (const row of $$("#type-settings li[data-type]")) {
+    const t = state.types.find((x) => x.id === Number(row.dataset.type));
+    const name = row.querySelector('[data-field="name"]').value.trim();
+    const color = row.querySelector('[data-field="color"]').value;
+    if (t && (name !== t.name || color !== t.color)) await api("PATCH", `/api/types/${t.id}`, { name, color });
+  }
   await api("PATCH", "/api/settings", collectSettings());
   $("#settings-dialog").close();
   showMessage("تنظیمات ذخیره شد و برنامه از نو چیده شد.", false);

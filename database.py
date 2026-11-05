@@ -10,6 +10,7 @@
 import json
 import re
 import sqlite3
+import threading
 from datetime import date, datetime
 from pathlib import Path
 
@@ -102,6 +103,18 @@ MIGRATIONS = [
     ALTER TABLE sessions ADD COLUMN section_start TEXT;
     ALTER TABLE sessions ADD COLUMN section_end TEXT;
     """,
+    # نسخهٔ 3: نوع‌های کار که خود کاربر می‌سازد (مثلاً «پروژه» یا «تمرین»)
+    #   behavior: study (مثل درس، با مرور لایتنر) یا routine (مثل کار روتین، بدون مرور)
+    """
+    CREATE TABLE item_types (
+        id          INTEGER PRIMARY KEY,
+        name        TEXT NOT NULL,
+        behavior    TEXT NOT NULL DEFAULT 'study',
+        color       TEXT NOT NULL DEFAULT '#8b5cf6',
+        sort_order  INTEGER NOT NULL DEFAULT 0
+    );
+    ALTER TABLE items ADD COLUMN custom_type_id INTEGER REFERENCES item_types(id) ON DELETE SET NULL;
+    """,
 ]
 
 # مقدار پیش‌فرض تنظیمات. فقط تنظیم‌هایی که کاربر عوض کند در جدول settings ذخیره می‌شوند.
@@ -122,7 +135,13 @@ DEFAULT_SETTINGS = {
     "vault_path": "",
     "backup_folder": "data/backups",
     "backup_retention": 30,
+    # رنگ کارها در تقویم. پیش‌فرض: روتین زرد، مرور آبی، خواندن قرمز
+    "colors": {"read": "#e5484d", "review": "#3b82f6", "routine": "#f5b400"},
+    # فونت‌هایی که کاربر اضافه کرده: [{"family": "...", "file": "..."}]؛ فایل‌ها در data/fonts
+    "custom_fonts": [],
 }
+
+FONTS_DIR = DATA_DIR / "fonts"
 
 # ستون‌هایی که تاریخ یا JSON هستند و باید موقع خواندن و نوشتن تبدیل شوند
 DATE_COLUMNS = {
@@ -147,18 +166,25 @@ def connect(path=DB_PATH):
     return conn
 
 
+# مرورگر گاهی چند درخواست را هم‌زمان می‌فرستد. این قفل نمی‌گذارد دو درخواست
+# با هم جدول‌ها را بسازند (وگرنه دومی خطای «table already exists» می‌گیرد).
+_migrate_lock = threading.Lock()
+
+
 def migrate(conn):
     """migrationهایی را که هنوز اجرا نشده‌اند اجرا می‌کند."""
-    version = conn.execute("PRAGMA user_version").fetchone()[0]
-    for number, script in enumerate(MIGRATIONS, start=1):
-        if number <= version:
-            continue
-        # همهٔ تغییرهای یک migration با هم انجام می‌شوند یا هیچ‌کدام
-        try:
-            conn.executescript(f"BEGIN; {script} PRAGMA user_version = {number}; COMMIT;")
-        except sqlite3.Error:
-            conn.rollback()
-            raise
+    with _migrate_lock:
+        # نسخه داخل قفل خوانده می‌شود، تا اگر درخواست دیگری همین الان migration را تمام کرده، دوباره اجرا نشود
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+        for number, script in enumerate(MIGRATIONS, start=1):
+            if number <= version:
+                continue
+            # همهٔ تغییرهای یک migration با هم انجام می‌شوند یا هیچ‌کدام
+            try:
+                conn.executescript(f"BEGIN; {script} PRAGMA user_version = {number}; COMMIT;")
+            except sqlite3.Error:
+                conn.rollback()
+                raise
 
 
 def _to_python(row):
@@ -281,8 +307,29 @@ def clean_setting(key, value):
         return _int_in(value, 10, 32, "اندازهٔ فونت")
     if key == "backup_retention":
         return _int_in(value, 1, 365, "تعداد backup")
+    if key == "colors":
+        if not isinstance(value, dict):
+            raise ValueError("رنگ‌ها نامعتبرند.")
+        result = dict(DEFAULT_SETTINGS["colors"])
+        for kind in result:
+            if kind in value:
+                result[kind] = _color(value[kind])
+        return result
+    if key == "custom_fonts":
+        if not isinstance(value, list):
+            raise ValueError("فهرست فونت‌ها نامعتبر است.")
+        return [{"family": clean_setting("font_family", f["family"]), "file": Path(str(f["file"])).name}
+                for f in value]
     # آدرس‌ها: vault_path، export_folder، backup_folder
     return str(value or "").strip()
+
+
+def _color(value):
+    """رنگ به شکل #rrggbb"""
+    text = str(value or "").strip().lower()
+    if not re.fullmatch(r"#[0-9a-f]{6}", text):
+        raise ValueError("رنگ باید به شکل #rrggbb باشد.")
+    return text
 
 
 def set_setting(conn, key, value):
@@ -317,6 +364,46 @@ def rename_category(conn, category_id, name):
     conn.commit()
 
 
+def reorder_categories(conn, category_ids):
+    conn.executemany("UPDATE categories SET sort_order = ? WHERE id = ?",
+                     [(n, cid) for n, cid in enumerate(category_ids, start=1)])
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# نوع‌های کار ساخت کاربر
+# ---------------------------------------------------------------------------
+
+def list_types(conn):
+    return [dict(r) for r in conn.execute("SELECT * FROM item_types ORDER BY sort_order, id")]
+
+
+def get_type(conn, type_id):
+    row = conn.execute("SELECT * FROM item_types WHERE id = ?", (type_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def add_type(conn, name, behavior, color):
+    order = conn.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM item_types").fetchone()[0]
+    cur = conn.execute("INSERT INTO item_types (name, behavior, color, sort_order) VALUES (?, ?, ?, ?)",
+                       (name, behavior, color, order))
+    conn.commit()
+    return cur.lastrowid
+
+
+def update_type(conn, type_id, name, color):
+    """نام و رنگ عوض می‌شود. رفتار (با مرور یا بدون مرور) بعد از ساخت ثابت است،
+    چون درس‌های قبلی همین نوع با همان رفتار ساخته شده‌اند."""
+    conn.execute("UPDATE item_types SET name = ?, color = ? WHERE id = ?", (name, color, type_id))
+    conn.commit()
+
+
+def delete_type(conn, type_id):
+    """نوع حذف می‌شود؛ درس‌هایش می‌مانند و درس یا روتین معمولی می‌شوند."""
+    conn.execute("DELETE FROM item_types WHERE id = ?", (type_id,))
+    conn.commit()
+
+
 def delete_category(conn, category_id):
     """دسته حذف می‌شود؛ درس‌هایش بدون دسته می‌مانند."""
     conn.execute("DELETE FROM categories WHERE id = ?", (category_id,))
@@ -331,7 +418,7 @@ ITEM_FIELDS = {
     "title", "category_id", "item_type", "source_type", "source_path_or_url",
     "is_active", "max_new_sessions_per_day", "review_ratio", "review_intervals",
     "start_date", "routine_weekdays", "target_date",
-    "section_unit", "range_start", "range_end",
+    "section_unit", "range_start", "range_end", "custom_type_id",
 }
 SESSION_FIELDS = {
     "section_label", "section_start", "section_end", "minutes", "minutes_done", "status", "leitner_box", "read_at",

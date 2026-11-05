@@ -162,3 +162,24 @@ def test_backup_keeps_only_last_n(conn, tmp_path):
 def test_backup_folder_relative_to_project():
     folder = database.backup_folder({"backup_folder": "data/backups"})
     assert folder == database.PROJECT_DIR / "data" / "backups"
+
+
+def test_simultaneous_first_requests_do_not_break_new_database(tmp_path):
+    """مرورگر اولین بار چند درخواست را با هم می‌فرستد؛ ساختن جدول‌ها نباید دو بار اجرا شود."""
+    import threading
+
+    path = tmp_path / "fresh.sqlite3"
+    errors = []
+
+    def open_db():
+        try:
+            database.connect(path).close()
+        except Exception as error:  # noqa: BLE001
+            errors.append(error)
+
+    threads = [threading.Thread(target=open_db) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert errors == []

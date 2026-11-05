@@ -274,3 +274,9 @@ def installed_fonts():
                 names.add(family)
     _font_cache = sorted(names, key=str.lower)
     return _font_cache
+
+
+def font_family_name(path):
+    """نام خانوادهٔ یک فایل فونت، مثلاً «Shabnam»."""
+    from PIL import ImageFont
+    return ImageFont.truetype(str(path), 12).getname()[0]

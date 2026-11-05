@@ -103,7 +103,9 @@ def render(state, scope, start, end, with_content, vault_path):
         note += " برنامهٔ روزهای آینده پیش‌بینی است و با هر تغییر روی Mac عوض می‌شود."
     note += " تیک‌های این صفحه فقط برای خودتان است و به Mac برنمی‌گردد."
     return PAGE.format(title=esc(heading), heading=esc(heading), note=esc(note),
-                       font=_font_data(), body="\n".join(body))
+                       font=_font_data(), extra_font=_custom_font_css(state.get("settings", {})),
+                       **_colors(state.get("settings", {})),
+                       body="\n".join(body))
 
 
 def day_html(day, plan_day, done_entries, sessions, today, with_content, vault_path, show_title):
@@ -304,6 +306,26 @@ def _data_uri(path):
     return f"data:{mime};base64,{base64.b64encode(Path(path).read_bytes()).decode()}"
 
 
+def _custom_font_css(settings):
+    """اگر کاربر فونت اضافه‌شده‌ای را انتخاب کرده، همان هم داخل خروجی قرار می‌گیرد."""
+    import database  # فقط برای آدرس پوشهٔ فونت‌ها
+
+    family = settings.get("font_family")
+    for font in settings.get("custom_fonts", []):
+        path = database.FONTS_DIR / font["file"]
+        if font["family"] == family and path.is_file():
+            kind = {".ttf": "truetype", ".otf": "opentype", ".woff": "woff", ".woff2": "woff2"}.get(path.suffix.lower(), "truetype")
+            data = base64.b64encode(path.read_bytes()).decode()
+            return (f'@font-face {{ font-family: "{family}"; src: url(data:font/{path.suffix[1:]};base64,{data}) '
+                    f'format("{kind}"); }}\nbody {{ font-family: "{family}", "Vazirmatn", system-ui, sans-serif; }}')
+    return ""
+
+
+def _colors(settings):
+    colors = {"read": "#e5484d", "review": "#3b82f6", "routine": "#f5b400", **settings.get("colors", {})}
+    return {f"c_{k}": esc(v) for k, v in colors.items()}
+
+
 def _font_data():
     if FONT_FILE.exists():
         return base64.b64encode(FONT_FILE.read_bytes()).decode()
@@ -323,12 +345,12 @@ PAGE = """<!doctype html>
 <style>
 @font-face {{ font-family: "Vazirmatn"; src: url(data:font/woff2;base64,{font}) format("woff2"); font-weight: 100 900; }}
 :root {{ --bg: #f6f6f3; --panel: #fff; --text: #1f2328; --muted: #6b7280; --border: #e3e3de;
-        --read: #2f6f5e; --review: #3b5ba9; --routine: #8a5a14; }}
+        --read: {c_read}; --review: {c_review}; --routine: {c_routine}; }}
 @media (prefers-color-scheme: dark) {{
-  :root {{ --bg: #16181b; --panel: #1e2125; --text: #e6e6e3; --muted: #9aa0a8; --border: #31353b;
-          --read: #6fbfa5; --review: #8ea8ec; --routine: #d6a65c; }}
+  :root {{ --bg: #16181b; --panel: #1e2125; --text: #e6e6e3; --muted: #9aa0a8; --border: #31353b; }}
 }}
 * {{ box-sizing: border-box; }}
+{extra_font}
 body {{ margin: 0; padding: 16px; background: var(--bg); color: var(--text);
        font-family: "Vazirmatn", system-ui, Tahoma, sans-serif; line-height: 1.8; font-size: 17px; }}
 main {{ max-width: 860px; margin: 0 auto; }}
@@ -337,9 +359,10 @@ h2 {{ font-size: 1.1em; margin: 0 0 6px; }}
 .muted {{ color: var(--muted); font-size: 0.9em; }}
 .day {{ background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 12px 0; }}
 .task {{ border: 1px solid var(--border); border-inline-start: 5px solid var(--read); border-radius: 8px;
+        background: color-mix(in srgb, var(--read) 12%, var(--panel));
         padding: 8px 10px; margin: 8px 0; }}
-.task.kind-review {{ border-inline-start-color: var(--review); }}
-.task.kind-routine {{ border-inline-start-color: var(--routine); }}
+.task.kind-review {{ border-inline-start-color: var(--review); background: color-mix(in srgb, var(--review) 12%, var(--panel)); }}
+.task.kind-routine {{ border-inline-start-color: var(--routine); background: color-mix(in srgb, var(--routine) 14%, var(--panel)); }}
 .task.done {{ color: var(--muted); border-style: dashed; }}
 .task-head {{ display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; cursor: pointer; }}
 .task-head input {{ width: 1.3em; height: 1.3em; }}

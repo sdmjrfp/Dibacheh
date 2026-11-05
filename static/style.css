@@ -329,8 +329,8 @@ input.num { width: 5em; }
 /* ---------- نشانگر حجم کار و هدف ---------- */
 .workload { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; font-size: 0.9em; }
 .workload .bars { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--border); margin: 4px 0; }
-.workload .bars .r { background: var(--read); }
-.workload .bars .v { background: var(--review); }
+.workload .bars .r { background: var(--c-read); }
+.workload .bars .v { background: var(--c-review); }
 .target.ahead { color: var(--accent); }
 .target.behind { color: var(--danger); }
 
@@ -340,3 +340,129 @@ input.num { width: 5em; }
 .weekday-grid .wd { display: flex; flex-direction: column; gap: 2px; font-size: 0.9em; }
 .weekday-grid input[type="number"] { width: 100%; }
 .path-setting { display: grid; grid-template-columns: 9em 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+
+/* =====================================================================
+   رنگ کارها (از تنظیمات قابل تغییر است). پیش‌فرض: روتین زرد، مرور آبی، خواندن قرمز.
+   کل کارت با همان رنگ، کم‌رنگ پر می‌شود.
+   ===================================================================== */
+:root { --c-read: #e5484d; --c-review: #3b82f6; --c-routine: #f5b400; --tint: 18%; }
+:root[data-theme="dark"] { --tint: 30%; }
+
+.kind-read { --c: var(--c-read); }
+.kind-review { --c: var(--c-review); }
+.kind-routine { --c: var(--c-routine); }
+.task, .legend > span[class^="kind-"], .task-pick {
+  background: color-mix(in srgb, var(--c) var(--tint), var(--panel));
+  border-color: color-mix(in srgb, var(--c) 45%, var(--border));
+  border-inline-start: 5px solid var(--c);
+}
+.task.done { background: var(--bg); border-inline-start-style: dashed; }
+.legend > span[class^="kind-"] { padding: 1px 10px; border-radius: 6px; border-width: 1px; border-style: solid; }
+.chip.typed, .type-button {
+  background: color-mix(in srgb, var(--c) 20%, var(--panel));
+  border-color: color-mix(in srgb, var(--c) 60%, var(--border));
+}
+.add-buttons { display: contents; }
+
+/* =====================================================================
+   کشیدن با انیمیشن
+   ===================================================================== */
+.item.lifted, .cat-tab.lifted {
+  position: relative;
+  z-index: 20;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+  cursor: grabbing;
+  transition: box-shadow 0.15s;
+}
+.item.lifted { background: var(--panel); }
+body.dragging-something, body.dragging-something * { cursor: grabbing !important; user-select: none; }
+.task.ghost {
+  position: fixed;
+  z-index: 50;
+  margin: 0;
+  pointer-events: none;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+}
+.task.drag-source { opacity: 0.3; }
+.cal-day.drop-target { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); outline: 2px dashed var(--accent); outline-offset: -3px; }
+
+/* =====================================================================
+   تب دسته‌ها
+   ===================================================================== */
+.cat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 10px;
+  border-bottom: 2px solid var(--border);
+}
+.cat-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+  margin-bottom: -2px;
+  background: transparent;
+}
+.cat-tab:hover { background: var(--accent-soft); }
+.cat-tab.selected {
+  background: var(--panel);
+  border-color: var(--border);
+  border-bottom: 2px solid var(--panel);
+  font-weight: 700;
+}
+.cat-tab .count { font-size: 0.75em; color: var(--muted); }
+.cat-tab .x {
+  display: none;
+  border: none; background: transparent; padding: 0 2px; line-height: 1;
+  color: var(--muted);
+}
+.cat-tab:hover .x { display: inline; }
+.cat-tab .x:hover { color: var(--danger); }
+.cat-tab.plus { font-size: 1.15em; font-weight: 700; padding: 3px 12px; }
+.cat-tab input { width: 9em; padding: 1px 6px; }
+.cat-tab.adding { background: var(--panel); border-color: var(--border); }
+#undo-button .count, #redo-button .count {
+  display: inline-block; min-width: 1.4em; padding: 0 5px; border-radius: 999px;
+  background: var(--accent-soft); font-size: 0.8em; text-align: center;
+}
+#undo-button .count:empty, #redo-button .count:empty { display: none; }
+label.stack { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+label.check { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+
+/* =====================================================================
+   تنظیمات: عدد کوتاه با واحد کنارش، اسلایدر و نمودار لایتنر
+   ===================================================================== */
+.settings-rows { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+.settings-rows > label { display: flex; flex-direction: column; gap: 2px; }
+.with-unit { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.with-unit input.num, input.num { width: 5.5em; text-align: center; }
+.slider-row { display: flex; align-items: center; gap: 16px; }
+.slider-row input[type="range"] { flex: 1; accent-color: var(--c-review); }
+.big-number { font-size: 1.6em; font-weight: 700; min-width: 3.5em; text-align: center; }
+.explain { background: var(--bg); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 0.9em; line-height: 1.9; }
+ol.explain { padding-inline-start: 28px; }
+.interval-chart { user-select: none; touch-action: none; }
+.interval-chart svg { width: 100%; height: 130px; display: block; overflow: visible; }
+.interval-chart .axis { stroke: var(--border); stroke-width: 3; stroke-linecap: round; }
+.interval-chart .tick line { stroke: var(--border); }
+.interval-chart .tick text { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+.interval-chart .span { stroke: var(--c-review); stroke-width: 5; stroke-linecap: round; opacity: 0.35; }
+.interval-chart .point circle { fill: var(--c-review); stroke: var(--panel); stroke-width: 3; cursor: grab; }
+.interval-chart .point.active circle { r: 12; cursor: grabbing; }
+.interval-chart .point text { fill: var(--text); font-size: 12px; font-weight: 700; text-anchor: middle; }
+.interval-chart .start circle { fill: var(--c-read); stroke: var(--panel); stroke-width: 3; }
+.type-settings { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.type-settings li { display: flex; align-items: center; gap: 8px; }
+.type-settings li input[type="text"] { width: 12em; }
+
+/* دکمه‌های بالای ستون منابع در ستون باریک به خط بعد بروند، نه اینکه خودشان بشکنند */
+.panel-head { flex-wrap: wrap; row-gap: 6px; }
+button { white-space: nowrap; }

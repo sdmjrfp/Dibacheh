@@ -13,7 +13,8 @@
     <h1>دیباچه</h1>
     <span id="today" class="muted"></span>
     <span class="spacer"></span>
-    <button id="undo-button" disabled title="برگرداندن آخرین تغییر">↶ برگرداندن</button>
+    <button id="undo-button" disabled title="برگرداندن آخرین تغییر">↶ برگرداندن <span class="count"></span></button>
+    <button id="redo-button" disabled title="بازگرداندن">↷ بازگرداندن <span class="count"></span></button>
     <button id="settings-button" title="تنظیمات">⚙ تنظیمات</button>
     <button id="vault-button" class="ghost" title="مسیر والت Obsidian">والت: <span id="vault-path">ثبت نشده</span></button>
   </header>
@@ -28,14 +29,15 @@
         <span class="spacer"></span>
         <button id="add-study" class="primary">+ درس</button>
         <button id="add-routine">+ کار روتین</button>
+        <span id="custom-add-buttons" class="add-buttons"></span>
+        <button id="add-type" class="icon" title="ساختن نوع کار تازه (مثلاً پروژه یا تمرین)">+</button>
       </div>
+
+      <!-- تب دسته‌ها: دوبار کلیک = تغییر نام، × = حذف، + = دستهٔ تازه، کشیدن = جابه‌جایی -->
+      <div id="category-tabs" class="cat-tabs" role="tablist"></div>
 
       <div class="filters">
         <div id="status-tabs" class="tabs" role="tablist"></div>
-        <div class="filter-row">
-          <select id="category-filter" aria-label="فیلتر دسته"></select>
-          <button id="manage-categories" class="ghost">مدیریت دسته‌ها</button>
-        </div>
       </div>
 
       <p class="hint muted">ترتیب صف = اولویت. برای جابه‌جایی، درس را از دستگیرهٔ ⋮⋮ بکشید.</p>
@@ -172,17 +174,24 @@
     </form>
   </dialog>
 
-  <!-- پنجرهٔ مدیریت دسته‌ها -->
-  <dialog id="category-dialog" class="dialog">
-    <h2>دسته‌ها</h2>
-    <ul id="category-list" class="category-list"></ul>
-    <form id="category-form" class="source-row">
-      <input name="name" placeholder="نام دستهٔ جدید" required autocomplete="off">
-      <button type="submit" class="primary">افزودن</button>
+  <!-- پنجرهٔ ساختن نوع کار تازه -->
+  <dialog id="type-dialog" class="dialog">
+    <form id="type-form" method="dialog">
+      <h2>نوع کار تازه</h2>
+      <p class="muted small">مثلاً «پروژه»، «تمرین» یا «کتاب صوتی». بعد از ساختن، یک دکمهٔ «+» با همین نام کنار «+ درس» می‌آید.</p>
+      <label class="stack">نام <input name="name" required maxlength="40" autocomplete="off"></label>
+      <fieldset>
+        <legend>رفتار در برنامه</legend>
+        <label class="check"><input type="radio" name="behavior" value="study" checked> مثل درس: جلسه‌ها به ترتیب صف، با مرور لایتنر</label>
+        <label class="check"><input type="radio" name="behavior" value="routine"> مثل کار روتین: هر روز (یا روزهای انتخابی)، بدون مرور</label>
+      </fieldset>
+      <label class="check">رنگ در تقویم <input type="color" name="color" value="#8b5cf6"></label>
+      <p class="muted small">نام و رنگ بعداً از تنظیمات قابل تغییر است.</p>
+      <div class="dialog-actions">
+        <button type="submit" class="primary">ساختن</button>
+        <button type="button" id="close-type">بستن</button>
+      </div>
     </form>
-    <div class="dialog-actions">
-      <button type="button" id="close-categories">بستن</button>
-    </div>
   </dialog>
 
   <!-- پنجرهٔ تنظیمات (بخش سوم داشبورد) -->
@@ -193,50 +202,76 @@
 
       <fieldset>
         <legend>برنامه‌ریزی</legend>
-        <div class="form-grid">
-          <label>سقف مطالعهٔ پیش‌فرض هر روز (دقیقه)
-            <input name="default_cap_minutes" type="number" min="0" max="1440"></label>
-          <label>مقدار مجاز بیشتر شدن از سقف (دقیقه)
-            <input name="cap_tolerance_minutes" type="number" min="0" max="600"></label>
-          <label>ساعت شروع روز (کار ثبت‌شده قبل از این ساعت جزو روز قبل است)
-            <input name="day_start_hour" type="number" min="0" max="23"></label>
-          <label>سقف زمان مرور در روز (درصد سقف روز؛ خالی = خاموش)
-            <input name="review_cap_percent" type="number" min="1" max="100" placeholder="خاموش"></label>
+        <div class="settings-rows">
+          <label>سقف مطالعهٔ پیش‌فرض هر روز
+            <span class="with-unit"><input name="default_cap_minutes" type="number" min="0" max="1440" class="num"> دقیقه</span></label>
+          <label>مقدار مجاز بیشتر شدن از سقف
+            <span class="with-unit"><input name="cap_tolerance_minutes" type="number" min="0" max="600" class="num"> دقیقه</span></label>
+          <label>ساعت شروع روز
+            <span class="with-unit"><input name="day_start_hour" type="number" min="0" max="23" class="num"> بامداد</span></label>
+          <label>سقف زمان مرور در روز (خالی = خاموش)
+            <span class="with-unit"><input name="review_cap_percent" type="number" min="1" max="100" class="num" placeholder="خاموش"> ٪ از سقف روز</span></label>
         </div>
+        <p class="muted small">کار ثبت‌شده قبل از ساعت شروع روز، جزو روز قبل حساب می‌شود.</p>
         <p class="small">سقف هر روز هفته (خالی = سقف پیش‌فرض) و تعطیلی ثابت هفتگی:</p>
         <div id="weekday-settings" class="weekday-grid"></div>
       </fieldset>
 
       <fieldset>
-        <legend>لایتنر و مرور</legend>
-        <div class="form-grid">
-          <label>نسبت پیش‌فرض زمان مرور به زمان خواندن
-            <input name="default_review_ratio" placeholder="1/3" dir="ltr"></label>
-          <label>فاصله‌های لایتنر (روز)
-            <input name="review_intervals" placeholder="1، 3، 7، 30"></label>
+        <legend>زمان مرور</legend>
+        <div class="slider-row">
+          <input name="ratio_percent" type="range" min="5" max="100" step="1">
+          <output id="ratio-value" class="big-number"></output>
         </div>
+        <p id="ratio-explain" class="explain"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>فاصله‌های لایتنر</legend>
+        <p class="muted small">هر نقطه یک مرور است. نقطه‌ها را به چپ و راست بکشید. دوبار کلیک روی یک نقطه آن را حذف می‌کند.</p>
+        <div id="interval-chart" class="interval-chart"></div>
+        <div class="pop-row">
+          <button type="button" id="interval-add">+ یک مرور دیگر</button>
+          <button type="button" id="interval-reset">پیش‌فرض (۱، ۳، ۷، ۳۰)</button>
+        </div>
+        <ol id="interval-explain" class="explain"></ol>
         <p class="muted small">با تغییر فاصله‌ها، تاریخ همهٔ مرورها (جز درس‌هایی که فاصلهٔ اختصاصی دارند) دوباره حساب می‌شود.</p>
       </fieldset>
 
       <fieldset>
         <legend>پیش‌فرض‌های درس جدید</legend>
-        <div class="form-grid">
-          <label>زمان هر جلسه (دقیقه) <input name="default_session_minutes" type="number" min="1"></label>
-          <label>سرعت: حداکثر جلسهٔ جدید در روز <input name="default_max_new" type="number" min="1"></label>
+        <div class="settings-rows">
+          <label>زمان هر جلسه <span class="with-unit"><input name="default_session_minutes" type="number" min="1" class="num"> دقیقه</span></label>
+          <label>سرعت <span class="with-unit"><input name="default_max_new" type="number" min="1" class="num"> جلسهٔ جدید در روز</span></label>
           <label>دسته <select name="default_category"></select></label>
         </div>
       </fieldset>
 
       <fieldset>
+        <legend>رنگ‌ها و نوع‌های کار</legend>
+        <div class="settings-rows">
+          <label class="check"><input type="color" name="color_read"> خواندن</label>
+          <label class="check"><input type="color" name="color_review"> مرور</label>
+          <label class="check"><input type="color" name="color_routine"> روتین</label>
+        </div>
+        <ul id="type-settings" class="type-settings"></ul>
+      </fieldset>
+
+      <fieldset>
         <legend>ظاهر</legend>
-        <div class="form-grid">
+        <div class="settings-rows">
           <label>حالت
             <select name="theme"><option value="light">روشن</option><option value="dark">تیره</option></select></label>
-          <label>اندازهٔ فونت <input name="font_size" type="number" min="10" max="32"></label>
-          <label class="span-2">فونت (Vazirmatn داخل خود برنامه است؛ بقیه فونت‌های نصب‌شده روی Mac‌اند)
+          <label>اندازهٔ فونت <span class="with-unit"><input name="font_size" type="number" min="10" max="32" class="num"> پیکسل</span></label>
+          <label>فونت
             <input name="font_family" list="font-list" autocomplete="off">
             <datalist id="font-list"></datalist></label>
         </div>
+        <div class="pop-row">
+          <button type="button" id="font-add">+ افزودن فایل فونت…</button>
+          <span class="muted small">ttf، otf، woff یا woff2. یک کپی داخل برنامه نگه داشته می‌شود.</span>
+        </div>
+        <ul id="custom-font-list" class="type-settings"></ul>
       </fieldset>
 
       <fieldset>
@@ -253,7 +288,8 @@
           <span>پوشهٔ backup</span><input name="backup_folder" dir="ltr">
           <button type="button" data-browse="backup_folder">Browse…</button>
         </div>
-        <label>تعداد backupهای نگه‌داشته‌شده <input name="backup_retention" type="number" min="1" max="365"></label>
+        <label>تعداد backupهای نگه‌داشته‌شده
+          <span class="with-unit"><input name="backup_retention" type="number" min="1" max="365" class="num"> نسخه</span></label>
       </fieldset>
 
       <div class="dialog-actions">
@@ -267,6 +303,7 @@
   <div id="popover" class="popover" hidden></div>
 
   <script src="{{ url_for('static', filename='jalali.js') }}"></script>
+  <script src="{{ url_for('static', filename='motion.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script src="{{ url_for('static', filename='calendar.js') }}"></script>
 </body>

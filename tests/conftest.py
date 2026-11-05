@@ -21,7 +21,7 @@ class LocalClient(FlaskClient):
     """مثل مرورگر روی همین Mac، درخواست‌ها را به آدرس 127.0.0.1:5000 می‌فرستد."""
 
     def open(self, *args, **kwargs):
-        kwargs.setdefault("base_url", "http://127.0.0.1:5000")
+        kwargs.setdefault("base_url", f"http://127.0.0.1:{app_module.PORT}")
         return super().open(*args, **kwargs)
 
 
@@ -41,6 +41,7 @@ def client(tmp_path):
     app_module.app.config["DB_PATH"] = db_path
     app_module._last_backup_day = None
     app_module._undo_stack.clear()
+    app_module._redo_stack.clear()
     app_module.app.test_client_class = LocalClient
     test_client = app_module.app.test_client()
     # مثل صفحهٔ خود برنامه: رمز CSRF همراه هر درخواست

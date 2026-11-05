@@ -207,7 +207,13 @@ function taskChip(task, iso, context, compact) {
     onchange: () => markDone(task, "done"),
   });
 
-  const chip = el("div", { class: classes.join(" "), "data-session": task.session_id, "data-kind": task.kind },
+  // رنگ نوع کار ساخت کاربر (برای خواندن و روتینِ آن نوع؛ مرور همیشه رنگ مرور است)
+  const custom = item ? typeOf(item) : null;
+  const style = custom && task.kind !== "review" ? `--c:${custom.color}` : null;
+  const chip = el("div", {
+    class: classes.join(" "), style, "data-session": task.session_id, "data-kind": task.kind,
+    "data-flip": taskKey(task),
+  },
     el("div", { class: "task-title" },
       quickTick,
       task.manual && el("span", { title: "دستی جابه‌جا شده" }, "📌 "),
@@ -231,7 +237,8 @@ function historyChip(entry, context) {
   let label = KIND_LABEL[kind] || kind;
   if (entry.result === "partial") label += " (بخشی)";
   if (entry.result === "needs_more") label += " · نیاز به مرور بیشتر";
-  return el("div", { class: `task done kind-${kind}`, title: "انجام شد. برای برگرداندن اشتباه، از دکمهٔ «برگرداندن» استفاده کنید." },
+  return el("div", { class: `task done kind-${kind}`, "data-flip": `h-${entry.id}`,
+    title: "انجام شد. برای برگرداندن اشتباه، از دکمهٔ «برگرداندن» استفاده کنید." },
     el("div", { class: "task-title" }, "✓ ", title),
     el("div", { class: "task-meta" },
       el("span", {}, label),
@@ -258,39 +265,37 @@ function markDone(task, result, minutes) {
 // کشیدن کار به روز دیگر، یا کلیک برای باز کردن منو
 // ---------------------------------------------------------------------------
 
-function enableTaskPointer(chip, task, iso, movable) {
-  let start = null;
-  let dragging = false;
-  let target = null;
+/** کلید هر کار برای انیمیشن: همان کار در روز دیگر همان کلید را دارد و «سُر» می‌خورد */
+function taskKey(task) {
+  return `t-${task.kind}-${task.session_id}-${task.review_round || 0}`;
+}
 
+/** کلیک = منوی کار. کشیدن = یک کپی از کار همراه ماوس حرکت می‌کند و در روز دیگر رها می‌شود. */
+function enableTaskPointer(chip, task, iso, movable) {
   chip.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.target.closest("input")) return;  // کلیک روی تیک، منو باز نمی‌کند
-    start = { x: e.clientX, y: e.clientY };
-    dragging = false;
-    chip.setPointerCapture(e.pointerId);
-  });
-  chip.addEventListener("pointermove", (e) => {
-    if (!start || !movable) return;
-    if (!dragging && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 6) return;
-    dragging = true;
-    chip.classList.add("dragging");
-    $$(".drop-target").forEach((n) => n.classList.remove("drop-target"));
-    const under = document.elementFromPoint(e.clientX, e.clientY);
-    const cell = under && under.closest(".cal-day");
-    target = cell && cell.dataset.date >= state.today && cell.dataset.date !== iso ? cell.dataset.date : null;
-    if (target) cell.classList.add("drop-target");
-  });
-  chip.addEventListener("pointerup", (e) => {
-    if (!start) return;
-    start = null;
-    chip.classList.remove("dragging");
-    $$(".drop-target").forEach((n) => n.classList.remove("drop-target"));
-    if (dragging) {
-      if (target) moveTask(task, target);
-    } else {
-      openTaskMenu(task, iso, chip);
+    e.preventDefault();
+    if (!movable) {
+      // کاری که جابه‌جا نمی‌شود: فقط کلیک
+      chip.addEventListener("pointerup", () => openTaskMenu(task, iso, chip), { once: true });
+      return;
     }
-    e.stopPropagation();
+    dragGhost(chip, e, {
+      targetSelector: ".cal-day",
+      canDrop: (cell) => cell.dataset.date >= state.today && cell.dataset.date !== iso,
+      onDrop: async (cell, ghostRect) => {
+        // کار از همان جایی که رها شد، به جای تازه‌اش در برنامه سُر می‌خورد
+        Motion.overrides.set(taskKey(task), ghostRect);
+        try {
+          await moveTask(task, cell.dataset.date);
+          return true;
+        } catch (error) {
+          Motion.overrides.clear();
+          return false;
+        }
+      },
+      onClick: () => openTaskMenu(task, iso, chip),
+    });
   });
 }
 

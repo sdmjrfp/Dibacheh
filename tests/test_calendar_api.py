@@ -122,7 +122,7 @@ def test_new_item_from_a_calendar_day(client):
 def test_undo_several_steps(client):
     add(client, "A")
     state = add(client, "B")
-    assert state["undo"] == {"count": 2, "label": "افزودن درس"}
+    assert (state["undo"]["count"], state["undo"]["label"]) == (2, "افزودن درس")
     b = item_named(state, "B")["id"]
     client.delete(f"/api/items/{b}")
     state = client.post("/api/undo", json={}).get_json()        # حذف B برگشت
@@ -149,3 +149,34 @@ def test_undo_keeps_only_last_20(client):
         add(client, f"درس {n}", count=1)
     state = client.get("/api/state").get_json()
     assert state["undo"]["count"] == 20
+
+
+def test_redo_goes_forward_again(client):
+    add(client, "A")
+    add(client, "B")
+    client.post("/api/undo", json={})
+    state = client.post("/api/undo", json={}).get_json()
+    assert [i["title"] for i in state["items"]] == []
+    assert state["undo"]["redo_count"] == 2
+    state = client.post("/api/redo", json={}).get_json()
+    assert state["redone"] == "افزودن درس"
+    assert [i["title"] for i in state["items"]] == ["A"]
+    state = client.post("/api/redo", json={}).get_json()
+    assert [i["title"] for i in state["items"]] == ["A", "B"]
+    assert state["undo"]["redo_count"] == 0
+    assert client.post("/api/redo", json={}).status_code == 400
+
+
+def test_new_change_clears_redo(client):
+    add(client, "A")
+    client.post("/api/undo", json={})
+    state = add(client, "C")
+    assert state["undo"]["redo_count"] == 0
+
+
+def test_failed_change_keeps_redo(client):
+    add(client, "A")
+    client.post("/api/undo", json={})
+    client.post("/api/items", json={"title": "", "session_count": 1, "session_minutes": 10})
+    state = client.get("/api/state").get_json()
+    assert state["undo"]["redo_count"] == 1

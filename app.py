@@ -37,7 +37,8 @@ import sources
 # 127.0.0.1 یعنی فقط خود همین Mac می‌تواند به برنامه وصل شود،
 # نه گوشی یا کامپیوتر دیگری در شبکه.
 HOST = "127.0.0.1"
-PORT = 5000
+# پورت را می‌شود برای امتحان عوض کرد: DIBACHEH_PORT=5001 .venv/bin/python app.py
+PORT = int(os.environ.get("DIBACHEH_PORT") or 5000)
 ALLOWED_HOSTS = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
 
 # توکن CSRF: هر بار که برنامه اجرا می‌شود یک رمز تصادفی تازه ساخته می‌شود.
@@ -126,6 +127,7 @@ def backup_once_a_day():
 
 UNDO_LIMIT = 20
 _undo_stack = deque(maxlen=UNDO_LIMIT)  # هر عضو: (متن تغییر، کپی دیتابیس)
+_redo_stack = []  # تغییرهای برگردانده‌شده؛ با هر تغییر تازه خالی می‌شود
 
 # نام هر مسیر تغییردهنده و متنی که روی دکمهٔ برگرداندن نشان داده می‌شود
 UNDO_LABELS = {
@@ -142,6 +144,12 @@ UNDO_LABELS = {
     "api_add_category": "افزودن دسته",
     "api_rename_category": "تغییر نام دسته",
     "api_delete_category": "حذف دسته",
+    "api_reorder_categories": "جابه‌جایی دسته‌ها",
+    "api_add_type": "ساختن نوع کار",
+    "api_update_type": "ویرایش نوع کار",
+    "api_delete_type": "حذف نوع کار",
+    "api_add_font": "افزودن فونت",
+    "api_remove_font": "حذف فونت",
     "api_settings": "تغییر تنظیمات",
 }
 
@@ -156,6 +164,9 @@ def remember_for_undo():
         _undo_stack.popleft()[1].close()  # قدیمی‌ترین کپی کنار می‌رود
     _undo_stack.append((UNDO_LABELS[request.endpoint], snapshot))
     g.undo_pushed = True
+    # تغییر تازه یعنی تاریخچهٔ «بازگرداندن» دیگر معنی ندارد
+    g.cleared_redo = list(_redo_stack)
+    _redo_stack.clear()
 
 
 @app.after_request
@@ -163,18 +174,44 @@ def forget_failed_change(response):
     # اگر تغییر به خطا خورد، چیزی عوض نشده و کپی‌اش لازم نیست
     if g.get("undo_pushed") and response.status_code >= 400 and _undo_stack:
         _undo_stack.pop()[1].close()
+        _redo_stack.extend(g.get("cleared_redo", []))  # تغییر انجام نشد؛ «بازگرداندن» سر جایش برمی‌گردد
+    else:
+        for _, old in g.get("cleared_redo", []):
+            old.close()
     return response
+
+
+def _snapshot_now():
+    snapshot = sqlite3.connect(":memory:")
+    get_db().backup(snapshot)
+    return snapshot
 
 
 @app.route("/api/undo", methods=["POST"])
 def api_undo():
+    """یک مرحله به عقب. وضعیت فعلی در فهرست «بازگرداندن» می‌رود تا بشود دوباره جلو رفت."""
     if not _undo_stack:
         raise UserError("تغییری برای برگرداندن نیست.")
     label, snapshot = _undo_stack.pop()
+    _redo_stack.append((label, _snapshot_now()))
     snapshot.backup(get_db())
     snapshot.close()
     state = build_state()
     state["undone"] = label
+    return jsonify(state)
+
+
+@app.route("/api/redo", methods=["POST"])
+def api_redo():
+    """تغییری را که برگردانده شده بود دوباره انجام می‌دهد."""
+    if not _redo_stack:
+        raise UserError("تغییری برای بازگرداندن نیست.")
+    label, snapshot = _redo_stack.pop()
+    _undo_stack.append((label, _snapshot_now()))
+    snapshot.backup(get_db())
+    snapshot.close()
+    state = build_state()
+    state["redone"] = label
     return jsonify(state)
 
 
@@ -293,12 +330,14 @@ def state_data():
         "today": now,
         "items": items,
         "categories": database.list_categories(conn),
+        "types": database.list_types(conn),
         "settings": settings,
         "plan": plan,
         "workload": workload(plan, now),
         "history": history(conn, now),
         "day_overrides": inputs["day_overrides"],
-        "undo": {"count": len(_undo_stack), "label": _undo_stack[-1][0] if _undo_stack else None},
+        "undo": {"count": len(_undo_stack), "label": _undo_stack[-1][0] if _undo_stack else None,
+                 "redo_count": len(_redo_stack), "redo_label": _redo_stack[-1][0] if _redo_stack else None},
     }
 
 
@@ -512,6 +551,13 @@ def api_add_item():
     if "title" not in fields:
         raise UserError("عنوان درس خالی است.")
     title = fields.pop("title")
+    # نوع کار ساخت کاربر: رفتارش (درس یا روتین) از خود نوع می‌آید
+    if data.get("custom_type_id"):
+        custom = database.get_type(conn, data["custom_type_id"])
+        if custom is None:
+            raise UserError("نوع کار پیدا نشد.")
+        fields["custom_type_id"] = custom["id"]
+        fields["item_type"] = custom["behavior"]
     fields.setdefault("category_id", defaults.get("category_id"))
     fields.setdefault("max_new_sessions_per_day", defaults.get("max_new_sessions_per_day", 1))
     # first_date: وقتی درس از روی یک روز تقویم اضافه می‌شود
@@ -876,6 +922,108 @@ def api_settings():
 def api_fonts():
     """فونت‌های نصب‌شده روی Mac، برای انتخاب در تنظیمات."""
     return jsonify(sources.installed_fonts())
+
+
+FONT_SUFFIXES = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2"}
+
+
+@app.route("/api/fonts/add", methods=["POST"])
+def api_add_font():
+    """یک فایل فونت را با Browse انتخاب می‌کند و کپی‌اش را در data/fonts می‌گذارد."""
+    conn = get_db()
+    path = sources.browse("file", "فایل فونت را انتخاب کنید (ttf، otf، woff یا woff2)")
+    if path is None:
+        return jsonify({"cancelled": True})
+    source = Path(path)
+    if source.suffix.lower() not in FONT_SUFFIXES:
+        raise UserError("این فایل فونت نیست. فقط ttf، otf، woff و woff2.")
+    try:
+        family = sources.font_family_name(source)
+        family = database.clean_setting("font_family", family)
+    except Exception:
+        raise UserError("نام این فونت خوانده نشد.")
+    database.FONTS_DIR.mkdir(parents=True, exist_ok=True)
+    target = database.FONTS_DIR / source.name
+    target.write_bytes(source.read_bytes())
+    fonts = [f for f in database.get_settings(conn)["custom_fonts"] if f["family"] != family]
+    fonts.append({"family": family, "file": target.name})
+    database.set_setting(conn, "custom_fonts", fonts)
+    state = build_state()
+    state["added_font"] = family
+    return jsonify(state)
+
+
+@app.route("/api/fonts/remove", methods=["POST"])
+def api_remove_font():
+    conn = get_db()
+    family = _body().get("family")
+    settings = database.get_settings(conn)
+    fonts = [f for f in settings["custom_fonts"] if f["family"] != family]
+    database.set_setting(conn, "custom_fonts", fonts)
+    if settings["font_family"] == family:
+        database.set_setting(conn, "font_family", "Vazirmatn")
+    return state_response()
+
+
+@app.route("/fonts/<name>")
+def serve_font(name):
+    """فایل فونت‌های اضافه‌شده، فقط از پوشهٔ data/fonts."""
+    path = database.FONTS_DIR / Path(name).name
+    if path.suffix.lower() not in FONT_SUFFIXES or not path.is_file():
+        abort(404)
+    return send_file(path, mimetype=FONT_SUFFIXES[path.suffix.lower()])
+
+
+# ---------------------------------------------------------------------------
+# نوع‌های کار ساخت کاربر
+# ---------------------------------------------------------------------------
+
+def _type_fields(data):
+    name = str(data.get("name", "")).strip()
+    if not name or len(name) > 40:
+        raise UserError("نام نوع کار باید بین 1 تا 40 حرف باشد.")
+    try:
+        color = database._color(data.get("color", "#8b5cf6"))
+    except ValueError as error:
+        raise UserError(str(error))
+    return name, color
+
+
+@app.route("/api/types", methods=["POST"])
+def api_add_type():
+    data = _body()
+    name, color = _type_fields(data)
+    behavior = data.get("behavior", "study")
+    if behavior not in ("study", "routine"):
+        raise UserError("رفتار نوع کار نامعتبر است.")
+    database.add_type(get_db(), name, behavior, color)
+    return state_response()
+
+
+@app.route("/api/types/<int:type_id>", methods=["PATCH"])
+def api_update_type(type_id):
+    if database.get_type(get_db(), type_id) is None:
+        abort(404)
+    name, color = _type_fields(_body())
+    database.update_type(get_db(), type_id, name, color)
+    return state_response()
+
+
+@app.route("/api/types/<int:type_id>", methods=["DELETE"])
+def api_delete_type(type_id):
+    database.delete_type(get_db(), type_id)
+    return state_response()
+
+
+@app.route("/api/categories/reorder", methods=["POST"])
+def api_reorder_categories():
+    conn = get_db()
+    ids = _body().get("ids")
+    existing = {c["id"] for c in database.list_categories(conn)}
+    if not isinstance(ids, list) or set(ids) != existing:
+        raise UserError("ترتیب دسته‌ها نامعتبر است.")
+    database.reorder_categories(conn, ids)
+    return state_response()
 
 
 if __name__ == "__main__":
