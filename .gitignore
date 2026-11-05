@@ -11,3 +11,4 @@ data/
 .env
 .env.*
 node_modules/
+.claude/launch.json

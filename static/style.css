@@ -1,26 +1,215 @@
+/* فونت Vazirmatn از داخل خود پروژه بار می‌شود، نه از اینترنت.
+   یک فایل «variable» همهٔ وزن‌ها (نازک تا ضخیم) را دارد. */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("vendor/vazirmatn/Vazirmatn-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 /* رنگ‌ها و اندازه‌ها یک‌جا تعریف می‌شوند تا تغییرشان راحت باشد.
-   حالت تیره و انتخاب فونت در مرحلهٔ تنظیمات اضافه می‌شود. */
+   حالت تیره با data-theme="dark" روی <html> فعال می‌شود (در مرحلهٔ تنظیمات). */
 :root {
-  --bg: #f7f7f5;
+  --bg: #f6f6f3;
+  --panel: #ffffff;
   --text: #1f2328;
   --muted: #6b7280;
+  --border: #e3e3de;
+  --accent: #2f6f5e;
+  --accent-soft: #e3efe9;
+  --danger: #b42318;
+  --warn-bg: #fff4e5;
+  --read: #2f6f5e;
+  --review: #3b5ba9;
+  --routine: #8a5a14;
+  --radius: 8px;
+  --font: "Vazirmatn", system-ui, -apple-system, Tahoma, sans-serif;
+  --font-size: 16px;
 }
+
+:root[data-theme="dark"] {
+  --bg: #16181b;
+  --panel: #1e2125;
+  --text: #e6e6e3;
+  --muted: #9aa0a8;
+  --border: #31353b;
+  --accent: #6fbfa5;
+  --accent-soft: #23362f;
+  --danger: #f0786c;
+  --warn-bg: #3a2c17;
+  --read: #6fbfa5;
+  --review: #8ea8ec;
+  --routine: #d6a65c;
+}
+
+* { box-sizing: border-box; }
+
+/* عنصر پنهان همیشه پنهان بماند، حتی اگر CSS دیگری display داده باشد */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  /* فعلاً فونت سیستم. Vazirmatn بعداً داخل پروژه قرار می‌گیرد. */
-  font-family: system-ui, -apple-system, Tahoma, sans-serif;
-  line-height: 1.8;
+  font-family: var(--font);
+  font-size: var(--font-size);
+  line-height: 1.7;
 }
 
-main {
-  max-width: 720px;
-  margin: 64px auto;
-  padding: 0 16px;
+button, input, select { font: inherit; color: inherit; }
+
+button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.ghost { border-color: transparent; background: transparent; }
+button.danger { color: var(--danger); }
+button.icon { padding: 2px 8px; }
+
+input, select {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
 }
 
-.note {
-  color: var(--muted);
+.muted { color: var(--muted); }
+.small { font-size: 0.85em; }
+.error { color: var(--danger); }
+.spacer { flex: 1; }
+
+/* ---------- نوار بالا ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
 }
+.topbar h1 { font-size: 1.3em; margin: 0; }
+#vault-path { direction: ltr; unicode-bidi: isolate; }
+
+.message {
+  margin: 8px 24px 0;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+}
+
+/* ---------- چیدمان اصلی: منابع کنار تقویم، برای مانیتور 2K ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(520px, 680px) 1fr;
+  gap: 16px;
+  padding: 16px 24px;
+  height: calc(100vh - 56px);
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  overflow: auto;
+}
+.panel-head { display: flex; align-items: center; gap: 8px; }
+.panel-head h2 { margin: 0; font-size: 1.1em; }
+.calendar-placeholder { display: grid; place-items: center; height: 80%; }
+
+/* پنجرهٔ باریک (مثلاً لپ‌تاپ یا نیمهٔ صفحه): ستون‌ها زیر هم */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; height: auto; }
+  .topbar { flex-wrap: wrap; }
+}
+
+/* ---------- فیلترها ---------- */
+.filters { margin: 12px 0 4px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.tabs button { border-radius: 999px; padding: 2px 12px; }
+.tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.filter-row { display: flex; gap: 8px; margin-top: 8px; }
+.hint { font-size: 0.85em; margin: 4px 0; }
+
+/* ---------- فهرست درس‌ها ---------- */
+.item-list { list-style: none; margin: 0; padding: 0; }
+.item {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  background: var(--panel);
+}
+.item.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.item.inactive { opacity: 0.55; }
+.item.dragging { opacity: 0.4; }
+.item.drop-before { border-top: 3px solid var(--accent); }
+.item .handle { cursor: grab; touch-action: none; color: var(--muted); user-select: none; padding: 0 2px; }
+.item .title { font-weight: 600; cursor: pointer; }
+.item .meta { grid-column: 3 / 5; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85em; color: var(--muted); }
+.item .actions { display: flex; gap: 4px; }
+.chip {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 0.8em;
+}
+.chip.routine { background: var(--warn-bg); color: var(--routine); }
+.progress {
+  grid-column: 3 / 5;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.progress span { display: block; height: 100%; background: var(--accent); }
+.item .problem { grid-column: 3 / 5; color: var(--danger); font-size: 0.85em; }
+
+/* ---------- پنجره‌ها ---------- */
+.dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 20px 24px;
+  min-width: 420px;
+}
+.dialog.wide { width: min(980px, 92vw); }
+.dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+.dialog h2 { margin-top: 0; font-size: 1.2em; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.form-grid label { display: flex; flex-direction: column; gap: 2px; }
+.form-grid label.check { flex-direction: row; align-items: center; gap: 6px; }
+.span-2 { grid-column: span 2; }
+fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; }
+fieldset.split { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: end; }
+fieldset.split p { width: 100%; margin: 0; }
+.source-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-bottom: 6px; }
+.source-row label { display: flex; flex-direction: column; }
+.path { font-size: 0.85em; color: var(--muted); word-break: break-all; }
+.weekdays { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.weekdays label { flex-direction: row; gap: 4px; }
+.jalali-input { display: inline-flex; gap: 4px; }
+.jalali-input select, .jalali-input input { padding: 2px 4px; }
+.jalali-input input { width: 5em; }
+.dialog-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+table.sessions { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+table.sessions th, table.sessions td { border-bottom: 1px solid var(--border); padding: 4px 6px; text-align: start; }
+table.sessions input { width: 100%; }
+table.sessions input.num { width: 5em; }
+table.sessions .range { display: flex; gap: 4px; }
+table.sessions tr.done { color: var(--muted); }
+
+.category-list { list-style: none; padding: 0; }
+.category-list li { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.category-list input { flex: 1; }

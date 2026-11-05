@@ -89,6 +89,18 @@ MIGRATIONS = [
         value  TEXT NOT NULL               -- JSON
     );
     """,
+    # نسخهٔ 2: مشخص کردن بخش هر جلسه
+    #   section_unit: page (بازهٔ صفحهٔ PDF)، time (بازهٔ زمانی ویدیو)،
+    #                 heading (عنوان‌های Markdown)، text (متن آزاد)
+    #   range_start / range_end: کل بازهٔ درس، مثلاً صفحهٔ 1 تا 150
+    #   section_start / section_end: بازهٔ هر جلسه
+    """
+    ALTER TABLE items ADD COLUMN section_unit TEXT NOT NULL DEFAULT 'text';
+    ALTER TABLE items ADD COLUMN range_start TEXT;
+    ALTER TABLE items ADD COLUMN range_end TEXT;
+    ALTER TABLE sessions ADD COLUMN section_start TEXT;
+    ALTER TABLE sessions ADD COLUMN section_end TEXT;
+    """,
 ]
 
 # مقدار پیش‌فرض تنظیمات. فقط تنظیم‌هایی که کاربر عوض کند در جدول settings ذخیره می‌شوند.
@@ -247,9 +259,10 @@ ITEM_FIELDS = {
     "title", "category_id", "item_type", "source_type", "source_path_or_url",
     "is_active", "max_new_sessions_per_day", "review_ratio", "review_intervals",
     "start_date", "routine_weekdays", "target_date",
+    "section_unit", "range_start", "range_end",
 }
 SESSION_FIELDS = {
-    "section_label", "minutes", "minutes_done", "status", "leitner_box", "read_at",
+    "section_label", "section_start", "section_end", "minutes", "minutes_done", "status", "leitner_box", "read_at",
     "last_reviewed_on", "next_review_on", "review_minutes_override",
     "read_manual_date", "review_manual_date",
 }
@@ -319,8 +332,46 @@ def list_sessions(conn, item_id=None):
     return [_to_python(r) for r in rows]
 
 
+def get_session(conn, session_id):
+    row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
+    return _to_python(row) if row else None
+
+
 def update_session(conn, session_id, **fields):
     _update(conn, "sessions", session_id, fields, SESSION_FIELDS)
+
+
+def replace_unread_sessions(conn, item_id, new_sessions):
+    """جلسه‌های خوانده‌نشدهٔ درس را با فهرست تازه عوض می‌کند (تغییر تقسیم‌بندی).
+
+    جلسه‌های شروع‌شده یا خوانده‌شده و سابقه‌شان دست نمی‌خورند.
+    هر جلسهٔ تازه یک dict با sequence، minutes و در صورت نیاز بخش است.
+    """
+    conn.execute("DELETE FROM sessions WHERE item_id = ? AND status = 'unread'", (item_id,))
+    for s in new_sessions:
+        conn.execute(
+            "INSERT INTO sessions (item_id, sequence, minutes, section_label, section_start, section_end) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (item_id, s["sequence"], s["minutes"], s.get("section_label") or "",
+             s.get("section_start"), s.get("section_end")),
+        )
+    conn.commit()
+
+
+def reset_item(conn, item_id):
+    """درس را به لیست خوانده‌نشده برمی‌گرداند و به انتهای صف می‌برد.
+
+    زمان و بخش جلسه‌ها می‌ماند و سابقهٔ قبلی در task_log حفظ می‌شود.
+    """
+    conn.execute(
+        "UPDATE sessions SET status = 'unread', leitner_box = 0, minutes_done = 0, read_at = NULL, "
+        "last_reviewed_on = NULL, next_review_on = NULL, read_manual_date = NULL, "
+        "review_manual_date = NULL WHERE item_id = ?",
+        (item_id,),
+    )
+    queue = conn.execute("SELECT COALESCE(MAX(queue_position), 0) + 1 FROM items").fetchone()[0]
+    conn.execute("UPDATE items SET queue_position = ? WHERE id = ?", (queue, item_id))
+    conn.commit()
 
 
 # ---------------------------------------------------------------------------

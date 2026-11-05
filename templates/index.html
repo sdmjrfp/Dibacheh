@@ -3,14 +3,165 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- رمز CSRF: JavaScript آن را همراه هر تغییر می‌فرستد -->
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <title>دیباچه</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <main>
+  <header class="topbar">
     <h1>دیباچه</h1>
-    <p>سیستم آفلاین مدیریت یادگیری</p>
-    <p class="note">مرحلهٔ ۱: راه‌اندازی پروژه انجام شد. بخش‌های داشبورد در مرحله‌های بعد ساخته می‌شوند.</p>
+    <span id="today" class="muted"></span>
+    <span class="spacer"></span>
+    <button id="vault-button" class="ghost" title="مسیر والت Obsidian">والت: <span id="vault-path">ثبت نشده</span></button>
+  </header>
+
+  <div id="message" class="message" hidden></div>
+
+  <main class="layout">
+    <!-- ستون منابع درسی -->
+    <section class="panel sources">
+      <div class="panel-head">
+        <h2>منابع درسی</h2>
+        <span class="spacer"></span>
+        <button id="add-study" class="primary">+ درس</button>
+        <button id="add-routine">+ کار روتین</button>
+      </div>
+
+      <div class="filters">
+        <div id="status-tabs" class="tabs" role="tablist"></div>
+        <div class="filter-row">
+          <select id="category-filter" aria-label="فیلتر دسته"></select>
+          <button id="manage-categories" class="ghost">مدیریت دسته‌ها</button>
+        </div>
+      </div>
+
+      <p class="hint muted">ترتیب صف = اولویت. برای جابه‌جایی، درس را از دستگیرهٔ ⋮⋮ بکشید.</p>
+      <ol id="item-list" class="item-list"></ol>
+      <p id="pending" class="muted"></p>
+    </section>
+
+    <!-- ستون تقویم (مرحلهٔ ۵) -->
+    <section class="panel calendar">
+      <div class="panel-head"><h2>برنامه</h2></div>
+      <div id="calendar" class="calendar-placeholder">
+        <p class="muted">تقویم هفتگی و ماهانه در مرحلهٔ ۵ ساخته می‌شود.</p>
+      </div>
+    </section>
   </main>
+
+  <!-- پنجرهٔ افزودن و ویرایش درس -->
+  <dialog id="item-dialog" class="dialog wide">
+    <form id="item-form" method="dialog">
+      <h2 id="item-dialog-title">درس جدید</h2>
+      <div class="form-grid">
+        <label class="span-2">عنوان
+          <input name="title" required autocomplete="off">
+        </label>
+        <label>دسته
+          <select name="category_id"></select>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="is_active" checked> فعال (روی تقویم)
+        </label>
+
+        <fieldset class="span-2 split" data-when="create">
+          <legend>تقسیم‌بندی</legend>
+          <label>تعداد جلسه <input name="session_count" type="number" min="1" value="1"></label>
+          <label>زمان هر جلسه (دقیقه) <input name="session_minutes" type="number" min="1" value="60"></label>
+        </fieldset>
+
+        <fieldset class="span-2 split" data-when="edit">
+          <legend>تغییر تقسیم‌بندی جلسه‌های خوانده‌نشده</legend>
+          <label>تعداد جلسهٔ باقی‌مانده <input name="resplit_count" type="number" min="1"></label>
+          <label>زمان هر جلسه (خالی = پخش زمان فعلی) <input name="resplit_minutes" type="number" min="1"></label>
+          <button type="button" id="resplit-button">اعمال تقسیم‌بندی</button>
+          <p class="muted small">جلسه‌های شروع‌شده و خوانده‌شده دست نمی‌خورند.</p>
+        </fieldset>
+
+        <label data-only="study">سرعت: حداکثر جلسهٔ جدید در روز
+          <input name="max_new_sessions_per_day" type="number" min="1" value="1">
+        </label>
+        <label data-only="study">نسبت مرور (خالی = تنظیم کلی)
+          <input name="review_ratio" placeholder="1/3" autocomplete="off">
+        </label>
+        <label data-only="study" class="span-2">فاصله‌های لایتنر اختصاصی، به روز (خالی = تنظیم کلی)
+          <input name="review_intervals" placeholder="1، 3، 7، 30" autocomplete="off">
+        </label>
+
+        <fieldset class="span-2" data-only="routine">
+          <legend>زمان‌بندی کار روتین</legend>
+          <label>تاریخ شروع <span class="jalali-input" data-name="start_date"></span></label>
+          <div class="weekdays" id="routine-weekdays"></div>
+          <p class="muted small">هیچ روزی انتخاب نشود = همهٔ روزها. روز انجام‌نشده به بعد منتقل نمی‌شود.</p>
+        </fieldset>
+
+        <label data-only="study">تاریخ هدف (اختیاری)
+          <span class="jalali-input" data-name="target_date"></span>
+        </label>
+
+        <fieldset class="span-2">
+          <legend>منبع</legend>
+          <div class="source-row">
+            <select name="source_type">
+              <option value="none">بدون منبع</option>
+              <option value="file">فایل (Obsidian یا هر پوشه)</option>
+              <option value="url">لینک (یوتیوب یا وب)</option>
+            </select>
+            <input name="source_url" placeholder="https://..." dir="ltr" autocomplete="off">
+            <button type="button" id="browse-button">Browse…</button>
+            <span id="source-path" class="path" dir="ltr"></span>
+          </div>
+          <p id="source-problem" class="error small" hidden></p>
+          <div class="source-row">
+            <label>نوع بخش هر جلسه
+              <select name="section_unit">
+                <option value="text">متن آزاد</option>
+                <option value="page">بازهٔ صفحه (PDF)</option>
+                <option value="time">بازهٔ زمانی (ویدیو)</option>
+                <option value="heading">عنوان‌های Markdown</option>
+              </select>
+            </label>
+            <label data-unit="page time">کل بازه از <input name="range_start" size="8" dir="ltr"></label>
+            <label data-unit="page time">تا <input name="range_end" size="8" dir="ltr"></label>
+          </div>
+          <p class="muted small" data-unit="page time">کل بازه خودکار بین جلسه‌ها تقسیم می‌شود و در جدول پایین قابل ویرایش است. زمان مثل 1:05:00.</p>
+        </fieldset>
+      </div>
+
+      <div id="sessions-box" data-when="edit">
+        <h3>جلسه‌ها</h3>
+        <ul id="range-problems" class="error small"></ul>
+        <table class="sessions">
+          <thead><tr><th>#</th><th>وضعیت</th><th>بخش</th><th>زمان (دقیقه)</th><th>زمان مرور</th></tr></thead>
+          <tbody id="sessions-body"></tbody>
+        </table>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="submit" class="primary" id="save-item">ذخیره</button>
+        <button type="button" id="close-item">بستن</button>
+        <span class="spacer"></span>
+        <button type="button" id="reset-item" data-when="edit">برگرداندن به خوانده‌نشده</button>
+        <button type="button" id="delete-item" class="danger" data-when="edit">حذف درس</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- پنجرهٔ مدیریت دسته‌ها -->
+  <dialog id="category-dialog" class="dialog">
+    <h2>دسته‌ها</h2>
+    <ul id="category-list" class="category-list"></ul>
+    <form id="category-form" class="source-row">
+      <input name="name" placeholder="نام دستهٔ جدید" required autocomplete="off">
+      <button type="submit" class="primary">افزودن</button>
+    </form>
+    <div class="dialog-actions">
+      <button type="button" id="close-categories">بستن</button>
+    </div>
+  </dialog>
+
+  <script src="{{ url_for('static', filename='jalali.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
