@@ -114,7 +114,7 @@ DEFAULT_SETTINGS = {
     "day_start_hour": 4,
     "new_item_defaults": {"session_minutes": 60, "max_new_sessions_per_day": 1, "category_id": None},
     "review_cap_percent": None,  # None = خاموش
-    "export_folder": "",
+    "export_folder": "~/Documents/Dibacheh Exports",
     "theme": "light",
     "font_family": "Vazirmatn",
     "font_size": 16,

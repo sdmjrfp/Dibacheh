@@ -20,14 +20,17 @@ import hmac
 import os
 import secrets
 import sqlite3
+import subprocess
 from collections import deque
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
-from flask import Flask, abort, g, jsonify, render_template, request
+from flask import Flask, abort, g, jsonify, render_template, request, send_file
 
 import database
 import leitner
 import scheduler
+import exporter
 import sources
 
 # آدرس و پورت سرور.
@@ -256,7 +259,8 @@ def item_progress(item, sessions, settings):
     }
 
 
-def build_state():
+def state_data():
+    """وضعیت کامل با تاریخ‌های پایتونی (برای خروجی HTML). build_state همین را به JSON می‌دهد."""
     conn = get_db()
     inputs = database.load_plan_inputs(conn)
     settings = inputs["settings"]
@@ -285,7 +289,7 @@ def build_state():
             "range_problems": sources.check_ranges(item, sess),
         })
         items[-1]["target"] = target_status(items[-1])
-    return _json_ready({
+    return {
         "today": now,
         "items": items,
         "categories": database.list_categories(conn),
@@ -295,7 +299,11 @@ def build_state():
         "history": history(conn, now),
         "day_overrides": inputs["day_overrides"],
         "undo": {"count": len(_undo_stack), "label": _undo_stack[-1][0] if _undo_stack else None},
-    })
+    }
+
+
+def build_state():
+    return _json_ready(state_data())
 
 
 def done_today(conn, now):
@@ -375,7 +383,7 @@ def history(conn, now, days=120):
         "WHERE task_log.date >= ? ORDER BY task_log.date, task_log.id",
         (since,),
     )
-    return [dict(r) for r in rows]
+    return [database._to_python(r) for r in rows]
 
 
 def state_response():
@@ -720,6 +728,59 @@ def _save_session(conn, session):
     """فیلدهای قابل ذخیرهٔ یک جلسهٔ تغییرکرده را در دیتابیس می‌نویسد."""
     fields = {k: session[k] for k in database.SESSION_FIELDS if k in session}
     database.update_session(conn, session["id"], **fields)
+
+
+# ---------------------------------------------------------------------------
+# خروجی HTML و اشتراک‌گذاری
+# ---------------------------------------------------------------------------
+
+def export_folder():
+    return Path(database.get_settings(get_db())["export_folder"] or "~/Documents/Dibacheh Exports").expanduser()
+
+
+def _export_file(name):
+    """فقط فایلی که خود برنامه در پوشهٔ خروجی ساخته؛ نه هر آدرس دلخواه."""
+    if not isinstance(name, str) or "/" in name or "\\" in name or name.startswith(".") or not name.endswith(".html"):
+        raise UserError("نام فایل نامعتبر است.")
+    path = export_folder() / name
+    if not path.is_file():
+        raise UserError("فایل خروجی پیدا نشد.")
+    return path
+
+
+@app.route("/api/export", methods=["POST"])
+def api_export():
+    """خروجی روز، هفته یا ماه را می‌سازد و در پوشهٔ خروجی ذخیره می‌کند."""
+    data = _body()
+    scope = data.get("scope", "day")
+    if scope not in ("day", "week", "month"):
+        raise UserError("نوع خروجی نامعتبر است.")
+    day = _parse_date(data.get("date")) or today()
+    # خروجی روزانه به‌طور پیش‌فرض مطالب را هم دارد؛ هفتگی و ماهانه فقط فهرست کارها
+    with_content = bool(data.get("with_content", scope == "day"))
+    state = state_data()
+    path = exporter.export(state, scope, day, with_content,
+                           state["settings"]["vault_path"], export_folder())
+    return jsonify({"name": path.name, "path": str(path), "size": path.stat().st_size})
+
+
+@app.route("/api/export/file/<path:name>")
+def api_export_file(name):
+    """فایل خروجی را به مرورگر می‌دهد (برای پنجرهٔ Share)."""
+    return send_file(_export_file(name), mimetype="text/html", as_attachment=True, download_name=name)
+
+
+@app.route("/api/export/reveal", methods=["POST"])
+def api_export_reveal():
+    """فایل را در Finder انتخاب‌شده نشان می‌دهد تا بشود آن را به تلگرام یا هر برنامه‌ای کشید."""
+    subprocess.run(["open", "-R", str(_export_file(_body().get("name")))], check=False)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/export/open", methods=["POST"])
+def api_export_open():
+    subprocess.run(["open", str(_export_file(_body().get("name")))], check=False)
+    return jsonify({"ok": True})
 
 
 @app.route("/api/days/<day>", methods=["PUT"])

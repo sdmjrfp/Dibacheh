@@ -64,3 +64,30 @@ def test_every_day_for_ten_years_round_trips():
       return bad;
     })()"""
     assert run_js(expr) == []
+
+
+def test_python_jalali_matches_browser_for_ten_years():
+    """jalali.py (برای خروجی) و jalali.js (برای صفحه) باید برای همهٔ روزها یکی باشند."""
+    from datetime import date, timedelta
+
+    import jalali
+    js = run_js("""(() => {
+      let iso = "2020-01-01", out = [];
+      for (let i = 0; i < 3653; i++) {
+        const j = Jalali.toJalali(iso); out.push([j.y, j.m, j.d]);
+        iso = Jalali.addDays(iso, 1);
+      }
+      return out;
+    })()""")
+    py = [list(jalali.to_jalali(date(2020, 1, 1) + timedelta(days=i))) for i in range(3653)]
+    assert py == js
+
+
+def test_python_jalali_helpers():
+    from datetime import date
+
+    import jalali
+    assert jalali.format_date(date(2026, 11, 5), weekday=True) == "پنجشنبه ۱۴ آبان ۱۴۰۵"
+    assert jalali.iso_name(date(2025, 3, 20)) == "1403-12-30"
+    assert jalali.month_bounds(date(2026, 11, 5)) == (date(2026, 10, 23), date(2026, 11, 21))
+    assert jalali.week_start(date(2026, 11, 5)) == date(2026, 10, 31)

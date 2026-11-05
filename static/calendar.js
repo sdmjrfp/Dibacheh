@@ -428,10 +428,89 @@ function openDayMenu(iso, day, anchor) {
         + ` · ${fa(t.minutes)} دقیقه · الان ${Jalali.formatShort(date)}`);
     })));
   }
+  content.push(el("button", { onclick: () => openExportMenu(anchor, "day", iso) }, "⇪ خروجی این روز"));
   content.push(el("div", { class: "pop-row" },
     el("button", { onclick: () => { closePopover(); openItemDialog(null, "study", iso); } }, "+ درس جدید از این روز"),
     el("button", { onclick: () => { closePopover(); openItemDialog(null, "routine", iso); } }, "+ کار روتین از این روز")));
   openPopover(anchor, ...content);
+}
+
+// ---------------------------------------------------------------------------
+// خروجی HTML و اشتراک‌گذاری
+// ---------------------------------------------------------------------------
+
+function openExportMenu(anchor, scope = "day", date = null) {
+  const choice = { scope, date: date || Jalali.addDays(state.today, 1) };  // پیش‌فرض: فردا
+  const picker = el("span", { class: "jalali-input" });
+  buildJalaliInput(picker, choice.date);
+  const withContent = el("input", { type: "checkbox", checked: scope === "day" });
+  const scopes = [["day", "روز"], ["week", "هفته"], ["month", "ماه"]];
+  const scopeRow = el("div", { class: "tabs" }, scopes.map(([key, label]) =>
+    el("button", {
+      "aria-selected": String(choice.scope === key),
+      onclick: (e) => {
+        choice.scope = key;
+        withContent.checked = key === "day";
+        $$("button", scopeRow).forEach((b) => b.setAttribute("aria-selected", "false"));
+        e.currentTarget.setAttribute("aria-selected", "true");
+      },
+    }, label)));
+  const quick = (days) => el("button", { onclick: () => buildJalaliInput(picker, Jalali.addDays(state.today, days)) },
+    ["امروز", "فردا", "پس‌فردا"][days]);
+
+  openPopover(anchor,
+    el("div", { class: "pop-title" }, "خروجی برای خواندن روی گوشی"),
+    scopeRow,
+    el("div", { class: "pop-row" }, quick(0), quick(1), quick(2)),
+    el("div", { class: "pop-row" }, "روز:", picker),
+    el("p", { class: "muted small" }, "برای هفته و ماه، هفته یا ماهی که این روز در آن است."),
+    el("label", { class: "pop-row" }, withContent, "همراه با مطالب (نوت، صفحه‌های PDF)"),
+    el("p", { class: "muted small" }, "خروجی هفتگی و ماهانهٔ همراه با مطالب ممکن است حجیم شود."),
+    el("button", {
+      class: "primary",
+      onclick: async (e) => {
+        let day;
+        try { day = readJalaliInput(picker) || state.today; } catch (error) { showMessage(error.message); return; }
+        e.currentTarget.disabled = true;
+        e.currentTarget.textContent = "در حال ساختن…";
+        try {
+          const result = await api("POST", "/api/export", { scope: choice.scope, date: day, with_content: withContent.checked });
+          showExportResult(anchor, result);
+        } catch (error) {
+          closePopover();
+        }
+      },
+    }, "ساختن خروجی"));
+}
+
+async function showExportResult(anchor, result) {
+  // فایل از قبل گرفته می‌شود تا کلیک روی «اشتراک‌گذاری» فوراً پنجرهٔ Share را باز کند
+  let file = null;
+  try {
+    const response = await fetch(`/api/export/file/${encodeURIComponent(result.name)}`);
+    file = new File([await response.blob()], result.name, { type: "text/html" });
+  } catch (error) { /* اشتراک‌گذاری مستقیم ممکن نیست؛ Finder می‌ماند */ }
+  const canShare = file && navigator.canShare && navigator.canShare({ files: [file] });
+  const reveal = () => api("POST", "/api/export/reveal", { name: result.name });
+
+  openPopover(anchor,
+    el("div", { class: "pop-title" }, "✓ خروجی ذخیره شد"),
+    el("div", { class: "small path", dir: "ltr" }, result.path),
+    el("div", { class: "muted small" }, `حجم: ${fa(Math.max(1, Math.round(result.size / 1024)))} کیلوبایت`),
+    canShare && el("button", {
+      class: "primary",
+      onclick: async () => {
+        try {
+          await navigator.share({ files: [file], title: result.name });
+        } catch (error) {
+          if (error.name !== "AbortError") { showMessage("پنجرهٔ Share باز نشد؛ فایل در Finder نشان داده می‌شود."); reveal(); }
+        }
+      },
+    }, "اشتراک‌گذاری… (تلگرام و برنامه‌های دیگر)"),
+    el("button", { onclick: reveal }, "نمایش در Finder (برای کشیدن به تلگرام)"),
+    el("button", { onclick: () => api("POST", "/api/export/open", { name: result.name }) }, "باز کردن فایل"),
+    !canShare && el("p", { class: "muted small" }, "این مرورگر پنجرهٔ Share را برای فایل پشتیبانی نمی‌کند. فایل را از Finder به تلگرام بکشید."),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -455,6 +534,7 @@ $("#view-week").addEventListener("click", () => { calView = "week"; renderCalend
 $("#view-month").addEventListener("click", () => { calView = "month"; renderCalendar(); });
 $("#cal-prev").addEventListener("click", () => shiftCalendar(-1));
 $("#cal-next").addEventListener("click", () => shiftCalendar(1));
+$("#export-button").addEventListener("click", (e) => openExportMenu(e.currentTarget, "day"));
 $("#cal-today").addEventListener("click", () => { calAnchor = state.today; renderCalendar(); });
 
 // اگر state قبل از بار شدن این فایل رسیده باشد
