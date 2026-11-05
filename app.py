@@ -137,6 +137,7 @@ UNDO_LABELS = {
     "api_delete_item": "حذف درس",
     "api_reset_item": "برگرداندن درس",
     "api_reorder": "جابه‌جایی در صف",
+    "api_unpin_item": "برگشت درس به چینش خودکار",
     "api_update_session": "ویرایش جلسه",
     "api_move_task": "جابه‌جایی کار",
     "api_set_day": "تغییر سقف روز",
@@ -324,6 +325,8 @@ def state_data():
             "finish": finish if item["is_active"] else {"read_end": None, "review_end": None},
             "source_problem": sources.check_source(item, settings["vault_path"]),
             "range_problems": sources.check_ranges(item, sess),
+            # چند جلسه از این درس دستی به روز خاصی برده شده‌اند (📌)
+            "pinned": sum(1 for x in sess if x.get("read_manual_date") or x.get("review_manual_date")),
         })
         items[-1]["target"] = target_status(items[-1])
     return {
@@ -623,6 +626,20 @@ def api_reorder():
     if not isinstance(ids, list) or set(ids) != existing or len(ids) != len(existing):
         raise UserError("ترتیب صف نامعتبر است.")
     database.reorder_items(conn, ids)
+    # درسی که کاربر در صف جابه‌جا کرد، از این به بعد طبق جای تازه‌اش در صف چیده می‌شود:
+    # خواندن‌هایی از همین درس که قبلاً دستی به روز خاصی برده شده بودند، آزاد می‌شوند.
+    # (وگرنه کار دستی سر روز انتخابی‌اش می‌ماند و جابه‌جایی صف روی تقویم اثری نمی‌گذاشت.)
+    moved = _body().get("moved_id")
+    released = database.clear_manual_dates(conn, moved, reviews=False) if moved in existing else 0
+    state = build_state()
+    state["released"] = released
+    return jsonify(state)
+
+
+@app.route("/api/items/<int:item_id>/unpin", methods=["POST"])
+def api_unpin_item(item_id):
+    """همهٔ جابه‌جایی‌های دستی یک درس (خواندن و مرور) برداشته می‌شود و برمی‌گردد به چینش خودکار."""
+    database.clear_manual_dates(get_db(), item_id)
     return state_response()
 
 

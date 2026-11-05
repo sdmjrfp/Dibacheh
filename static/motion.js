@@ -74,7 +74,7 @@ const Motion = (() => {
  *   options.items      selector کارت‌ها (مثلاً ".item")
  *   options.handle     selector جای گرفتن (مثلاً ".handle")؛ خالی = کل کارت
  *   options.axis       "y" برای فهرست عمودی، "x" برای تب‌های افقی (راست‌به‌چپ)
- *   options.onDrop(ids)  ترتیب تازهٔ data-id ها بعد از رها کردن
+ *   options.onDrop(ids, movedId)  ترتیب تازهٔ data-id ها بعد از رها کردن، و شمارهٔ کارتی که کشیده شد
  */
 function sortable(list, options) {
   const axis = options.axis || "y";
@@ -149,7 +149,7 @@ function sortable(list, options) {
     card.animate([{ transform: from, boxShadow: "0 12px 30px rgba(0,0,0,.18)" }, { transform: "none" }],
       { duration: 260, easing: Motion.EASE });
     const order = [...list.querySelectorAll(options.items)].map((n) => n.dataset.id);
-    if (order.join() !== startOrder.join()) options.onDrop(order);
+    if (order.join() !== startOrder.join()) options.onDrop(order, card.dataset.id);
   };
   list.addEventListener("pointerup", finish);
   list.addEventListener("pointercancel", finish);

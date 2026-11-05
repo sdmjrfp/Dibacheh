@@ -180,3 +180,32 @@ def test_failed_change_keeps_redo(client):
     client.post("/api/items", json={"title": "", "session_count": 1, "session_minutes": 10})
     state = client.get("/api/state").get_json()
     assert state["undo"]["redo_count"] == 1
+
+
+def test_reorder_releases_manual_moves_of_dragged_course(client):
+    """باگ گزارش‌شده: درسی که قبلاً دستی جابه‌جا شده بود، با تغییر اولویت در صف جابه‌جا نمی‌شد."""
+    for t in ("تست ۲", "تست ۱", "تست ۳"):
+        state = add(client, t, count=1)
+    today = today_of(state)
+    ids = {i["title"]: i["id"] for i in state["items"]}
+    sid = {i["title"]: i["sessions"][0]["id"] for i in state["items"]}
+    move(client, sid["تست ۳"], "read", today)                         # مثل دیتابیس کاربر
+    state = move(client, sid["تست ۱"], "read", today + timedelta(days=6)).get_json()
+    assert item_named(state, "تست ۱")["pinned"] == 1
+    # «تست ۱» به اول صف کشیده می‌شود
+    order = [ids["تست ۱"], ids["تست ۲"], ids["تست ۳"]]
+    state = client.post("/api/items/reorder", json={"ids": order, "moved_id": ids["تست ۱"]}).get_json()
+    assert state["released"] == 1
+    assert item_named(state, "تست ۱")["pinned"] == 0
+    assert days_of(state, sid["تست ۱"], "read") == [today]               # حالا طبق اولویت، امروز
+    assert days_of(state, sid["تست ۳"], "read") == [today]               # «تست ۳» دستی امروز می‌ماند
+    assert days_of(state, sid["تست ۲"], "read") == [today + timedelta(days=1)]
+
+
+def test_unpin_course(client):
+    state = add(client, "A", count=2)
+    s1 = item_named(state, "A")["sessions"][0]["id"]
+    move(client, s1, "read", today_of(state) + timedelta(days=3))
+    state = client.post(f"/api/items/{item_named(state, 'A')['id']}/unpin", json={}).get_json()
+    assert item_named(state, "A")["pinned"] == 0
+    assert days_of(state, s1, "read") == [today_of(state)]

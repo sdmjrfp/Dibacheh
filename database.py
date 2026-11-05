@@ -500,6 +500,16 @@ def update_session(conn, session_id, **fields):
     _update(conn, "sessions", session_id, fields, SESSION_FIELDS)
 
 
+def clear_manual_dates(conn, item_id, reads=True, reviews=True):
+    """جابه‌جایی‌های دستی جلسه‌های یک درس را برمی‌دارد. خروجی: تعداد جلسه‌های آزادشده."""
+    columns = [c for c, on in (("read_manual_date", reads), ("review_manual_date", reviews)) if on]
+    where = " OR ".join(f"{c} IS NOT NULL" for c in columns)
+    count = conn.execute(f"SELECT COUNT(*) FROM sessions WHERE item_id = ? AND ({where})", (item_id,)).fetchone()[0]
+    conn.execute(f"UPDATE sessions SET {', '.join(f'{c} = NULL' for c in columns)} WHERE item_id = ?", (item_id,))
+    conn.commit()
+    return count
+
+
 def replace_unread_sessions(conn, item_id, new_sessions):
     """جلسه‌های خوانده‌نشدهٔ درس را با فهرست تازه عوض می‌کند (تغییر تقسیم‌بندی).
 

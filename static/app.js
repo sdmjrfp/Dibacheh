@@ -323,6 +323,14 @@ function itemCard(item) {
     if (item.finish.read_end) meta.push(el("span", {}, `پایان خواندن: ${Jalali.formatShort(item.finish.read_end)}`));
     if (item.finish.review_end) meta.push(el("span", {}, `پایان مرور: ${Jalali.format(item.finish.review_end)}`));
   }
+  if (item.pinned) {
+    meta.push(el("span", { class: "pinned", title: "این جلسه‌ها روی روز خاصی مانده‌اند و اولویت صف رویشان اثر ندارد" },
+      `📌 ${fa(item.pinned)} جلسه دستی جابه‌جا شده`,
+      el("button", {
+        class: "link", title: "همهٔ جابه‌جایی‌های دستی این درس برداشته شود",
+        onclick: () => api("POST", `/api/items/${item.id}/unpin`, {}),
+      }, "برگشت به چینش خودکار")));
+  }
   if (item.target_date) {
     meta.push(el("span", {}, `هدف: ${Jalali.format(item.target_date)}`));
     if (item.target) {
@@ -365,17 +373,24 @@ function itemCard(item) {
 // کشیدن کارت درس: خود کارت همراه ماوس حرکت می‌کند و بقیه کنار می‌روند (static/motion.js)
 sortable($("#item-list"), {
   items: ".item", handle: ".handle", axis: "y",
-  onDrop: (visibleIds) => reorderVisible(visibleIds.map(Number)),
+  onDrop: (visibleIds, movedId) => reorderVisible(visibleIds.map(Number), Number(movedId)),
 });
 
 /** ترتیب تازهٔ کارت‌های دیده‌شده را در کل صف اعمال می‌کند.
  *  اگر فیلتری روشن است، درس‌های پنهان سر جای خودشان در صف می‌مانند. */
-function reorderVisible(visibleIds) {
+function reorderVisible(visibleIds, movedId) {
   const visible = new Set(visibleIds);
   const queue = [...visibleIds];
   const ids = state.items.map((item) => (visible.has(item.id) ? queue.shift() : item.id));
   state.items.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-  api("POST", "/api/items/reorder", { ids });
+  // movedId: درسی که کشیده شد. جابه‌جایی‌های دستی خواندنِ همین درس برداشته می‌شود
+  // تا از این به بعد طبق جای تازه‌اش در صف چیده شود.
+  api("POST", "/api/items/reorder", { ids, moved_id: movedId }).then((result) => {
+    const item = itemById(movedId);
+    if (result.released && item) {
+      showMessage(`جابه‌جایی دستی ${fa(result.released)} جلسه از «${item.title}» برداشته شد تا طبق اولویت تازه چیده شود.`, false);
+    }
+  });
 }
 
 /** درس را درست قبل از درس مقصد در کل صف قرار می‌دهد. beforeId=null یعنی انتهای صف. */

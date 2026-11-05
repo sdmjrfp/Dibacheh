@@ -466,3 +466,6 @@ ol.explain { padding-inline-start: 28px; }
 /* دکمه‌های بالای ستون منابع در ستون باریک به خط بعد بروند، نه اینکه خودشان بشکنند */
 .panel-head { flex-wrap: wrap; row-gap: 6px; }
 button { white-space: nowrap; }
+
+.item .pinned { color: var(--text); }
+button.link { border: none; background: none; padding: 0 4px; color: var(--accent); text-decoration: underline; cursor: pointer; font-size: inherit; }
