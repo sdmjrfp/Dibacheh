@@ -295,3 +295,17 @@ input.num { width: 5em; }
   .week { grid-template-columns: 1fr; }
   .week-day { min-height: auto; }
 }
+
+/* ---------- تیک و سابقه ---------- */
+.task .tick { margin-inline-end: 6px; vertical-align: middle; cursor: pointer; }
+.task.done { background: var(--bg); color: var(--muted); cursor: default; border-style: dashed; }
+.task.done .task-title { font-weight: 500; }
+.done-count { color: var(--accent); font-size: 0.8em; }
+
+/* ---------- نشانگر حجم کار و هدف ---------- */
+.workload { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; font-size: 0.9em; }
+.workload .bars { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--border); margin: 4px 0; }
+.workload .bars .r { background: var(--read); }
+.workload .bars .v { background: var(--review); }
+.target.ahead { color: var(--accent); }
+.target.behind { color: var(--danger); }

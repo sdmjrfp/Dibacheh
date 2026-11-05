@@ -355,6 +355,20 @@ def test_partial_session_schedules_remaining_time_without_review():
     assert day_of(plan, "A1", "review")[0] == 2  # مرور فقط بعد از پایان خواندن
 
 
+def test_work_done_today_counts_against_cap_and_speed():
+    # A1 امروز خوانده و تیک خورده (60 دقیقه). A2 نباید امروز بیاید (سرعت 1)،
+    # و از سقف 120 فقط 60 دقیقه مانده است.
+    items, sess = base_input()
+    sess = mark_read(sess, "A1", d(1))
+    plan = scheduler.build_plan(items, sess, settings(), {}, DAY1,
+                                done_today={"minutes": 60, "new_reads": {"A": 1}})
+    t = table(plan)
+    assert t[1] == ["خواندن B1"]
+    assert plan["days"][0]["done"] == 60
+    assert plan["days"][0]["total"] == 60
+    assert day_of(plan, "A2", "read") == [2]
+
+
 def test_horizon_warning():
     items = [item("A", 1)]
     plan = scheduler.build_plan(items, sessions("A", 3, 60), settings(), {}, DAY1,

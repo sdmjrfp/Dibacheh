@@ -41,6 +41,16 @@ function firstReviewDates() {
   return first;
 }
 
+/** نقشهٔ تاریخ → کارهای انجام‌شدهٔ آن روز (از سابقه) */
+function historyByDate() {
+  const map = new Map();
+  for (const entry of state.history) {
+    if (!map.has(entry.date)) map.set(entry.date, []);
+    map.get(entry.date).push(entry);
+  }
+  return map;
+}
+
 /** شنبهٔ هفتهٔ یک روز (هفتهٔ ایرانی از شنبه شروع می‌شود) */
 function weekStart(iso) {
   const weekday = new Date(iso + "T00:00:00Z").getUTCDay();  // 0 = یکشنبه ... 6 = شنبه
@@ -73,7 +83,9 @@ function renderCalendar() {
   note.hidden = !selected;
   if (selected) note.textContent = `روزهایی که «${selected.title}» کار دارد پررنگ شده‌اند. برای برداشتن، دوباره روی نام درس کلیک کنید.`;
 
-  const context = { days: planDays(), index: sessionIndex(), firstReviews: firstReviewDates() };
+  const context = {
+    days: planDays(), index: sessionIndex(), firstReviews: firstReviewDates(), history: historyByDate(),
+  };
   const box = $("#calendar");
   if (calView === "week") {
     const start = weekStart(calAnchor);
@@ -94,10 +106,12 @@ function weekView(start, context) {
     const day = context.days.get(iso);
     const column = el("div", { class: dayClasses(iso, day, "cal-day week-day"), "data-date": iso },
       dayHeader(iso, day),
-      el("div", { class: "tasks" }, day ? day.tasks.map((t) => taskChip(t, iso, context, false)) : []),
+      el("div", { class: "tasks" },
+        (context.history.get(iso) || []).map((entry) => historyChip(entry, context)),
+        day ? day.tasks.map((t) => taskChip(t, iso, context, false)) : []),
     );
-    if (iso < state.today) column.append(el("p", { class: "muted small" }, "گذشته"));
-    else if (!day) column.append(el("p", { class: "muted small" }, "کاری نمانده"));
+    if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
+    else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, "کاری نمانده"));
     else if (day.is_off) column.append(el("p", { class: "muted small" }, "تعطیل"));
     grid.append(column);
   }
@@ -130,6 +144,8 @@ function monthView(y, m, context) {
     },
       el("div", { class: "month-day-head" },
         el("strong", {}, fa(d)),
+        context.history.has(iso) && el("span", { class: "done-count", title: "کارهای انجام‌شده" },
+          `✓ ${fa(context.history.get(iso).length)}`),
         day && !day.is_off && el("span", { class: "muted small" }, `${fa(day.total)}/${fa(day.cap)}`),
         day && day.is_off && el("span", { class: "muted small" }, "تعطیل")),
       ...shown.map((t) => taskChip(t, iso, context, true)),
@@ -160,11 +176,12 @@ function dayHeader(iso, day) {
     el("span", {}, Jalali.formatShort(iso)),
   );
   if (day && !day.is_off) {
-    const percent = Math.min(100, Math.round((100 * day.total) / Math.max(day.cap, 1)));
-    header.append(
-      el("span", { class: "small muted" }, `${minutesText(day.total)} از ${minutesText(day.cap)}`),
-      el("span", { class: `load${day.total > day.cap ? " over" : ""}` }, el("span", { style: `width:${percent}%` })),
-    );
+    // امروز: کارهای انجام‌شده هم جزو پرشدن روز حساب می‌شوند
+    const used = day.total + (day.done || 0);
+    const percent = Math.min(100, Math.round((100 * used) / Math.max(day.cap, 1)));
+    header.append(el("span", { class: "small muted" }, `${minutesText(used)} از ${minutesText(day.cap)}`));
+    if (day.done) header.append(el("span", { class: "small done-count" }, `✓ ${minutesText(day.done)} انجام شد`));
+    header.append(el("span", { class: `load${used > day.cap ? " over" : ""}` }, el("span", { style: `width:${percent}%` })));
   }
   if (day && day.predicted) header.append(el("span", { class: "small muted" }, "پیش‌بینی"));
   return header;
@@ -184,8 +201,15 @@ function taskChip(task, iso, context, compact) {
   if (task.kind === "review") label += ` ${fa(task.review_round)}`;
   if (task.partial) label += " (ادامه)";
 
+  // تیک سریع فقط روی کارهای امروز. کار آینده از منوی خودش تیک می‌خورد.
+  const quickTick = iso === state.today && canTick(task, iso, context) && el("input", {
+    type: "checkbox", class: "tick", title: "انجام شد",
+    onchange: () => markDone(task, "done"),
+  });
+
   const chip = el("div", { class: classes.join(" "), "data-session": task.session_id, "data-kind": task.kind },
     el("div", { class: "task-title" },
+      quickTick,
       task.manual && el("span", { title: "دستی جابه‌جا شده" }, "📌 "),
       item ? item.title : "؟"),
     !compact && el("div", { class: "task-meta" },
@@ -199,6 +223,37 @@ function taskChip(task, iso, context, compact) {
   return chip;
 }
 
+/** کار انجام‌شده (از سابقه)، با علامت ✓ */
+function historyChip(entry, context) {
+  const info = context.index.get(entry.session_id);
+  const title = info ? info.item.title : "درس حذف‌شده";
+  const kind = entry.task_type;
+  let label = KIND_LABEL[kind] || kind;
+  if (entry.result === "partial") label += " (بخشی)";
+  if (entry.result === "needs_more") label += " · نیاز به مرور بیشتر";
+  return el("div", { class: `task done kind-${kind}`, title: "انجام شد. برای برگرداندن اشتباه، از دکمهٔ «برگرداندن» استفاده کنید." },
+    el("div", { class: "task-title" }, "✓ ", title),
+    el("div", { class: "task-meta" },
+      el("span", {}, label),
+      info && el("span", {}, `جلسهٔ ${fa(entry.sequence)}`),
+      el("span", {}, `${fa(entry.minutes)} دقیقه`)));
+}
+
+/** آیا این کار را می‌شود امروز تیک زد؟ */
+function canTick(task, iso, context) {
+  if (task.kind === "routine") return iso === state.today;
+  if (task.kind === "read") return true;
+  // مرور: فقط مرور بعدیِ جلسه‌ای که واقعاً خوانده شده
+  return !whyNotMovable(task, iso, context.index, context.firstReviews);
+}
+
+function markDone(task, result, minutes) {
+  closePopover();
+  const body = { session_id: task.session_id, kind: task.kind, result };
+  if (minutes !== undefined) body.minutes = minutes;
+  return api("POST", "/api/tasks/done", body);
+}
+
 // ---------------------------------------------------------------------------
 // کشیدن کار به روز دیگر، یا کلیک برای باز کردن منو
 // ---------------------------------------------------------------------------
@@ -209,7 +264,7 @@ function enableTaskPointer(chip, task, iso, movable) {
   let target = null;
 
   chip.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || e.target.closest("input")) return;  // کلیک روی تیک، منو باز نمی‌کند
     start = { x: e.clientX, y: e.clientY };
     dragging = false;
     chip.setPointerCapture(e.pointerId);
@@ -283,6 +338,24 @@ function openTaskMenu(task, iso, anchor) {
       `${KIND_LABEL[task.kind]}${task.kind === "review" ? ` ${fa(task.review_round)}` : ""} · جلسهٔ ${fa(session.sequence)}`
       + `${session.section_text ? ` · ${session.section_text}` : ""} · ${fa(task.minutes)} دقیقه · ${Jalali.format(iso)}`),
   ];
+
+  // ثبت انجام کار (همیشه با تاریخ امروز)
+  if (canTick(task, iso, { index, firstReviews: firstReviewDates() })) {
+    const early = iso > state.today ? " (امروز، زودتر از برنامه)" : "";
+    if (task.kind === "review") {
+      content.push(el("div", { class: "pop-row" },
+        el("button", { class: "primary", onclick: () => markDone(task, "done") }, `✓ مرور انجام شد${early}`),
+        el("button", { onclick: () => markDone(task, "needs_more") }, "↺ نیاز به مرور بیشتر")));
+    } else {
+      content.push(el("button", { class: "primary", onclick: () => markDone(task, "done") }, `✓ انجام شد${early}`));
+    }
+    if (task.kind === "read") {
+      const minutes = el("input", { type: "number", min: 1, max: task.minutes - 1, class: "num" });
+      content.push(el("div", { class: "pop-row" }, "فقط بخشی خواندم:", minutes, "دقیقه",
+        el("button", { onclick: () => minutes.value && markDone(task, "partial", Number(minutes.value)) }, "ثبت")));
+    }
+  }
+
   if (item.source_type !== "none") {
     content.push(el("button", { onclick: () => api("POST", `/api/items/${item.id}/open`, {}) }, "↗ باز کردن منبع"));
   }

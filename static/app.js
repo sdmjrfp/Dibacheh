@@ -115,8 +115,7 @@ function render() {
   renderTabs();
   renderCategoryFilter();
   renderItems();
-  const pending = state.plan.pending_minutes;
-  $("#pending").textContent = pending ? `حجم کار باقی‌مانده: ${minutesText(pending)}` : "";
+  renderWorkload();
   for (const warning of state.plan.warnings) showMessage(warning);
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
   const undo = $("#undo-button");
@@ -124,6 +123,40 @@ function render() {
   undo.title = state.undo.count
     ? `برگرداندن: ${state.undo.label} (${fa(state.undo.count)} مرحله قابل برگشت)` : "تغییری برای برگرداندن نیست";
   if (typeof renderCalendar === "function") renderCalendar();  // در calendar.js
+}
+
+/** نشانگر حجم کار منتظر: خواندن و مرور باقی‌مانده، تاریخ پایان و میانگین روزانه. */
+function renderWorkload() {
+  const w = state.workload;
+  const box = $("#pending");
+  const total = w.read_minutes + w.review_minutes;
+  if (!total) {
+    box.replaceChildren();
+    return;
+  }
+  const readShare = Math.round((100 * w.read_minutes) / total);
+  box.className = "workload";
+  box.replaceChildren(
+    el("strong", {}, `حجم کار منتظر: ${minutesText(total)}`),
+    el("div", { class: "bars", title: "سبز: خواندن · آبی: مرور" },
+      el("span", { class: "r", style: `width:${readShare}%` }),
+      el("span", { class: "v", style: `width:${100 - readShare}%` })),
+    el("div", {}, `خواندن ${minutesText(w.read_minutes)} · مرور ${minutesText(w.review_minutes)}`),
+    w.end_date && el("div", {}, `پایان پیش‌بینی‌شدهٔ همه‌چیز: ${Jalali.format(w.end_date)}`),
+    el("div", { class: "muted" },
+      `۳۰ روز آینده، به‌طور میانگین هر روز ${fa(w.avg_review_next_30)} دقیقه مرور و ${fa(w.avg_read_next_30)} دقیقه مطلب جدید`),
+  );
+}
+
+/** متن جلو یا عقب بودن از تاریخ هدف */
+function targetText(label, info) {
+  if (!info) return null;
+  if (info.done) return el("span", { class: "target ahead" }, `${label}: تمام شده ✓`);
+  if (info.days === null) return null;
+  if (info.days === 0) return el("span", { class: "target ahead" }, `${label}: درست سر هدف`);
+  const ahead = info.days > 0;
+  return el("span", { class: `target ${ahead ? "ahead" : "behind"}` },
+    `${label}: ${fa(Math.abs(info.days))} روز ${ahead ? "زودتر از" : "دیرتر از"} هدف`);
 }
 
 function renderTabs() {
@@ -178,7 +211,13 @@ function itemCard(item) {
     if (item.finish.read_end) meta.push(el("span", {}, `پایان خواندن: ${Jalali.formatShort(item.finish.read_end)}`));
     if (item.finish.review_end) meta.push(el("span", {}, `پایان مرور: ${Jalali.format(item.finish.review_end)}`));
   }
-  if (item.target_date) meta.push(el("span", {}, `هدف: ${Jalali.format(item.target_date)}`));
+  if (item.target_date) {
+    meta.push(el("span", {}, `هدف: ${Jalali.format(item.target_date)}`));
+    if (item.target) {
+      meta.push(targetText("خواندن", item.target.read));
+      meta.push(targetText("مرور", item.target.review));
+    }
+  }
 
   const card = el("li", {
     class: `item${item.is_active ? "" : " inactive"}${item.id === selectedItemId ? " selected" : ""}`,

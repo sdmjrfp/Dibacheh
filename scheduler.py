@@ -69,17 +69,19 @@ def day_cap(day, settings, day_overrides):
 class _Day:
     """کارهای یک روز در حال چیدن، و قانون «آیا این کار جا می‌شود؟»."""
 
-    def __init__(self, date, cap, tolerance):
+    def __init__(self, date, cap, tolerance, already_done=0):
         self.date = date
         self.cap = cap
         self.tolerance = tolerance
         self.tasks = []
-        self.used = 0
+        # دقیقه‌هایی که امروز قبلاً انجام و تیک خورده، از سقف امروز کم می‌شود
+        self.done = already_done
+        self.used = already_done
 
     def fits(self, minutes):
         # جلسهٔ خیلی بزرگ (بیشتر از سقف + اضافه‌سقف) فقط در روز کاملاً خالی می‌آید.
         if minutes > self.cap + self.tolerance:
-            return not self.tasks
+            return not self.tasks and self.used == 0
         if self.used + minutes <= self.cap:
             return True
         # اضافه‌سقف: فقط وقتی روز هنوز جای خالی دارد، و جمع از سقف + 30 بیشتر نشود.
@@ -167,7 +169,8 @@ def _review_key(st):
 # تابع اصلی
 # ---------------------------------------------------------------------------
 
-def build_plan(items, sessions, settings, day_overrides, today, horizon_days=3650):
+def build_plan(items, sessions, settings, day_overrides, today, horizon_days=3650,
+               done_today=None):
     """کل برنامه را از امروز تا پایان کارها می‌سازد.
 
     ورودی‌ها:
@@ -176,6 +179,9 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
         settings       dict تنظیمات (کلیدهای جاافتاده از DEFAULT_SETTINGS خوانده می‌شوند)
         day_overrides  dict از تاریخ به سقف آن روز (صفر = تعطیل)
         today          datetime.date
+        done_today     کارهایی که امروز قبلاً تیک خورده‌اند (اختیاری):
+                       {"minutes": جمع دقیقه‌ها، "new_reads": {item_id: تعداد جلسهٔ جدید}}
+                       تا سقف امروز و سرعت درس‌ها دوباره پر نشود.
 
     خروجی، یک dict:
         days      فهرست روزها. هر روز: date، cap، is_off، predicted، total، tasks
@@ -184,6 +190,7 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
         warnings  فهرست هشدارها
     """
     settings = {**DEFAULT_SETTINGS, **settings}
+    done_today = done_today or {}
     tolerance = settings["cap_tolerance_minutes"]
     review_cap_percent = settings.get("review_cap_percent")
 
@@ -288,9 +295,10 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
             break
 
         cap = day_cap(date, settings, day_overrides)
-        day = _Day(date, cap, tolerance)
+        day = _Day(date, cap, tolerance, done_today.get("minutes", 0) if date == today else 0)
         if cap > 0:
-            new_today = {}  # item_id -> تعداد جلسهٔ جدید امروز
+            # item_id -> تعداد جلسهٔ جدید امروز (با احتساب جلسه‌هایی که امروز تیک خورده‌اند)
+            new_today = dict(done_today.get("new_reads", {})) if date == today else {}
 
             # 2. کارهای روتین همین تاریخ. روز ازدست‌رفته منتقل نمی‌شود.
             for it in routines:
@@ -371,7 +379,8 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
             "cap": cap,
             "is_off": cap == 0,
             "predicted": date > today,
-            "total": day.used,
+            "total": day.used - day.done,   # فقط کارهای چیده‌شده
+            "done": day.done,               # دقیقه‌های انجام‌شدهٔ امروز
             "tasks": day.tasks,
         })
     else:

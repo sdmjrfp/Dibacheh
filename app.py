@@ -135,6 +135,7 @@ UNDO_LABELS = {
     "api_update_session": "ویرایش جلسه",
     "api_move_task": "جابه‌جایی کار",
     "api_set_day": "تغییر سقف روز",
+    "api_task_done": "ثبت انجام کار",
     "api_add_category": "افزودن دسته",
     "api_rename_category": "تغییر نام دسته",
     "api_delete_category": "حذف دسته",
@@ -261,7 +262,8 @@ def build_state():
     settings = inputs["settings"]
     now = today()
     plan = scheduler.build_plan(
-        inputs["items"], inputs["sessions"], settings, inputs["day_overrides"], now
+        inputs["items"], inputs["sessions"], settings, inputs["day_overrides"], now,
+        done_today=done_today(conn, now),
     )
     sessions_by_item = {}
     for s in inputs["sessions"]:
@@ -282,15 +284,98 @@ def build_state():
             "source_problem": sources.check_source(item, settings["vault_path"]),
             "range_problems": sources.check_ranges(item, sess),
         })
+        items[-1]["target"] = target_status(items[-1])
     return _json_ready({
         "today": now,
         "items": items,
         "categories": database.list_categories(conn),
         "settings": settings,
         "plan": plan,
+        "workload": workload(plan, now),
+        "history": history(conn, now),
         "day_overrides": inputs["day_overrides"],
         "undo": {"count": len(_undo_stack), "label": _undo_stack[-1][0] if _undo_stack else None},
     })
+
+
+def done_today(conn, now):
+    """کارهای امروز که قبلاً تیک خورده‌اند، برای اینکه موتور سقف و سرعت امروز را دوباره پر نکند."""
+    rows = conn.execute(
+        "SELECT task_log.session_id, task_log.task_type, task_log.minutes, sessions.item_id "
+        "FROM task_log JOIN sessions ON sessions.id = task_log.session_id WHERE task_log.date = ?",
+        (now.isoformat(),),
+    ).fetchall()
+    read_sessions = {}
+    for r in rows:
+        if r["task_type"] == "read":
+            read_sessions.setdefault(r["item_id"], set()).add(r["session_id"])
+    return {
+        "minutes": sum(r["minutes"] for r in rows),
+        "new_reads": {item_id: len(ids) for item_id, ids in read_sessions.items()},
+    }
+
+
+def target_status(item):
+    """جلو یا عقب بودن درس نسبت به تاریخ هدف، جداگانه برای پایان خواندن و پایان مرور.
+
+    days مثبت = چند روز زودتر از هدف تمام می‌شود، منفی = چند روز دیرتر.
+    done = این بخش از قبل تمام شده است.
+    """
+    target = item.get("target_date")
+    if not target or not item["is_active"]:
+        return None
+    status = item["status_list"]
+    result = {}
+    for key, end, finished in (
+        ("read", item["finish"]["read_end"], status in ("read", "finished")),
+        ("review", item["finish"]["review_end"], status == "finished"),
+    ):
+        if end is None:
+            result[key] = {"done": finished, "days": None}
+        else:
+            result[key] = {"done": False, "days": (target - end).days}
+    return result
+
+
+def workload(plan, now):
+    """نشانگر حجم کار منتظر: چقدر خواندن و مرور مانده و میانگین 30 روز آینده."""
+    read = review = 0
+    next_read = next_review = 0
+    last_day = None
+    horizon = now + timedelta(days=30)
+    for day in plan["days"]:
+        for task in day["tasks"]:
+            if task["kind"] == "routine":
+                continue
+            last_day = day["date"]
+            if task["kind"] == "read":
+                read += task["minutes"]
+            else:
+                review += task["minutes"]
+            if day["date"] < horizon:
+                if task["kind"] == "read":
+                    next_read += task["minutes"]
+                else:
+                    next_review += task["minutes"]
+    return {
+        "read_minutes": read,
+        "review_minutes": review,
+        "end_date": last_day,
+        "avg_read_next_30": round(next_read / 30),
+        "avg_review_next_30": round(next_review / 30),
+    }
+
+
+def history(conn, now, days=120):
+    """کارهای انجام‌شدهٔ گذشته (و امروز)، برای نمایش در تقویم."""
+    since = (now - timedelta(days=days)).isoformat()
+    rows = conn.execute(
+        "SELECT task_log.*, sessions.item_id, sessions.sequence FROM task_log "
+        "JOIN sessions ON sessions.id = task_log.session_id "
+        "WHERE task_log.date >= ? ORDER BY task_log.date, task_log.id",
+        (since,),
+    )
+    return [dict(r) for r in rows]
 
 
 def state_response():
@@ -564,6 +649,77 @@ def api_move_task():
     else:
         raise UserError("نوع کار نامعتبر است.")
     return state_response()
+
+
+@app.route("/api/tasks/done", methods=["POST"])
+def api_task_done():
+    """ثبت انجام یک کار، همیشه با تاریخ امروز.
+
+    result:
+      done        انجام شد
+      partial     فقط بخشی از خواندن انجام شد (minutes = دقیقهٔ خوانده‌شده)
+      needs_more  مرور انجام شد ولی نیاز به مرور بیشتر دارد (برگشت به جعبهٔ 1)
+    کار آینده را هم می‌شود زودتر تیک زد؛ باز هم با تاریخ امروز ثبت می‌شود.
+    """
+    conn = get_db()
+    data = _body()
+    session = database.get_session(conn, data.get("session_id"))
+    if session is None:
+        raise UserError("جلسه پیدا نشد.")
+    item = database.get_item(conn, session["item_id"])
+    settings = database.get_settings(conn)
+    intervals = leitner.intervals_for(item, settings)
+    day = today()
+    kind = data.get("kind")
+    result = data.get("result", "done")
+
+    if kind == "routine":
+        if item["item_type"] != "routine" or session["status"] == "finished":
+            raise UserError("این کار روتین قبلاً ثبت شده است.")
+        database.update_session(conn, session["id"], status="finished", minutes_done=session["minutes"])
+        database.add_log(conn, session["id"], day, "routine", session["minutes"], "done")
+
+    elif kind == "read":
+        if session["status"] not in ("unread", "reading"):
+            raise UserError("این جلسه قبلاً خوانده شده است.")
+        already = session["minutes_done"] or 0
+        if result == "partial":
+            minutes = _positive_int(data.get("minutes"), "دقیقهٔ خوانده‌شده")
+            if already + minutes < session["minutes"]:
+                # بقیهٔ جلسه از فردا چیده می‌شود، نه دوباره امروز
+                database.update_session(conn, session["id"], status="reading",
+                                        minutes_done=already + minutes,
+                                        read_manual_date=day + timedelta(days=1))
+                database.add_log(conn, session["id"], day, "read", minutes, "partial")
+                return state_response()
+            # اگر با این مقدار کل جلسه خوانده شد، مثل «انجام شد» ثبت می‌شود
+        elif result != "done":
+            raise UserError("نتیجهٔ نامعتبر.")
+        updated = leitner.finish_reading(session, day, intervals)
+        _save_session(conn, updated)
+        database.add_log(conn, session["id"], day, "read", session["minutes"] - already, "done")
+
+    elif kind == "review":
+        if session["status"] != "reviewing":
+            raise UserError("این جلسه مرور منتظر ندارد.")
+        minutes = leitner.review_minutes(session, item, settings)
+        if result == "needs_more":
+            updated = leitner.needs_more_review(session, day, intervals)
+        elif result == "done":
+            updated = leitner.record_review(session, day, intervals)
+        else:
+            raise UserError("نتیجهٔ نامعتبر.")
+        _save_session(conn, updated)
+        database.add_log(conn, session["id"], day, "review", minutes, result)
+    else:
+        raise UserError("نوع کار نامعتبر است.")
+    return state_response()
+
+
+def _save_session(conn, session):
+    """فیلدهای قابل ذخیرهٔ یک جلسهٔ تغییرکرده را در دیتابیس می‌نویسد."""
+    fields = {k: session[k] for k in database.SESSION_FIELDS if k in session}
+    database.update_session(conn, session["id"], **fields)
 
 
 @app.route("/api/days/<day>", methods=["PUT"])
