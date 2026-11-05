@@ -103,13 +103,36 @@ input, select {
 }
 
 /* ---------- چیدمان اصلی: منابع کنار تقویم، برای مانیتور 2K ---------- */
+/* پهنای ستون منابع در --sources-width است و با کشیدن جداکننده عوض می‌شود (static/app.js) */
 .layout {
+  --sources-width: 620px;
   display: grid;
-  grid-template-columns: minmax(520px, 680px) 1fr;
-  gap: 16px;
+  grid-template-columns: var(--sources-width) 12px minmax(0, 1fr);
+  gap: 2px;
   padding: 16px 24px;
   height: calc(100vh - 56px);
 }
+
+.splitter {
+  cursor: col-resize;
+  touch-action: none;
+  border-radius: 6px;
+  position: relative;
+}
+/* خط کوچک وسط جداکننده */
+.splitter::after {
+  content: "";
+  position: absolute;
+  inset: 45% 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.splitter:hover::after, .splitter:focus-visible::after, .splitter.active::after {
+  inset: 0 4px;
+  background: var(--accent);
+}
+.splitter:focus-visible { outline: none; }
+body.resizing { cursor: col-resize; user-select: none; }
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -123,7 +146,8 @@ input, select {
 
 /* پنجرهٔ باریک (مثلاً لپ‌تاپ یا نیمهٔ صفحه): ستون‌ها زیر هم */
 @media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; height: auto; }
+  .layout { grid-template-columns: 1fr; height: auto; gap: 16px; }
+  .splitter { display: none; }
   .topbar { flex-wrap: wrap; }
 }
 
