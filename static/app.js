@@ -119,6 +119,11 @@ function render() {
   $("#pending").textContent = pending ? `حجم کار باقی‌مانده: ${minutesText(pending)}` : "";
   for (const warning of state.plan.warnings) showMessage(warning);
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
+  const undo = $("#undo-button");
+  undo.disabled = !state.undo.count;
+  undo.title = state.undo.count
+    ? `برگرداندن: ${state.undo.label} (${fa(state.undo.count)} مرحله قابل برگشت)` : "تغییری برای برگرداندن نیست";
+  if (typeof renderCalendar === "function") renderCalendar();  // در calendar.js
 }
 
 function renderTabs() {
@@ -288,14 +293,16 @@ const form = $("#item-form");
 // form.elements به‌جای form: چون form.title خودِ عنوان فرم است، نه فیلد title
 const fields = form.elements;
 
-function openItemDialog(item, type = "study") {
-  editing = { id: item ? item.id : null, type: item ? item.item_type : type };
+/** پنجرهٔ درس. firstDate: وقتی درس از روی یک روز تقویم اضافه می‌شود. */
+function openItemDialog(item, type = "study", firstDate = null) {
+  editing = { id: item ? item.id : null, type: item ? item.item_type : type, firstDate };
   pickedSource = null;
   headingsCache = [];
   const isRoutine = editing.type === "routine";
   $("#item-dialog-title").textContent = item
     ? (isRoutine ? "ویرایش کار روتین" : "ویرایش درس")
-    : (isRoutine ? "کار روتین جدید" : "درس جدید");
+    : (isRoutine ? "کار روتین جدید" : "درس جدید")
+      + (firstDate ? ` از ${Jalali.format(firstDate)}` : "");
 
   const defaults = state.settings.new_item_defaults || {};
   fields.title.value = item ? item.title : "";
@@ -319,7 +326,8 @@ function openItemDialog(item, type = "study") {
   fields.resplit_count.value = unread.length || "";
   fields.resplit_minutes.value = "";
 
-  buildJalaliInput($('.jalali-input[data-name="start_date"]'), item ? item.start_date : (isRoutine ? state.today : null));
+  buildJalaliInput($('.jalali-input[data-name="start_date"]'),
+    item ? item.start_date : (isRoutine ? (firstDate || state.today) : null));
   buildJalaliInput($('.jalali-input[data-name="target_date"]'), item ? item.target_date : null);
   const weekdays = item && item.routine_weekdays ? item.routine_weekdays : [];
   $("#routine-weekdays").replaceChildren(...WEEKDAYS.map(([num, name]) =>
@@ -394,6 +402,7 @@ function collectForm() {
   if (!editing.id) {
     data.session_count = Number(fields.session_count.value);
     data.session_minutes = Number(fields.session_minutes.value);
+    if (editing.firstDate) data.first_date = editing.firstDate;
   }
   return data;
 }
@@ -537,3 +546,8 @@ $("#add-routine").addEventListener("click", () => openItemDialog(null, "routine"
 $("#vault-button").addEventListener("click", () => api("POST", "/api/browse", { kind: "vault" }));
 
 api("GET", "/api/state");
+
+$("#undo-button").addEventListener("click", async () => {
+  const result = await api("POST", "/api/undo", {});
+  if (result.undone) showMessage(`برگشت: ${result.undone}`, false);
+});

@@ -40,6 +40,7 @@ def client(tmp_path):
     setup.close()
     app_module.app.config["DB_PATH"] = db_path
     app_module._last_backup_day = None
+    app_module._undo_stack.clear()
     app_module.app.test_client_class = LocalClient
     test_client = app_module.app.test_client()
     # مثل صفحهٔ خود برنامه: رمز CSRF همراه هر درخواست

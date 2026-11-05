@@ -19,7 +19,9 @@
 import hmac
 import os
 import secrets
-from datetime import date, datetime
+import sqlite3
+from collections import deque
+from datetime import date, datetime, timedelta
 
 from flask import Flask, abort, g, jsonify, render_template, request
 
@@ -109,6 +111,67 @@ def backup_once_a_day():
     settings = database.get_settings(conn)
     database.daily_backup(conn, database.backup_folder(settings), settings["backup_retention"], day)
     _last_backup_day = day
+
+
+# ---------------------------------------------------------------------------
+# برگرداندن تغییرها (Undo)
+#
+# قبل از هر تغییر، یک کپی کامل از دیتابیس در حافظه نگه داشته می‌شود.
+# «برگرداندن» آخرین کپی را سر جایش می‌گذارد. تا 20 مرحله نگه داشته می‌شود،
+# و فقط تا وقتی برنامه باز است (با بستن برنامه پاک می‌شود).
+# ---------------------------------------------------------------------------
+
+UNDO_LIMIT = 20
+_undo_stack = deque(maxlen=UNDO_LIMIT)  # هر عضو: (متن تغییر، کپی دیتابیس)
+
+# نام هر مسیر تغییردهنده و متنی که روی دکمهٔ برگرداندن نشان داده می‌شود
+UNDO_LABELS = {
+    "api_add_item": "افزودن درس",
+    "api_update_item": "ویرایش درس",
+    "api_split_item": "تغییر تقسیم‌بندی",
+    "api_delete_item": "حذف درس",
+    "api_reset_item": "برگرداندن درس",
+    "api_reorder": "جابه‌جایی در صف",
+    "api_update_session": "ویرایش جلسه",
+    "api_move_task": "جابه‌جایی کار",
+    "api_set_day": "تغییر سقف روز",
+    "api_add_category": "افزودن دسته",
+    "api_rename_category": "تغییر نام دسته",
+    "api_delete_category": "حذف دسته",
+    "api_settings": "تغییر تنظیمات",
+}
+
+
+@app.before_request
+def remember_for_undo():
+    if request.method == "GET" or request.endpoint not in UNDO_LABELS:
+        return
+    snapshot = sqlite3.connect(":memory:")
+    get_db().backup(snapshot)
+    if len(_undo_stack) == UNDO_LIMIT:
+        _undo_stack.popleft()[1].close()  # قدیمی‌ترین کپی کنار می‌رود
+    _undo_stack.append((UNDO_LABELS[request.endpoint], snapshot))
+    g.undo_pushed = True
+
+
+@app.after_request
+def forget_failed_change(response):
+    # اگر تغییر به خطا خورد، چیزی عوض نشده و کپی‌اش لازم نیست
+    if g.get("undo_pushed") and response.status_code >= 400 and _undo_stack:
+        _undo_stack.pop()[1].close()
+    return response
+
+
+@app.route("/api/undo", methods=["POST"])
+def api_undo():
+    if not _undo_stack:
+        raise UserError("تغییری برای برگرداندن نیست.")
+    label, snapshot = _undo_stack.pop()
+    snapshot.backup(get_db())
+    snapshot.close()
+    state = build_state()
+    state["undone"] = label
+    return jsonify(state)
 
 
 # ---------------------------------------------------------------------------
@@ -225,6 +288,8 @@ def build_state():
         "categories": database.list_categories(conn),
         "settings": settings,
         "plan": plan,
+        "day_overrides": inputs["day_overrides"],
+        "undo": {"count": len(_undo_stack), "label": _undo_stack[-1][0] if _undo_stack else None},
     })
 
 
@@ -356,10 +421,16 @@ def api_add_item():
     title = fields.pop("title")
     fields.setdefault("category_id", defaults.get("category_id"))
     fields.setdefault("max_new_sessions_per_day", defaults.get("max_new_sessions_per_day", 1))
+    # first_date: وقتی درس از روی یک روز تقویم اضافه می‌شود
+    first_date = _parse_date(data.get("first_date"))
     if fields.get("item_type") == "routine":
-        fields.setdefault("start_date", today())
+        fields["start_date"] = fields.get("start_date") or first_date or today()
     item_id = database.add_item(conn, title, count, minutes, **fields)
     _apply_auto_split(conn, item_id)
+    if first_date and fields.get("item_type") != "routine":
+        # جلسهٔ اول دستی به همان روز می‌رود؛ بقیهٔ جلسه‌ها پشت سرش می‌آیند
+        first = database.list_sessions(conn, item_id)[0]
+        database.update_session(conn, first["id"], read_manual_date=max(first_date, today()))
     return state_response()
 
 
@@ -456,6 +527,58 @@ def api_update_session(session_id):
         value = data["review_minutes_override"]
         fields["review_minutes_override"] = None if value in (None, "") else _positive_int(value, "زمان مرور")
     database.update_session(conn, session_id, **fields)
+    return state_response()
+
+
+# ---------------------------------------------------------------------------
+# تغییرات دستی در تقویم
+# ---------------------------------------------------------------------------
+
+@app.route("/api/tasks/move", methods=["POST"])
+def api_move_task():
+    """یک خواندن یا مرور را به روز دیگری می‌برد (جلو یا عقب).
+
+    date خالی یعنی «برگشت به چینش خودکار».
+    برنامه کار را زودتر از این روز نمی‌آورد. اگر آن روز انجام نشود، جلوتر می‌رود.
+    مرورهای بعدی همان جلسه هم خودبه‌خود به همان اندازه جابه‌جا می‌شوند.
+    """
+    conn = get_db()
+    data = _body()
+    session = database.get_session(conn, data.get("session_id"))
+    if session is None:
+        raise UserError("جلسه پیدا نشد.")
+    target = _parse_date(data.get("date"))
+    if target is not None and target < today():
+        raise UserError("کار را نمی‌شود به روزهای گذشته برد.")
+    kind = data.get("kind")
+    if kind == "read":
+        if session["status"] not in ("unread", "reading"):
+            raise UserError("این جلسه خوانده شده است.")
+        database.update_session(conn, session["id"], read_manual_date=target)
+    elif kind == "review":
+        if session["status"] != "reviewing":
+            raise UserError("این جلسه هنوز خوانده نشده؛ خواندنش را جابه‌جا کنید تا مرورها هم با آن بروند.")
+        if target is not None and session["read_at"] and target <= session["read_at"]:
+            raise UserError("مرور باید بعد از روز خواندن همان جلسه باشد.")
+        database.update_session(conn, session["id"], review_manual_date=target)
+    else:
+        raise UserError("نوع کار نامعتبر است.")
+    return state_response()
+
+
+@app.route("/api/days/<day>", methods=["PUT"])
+def api_set_day(day):
+    """سقف یک روز خاص. 0 = تعطیل، null = برگشت به سقف عادی."""
+    target = _parse_date(day)
+    value = _body().get("cap_minutes")
+    if value is not None:
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise UserError("سقف روز باید عدد باشد.")
+        if value < 0:
+            raise UserError("سقف روز نمی‌تواند منفی باشد.")
+    database.set_day_override(get_db(), target, value)
     return state_response()
 
 

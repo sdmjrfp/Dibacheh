@@ -13,6 +13,7 @@
     <h1>دیباچه</h1>
     <span id="today" class="muted"></span>
     <span class="spacer"></span>
+    <button id="undo-button" disabled title="برگرداندن آخرین تغییر">↶ برگرداندن</button>
     <button id="vault-button" class="ghost" title="مسیر والت Obsidian">والت: <span id="vault-path">ثبت نشده</span></button>
   </header>
 
@@ -43,10 +44,26 @@
 
     <!-- ستون تقویم (مرحلهٔ ۵) -->
     <section class="panel calendar">
-      <div class="panel-head"><h2>برنامه</h2></div>
-      <div id="calendar" class="calendar-placeholder">
-        <p class="muted">تقویم هفتگی و ماهانه در مرحلهٔ ۵ ساخته می‌شود.</p>
+      <div class="panel-head">
+        <h2>برنامه</h2>
+        <div class="tabs" role="tablist">
+          <button id="view-week" role="tab">هفتگی</button>
+          <button id="view-month" role="tab">ماهانه</button>
+        </div>
+        <button id="cal-prev" class="icon" title="قبلی">→</button>
+        <button id="cal-today">امروز</button>
+        <button id="cal-next" class="icon" title="بعدی">←</button>
+        <strong id="cal-title"></strong>
+        <span class="spacer"></span>
+        <span class="legend">
+          <span class="kind-routine">روتین</span>
+          <span class="kind-review">مرور</span>
+          <span class="kind-read">خواندن</span>
+          <span class="muted small">📌 = دستی جابه‌جا شده</span>
+        </span>
       </div>
+      <p id="selected-item-note" class="hint" hidden></p>
+      <div id="calendar"></div>
     </section>
   </main>
 
@@ -161,7 +178,11 @@
     </div>
   </dialog>
 
+  <!-- منوی کوچک روی کار یا روز تقویم -->
+  <div id="popover" class="popover" hidden></div>
+
   <script src="{{ url_for('static', filename='jalali.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='calendar.js') }}"></script>
 </body>
 </html>
