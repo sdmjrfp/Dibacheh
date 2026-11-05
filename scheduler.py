@@ -137,6 +137,26 @@ def _due(st, today):
     return due
 
 
+def routine_calendar(item, count, today):
+    """روزهای یک کار روتین: {تاریخ: شمارهٔ جلسه}.
+
+    از تاریخ شروع، count روز پشت‌سرهم. اگر کاربر فقط بعضی روزهای هفته را
+    انتخاب کرده باشد (routine_weekdays)، فقط همان روزها شمرده می‌شوند.
+    روز ازدست‌رفته یا تعطیل هم یکی از همین روزهاست و جبران نمی‌شود.
+    """
+    start = item.get("start_date") or today
+    weekdays = {int(w) for w in item.get("routine_weekdays") or []}
+    result = {}
+    day = start
+    seq = 1
+    while seq <= count:
+        if not weekdays or day.weekday() in weekdays:
+            result[day] = seq
+            seq += 1
+        day += timedelta(days=1)
+    return result
+
+
 def _review_key(st):
     """ترتیب مرورها: تاریخ خواندن، بعد جای درس در صف، بعد شمارهٔ جلسه."""
     read_day = st["read_day"].toordinal() if st["read_day"] else 0
@@ -186,12 +206,14 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
         if st["phase"] != "done":
             states.append(st)
 
-    # روز آخر هر کار روتین: از تاریخ شروع، به تعداد جلسه‌هایش روز پشت‌سرهم.
+    # تقویم هر کار روتین و آخرین روز همهٔ روتین‌ها
+    routine_dates = {}
     routine_last_day = today
     for it in routines:
-        count = len(routine_sessions.get(it["id"], {}))
-        start = it.get("start_date") or today
-        routine_last_day = max(routine_last_day, start + timedelta(days=count - 1))
+        cal = routine_calendar(it, len(routine_sessions.get(it["id"], {})), today)
+        routine_dates[it["id"]] = cal
+        if cal:
+            routine_last_day = max(routine_last_day, max(cal))
 
     # صف خواندن هر درس، به ترتیب شمارهٔ جلسه
     reads_by_item = {}
@@ -272,8 +294,7 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
 
             # 2. کارهای روتین همین تاریخ. روز ازدست‌رفته منتقل نمی‌شود.
             for it in routines:
-                start = it.get("start_date") or today
-                seq = (date - start).days + 1
+                seq = routine_dates[it["id"]].get(date)
                 rs = routine_sessions.get(it["id"], {}).get(seq)
                 if rs is not None and rs["status"] != "finished":
                     day.add({

@@ -143,6 +143,22 @@ def test_9b_routine_day_off_is_burned():
     assert day_of(plan, "W3", "routine") == [3]
 
 
+def test_9c_routine_on_some_weekdays():
+    # فقط شنبه (5) و دوشنبه (0). DAY1 شنبه است.
+    items = [item("W", 0, item_type="routine", start_date=d(1), routine_weekdays=[5, 0])]
+    plan = build(items, sessions("W", 3, 10))
+    assert day_of(plan, "W1", "routine") == [1]   # شنبه
+    assert day_of(plan, "W2", "routine") == [3]   # دوشنبه
+    assert day_of(plan, "W3", "routine") == [8]   # شنبهٔ بعد
+
+
+def test_9d_routine_future_start_date():
+    items = [item("W", 0, item_type="routine", start_date=d(5))]
+    plan = build(items, sessions("W", 2, 10))
+    assert day_of(plan, "W1", "routine") == [5]
+    assert day_of(plan, "W2", "routine") == [6]
+
+
 def test_10_huge_session():
     items = [item("A", 1), item("H", 2), item("C", 3)]
     sess = sessions("A", 2, 60) + sessions("H", 1, 180) + sessions("C", 1, 30)

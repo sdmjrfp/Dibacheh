@@ -1,0 +1,35 @@
+"""تنظیمات مشترک تست‌ها.
+
+تست‌ها هرگز به دیتابیس واقعی شما در data/ دست نمی‌زنند.
+هر تست یک دیتابیس و پوشهٔ backup موقت جدا می‌گیرد که بعد از تست پاک می‌شود.
+"""
+
+import sys
+from pathlib import Path
+
+import pytest
+
+# تا تست‌ها بتوانند «from helpers import ...» بنویسند
+sys.path.insert(0, str(Path(__file__).parent))
+
+import app as app_module  # noqa: E402
+import database  # noqa: E402
+
+
+@pytest.fixture
+def conn(tmp_path):
+    connection = database.connect(tmp_path / "test.sqlite3")
+    yield connection
+    connection.close()
+
+
+@pytest.fixture
+def client(tmp_path):
+    db_path = tmp_path / "app.sqlite3"
+    setup = database.connect(db_path)
+    database.set_setting(setup, "backup_folder", str(tmp_path / "backups"))
+    setup.close()
+    app_module.app.config["DB_PATH"] = db_path
+    app_module._last_backup_day = None
+    yield app_module.app.test_client()
+    app_module.app.config["DB_PATH"] = database.DB_PATH
