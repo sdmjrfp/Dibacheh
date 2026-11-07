@@ -5,15 +5,29 @@
 
 ## دانلود و نصب
 
-برنامهٔ آماده برای Mac با تراشهٔ Apple (M1 به بعد) و macOS 13 یا تازه‌تر:
+**[دانلود آخرین نسخه](https://github.com/sdmjrfp/Dibacheh/releases/latest)**. نصب Python یا چیز دیگری لازم نیست.
 
-**[دانلود آخرین نسخه](https://github.com/sdmjrfp/Dibacheh/releases/latest)**
+| سیستم | فایل | نصب |
+|---|---|---|
+| Mac با تراشهٔ Apple (M1 به بعد) | `…-AppleSilicon.dmg` | برنامه را به Applications بکشید |
+| Mac اینتل | `…-Intel.dmg` | برنامه را به Applications بکشید |
+| ویندوز ۱۰ و ۱۱ (۶۴ بیتی) | `…-Windows-Setup.exe` | اجرا کنید؛ دسترسی مدیر لازم نیست. `…-Windows-Portable.zip` نسخهٔ بدون نصب است |
+| لینوکس (x86_64) | `…-Linux-x86_64.AppImage` | قابل اجرا کنید (`chmod +x`) و اجرا کنید. اگر اجرا نشد، `…-Linux-x86_64.tar.gz` را باز کنید و فایل `Dibacheh` را اجرا کنید |
 
-1. فایل dmg را باز کنید و Dibacheh را به پوشهٔ Applications بکشید. نصب Python یا چیز دیگری لازم نیست.
-2. برنامه را باز کنید. چون برنامه با گواهی اپل امضا نشده، macOS بار اول جلوی آن را می‌گیرد: به System Settings و Privacy & Security بروید و پایین صفحه Open Anyway را بزنید.
-3. برنامه در مرورگر باز می‌شود و آیکونش در Dock می‌ماند. برای بستن، روی آیکون کلیک راست کنید و Quit را بزنید.
+**هشدار بار اول:** برنامه امضای پولی ندارد، پس سیستم بار اول هشدار می‌دهد.
 
-داده‌ها فقط روی Mac شما، در `~/Library/Application Support/Dibacheh` می‌مانند و هیچ چیزی به اینترنت فرستاده نمی‌شود. با نصب نسخهٔ تازه داده‌ها سر جایشان می‌مانند.
+- **Mac:** System Settings، بخش Privacy & Security، پایین صفحه Open Anyway.
+- **ویندوز:** در پنجرهٔ SmartScreen روی More info و بعد Run anyway بزنید.
+
+**بستن برنامه:** برنامه در مرورگر باز می‌شود. روی Mac از Dock با Quit، و روی ویندوز و لینوکس با دکمهٔ «⏻ بستن برنامه» بالای صفحه بسته می‌شود. بستن تب مرورگر برنامه را نمی‌بندد.
+
+**لینوکس:** برای پنجرهٔ Browse باید `zenity` یا `kdialog` نصب باشد.
+
+**داده‌ها** فقط روی کامپیوتر شما می‌مانند و هیچ چیزی به اینترنت فرستاده نمی‌شود. با نصب نسخهٔ تازه هم سر جایشان هستند:
+
+- Mac: `~/Library/Application Support/Dibacheh`
+- ویندوز: `%APPDATA%\Dibacheh`
+- لینوکس: `~/.local/share/dibacheh`
 
 استفادهٔ شخصی از برنامه رایگان است؛ جزئیات در [LICENSE](LICENSE). مجوز فونت‌ها و کتابخانه‌ها در [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) است.
 
@@ -186,11 +200,15 @@ DIBACHEH_DB=/tmp/dibacheh-demo.sqlite3 DIBACHEH_PORT=5001 .venv/bin/python app.p
 
 ## ساختن نسخهٔ نصبی
 
+نسخه‌های همهٔ سیستم‌ها روی ماشین‌های GitHub ساخته می‌شوند (`.github/workflows/release.yml`). برای انتشار نسخهٔ تازه، عدد فایل `VERSION` را عوض کنید، commit کنید و یک تگ بفرستید:
+
 ```bash
-zsh tools/build_release.sh
+git tag v1.2.0 && git push origin v1.2.0
 ```
 
-خروجی در `build/release` است: `Dibacheh.app` با پایتون داخلش و یک فایل dmg. شمارهٔ نسخه در فایل `VERSION` است. نسخهٔ ساخته‌شده فقط برای همان نوع پردازنده‌ای است که با آن ساخته‌اید.
+تست‌ها روی هر چهار سیستم اجرا می‌شوند، نسخهٔ ساخته‌شده واقعاً اجرا و امتحان می‌شود (`tools/smoke_test.py`) و فایل‌ها به یک Release پیش‌نویس اضافه می‌شوند. بعد آن را در GitHub منتشر کنید.
+
+ساختن روی همین کامپیوتر: `zsh tools/build_release.sh` روی Mac و `python tools/build_release.py` روی ویندوز و لینوکس. خروجی در `build/release` است.
 
 ## ساختار پوشه‌ها
 
@@ -201,6 +219,7 @@ zsh tools/build_release.sh
 | `leitner.py` | قانون‌های جعبه و مرور |
 | `database.py` | کار با SQLite |
 | `sources.py` | خواندن منابع، Browse و باز کردن فایل |
+| `platform_tools.py` | هر چیزی که بین Mac، ویندوز و لینوکس فرق دارد |
 | `exporter.py` | ساخت خروجی HTML |
 | `reports.py` | آمار و گزارش هفتگی |
 | `static/stats.js` | پنجرهٔ گزارش و نمودارها |
