@@ -1,6 +1,6 @@
 """آمار و گزارش هفتگی، از روی سابقهٔ کارهای انجام‌شده (task_log)."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import jalali
 
@@ -48,27 +48,52 @@ def stats(conn, items, categories, now, days=371):
             group["read"] += s["minutes"] if s["status"] in ("reviewing", "finished") else (s["minutes_done"] or 0)
     categories_out = [g for g in groups.values() if g["items"]]
 
+    # 12 ماه شمسی اخیر
+    months = []
+    cursor = now
+    for _ in range(12):
+        first, last = jalali.month_bounds(cursor)
+        month = {"start": first, "read": 0, "review": 0, "routine": 0}
+        for entry in per_day.values():
+            if first.isoformat() <= entry["date"] <= last.isoformat():
+                for kind in ("read", "review", "routine"):
+                    month[kind] += entry[kind]
+        months.insert(0, month)
+        cursor = first - timedelta(days=1)
+
     totals = {k: sum(d[k] for d in per_day.values()) for k in ("read", "review", "routine")}
-    return {"days": list(per_day.values()), "weeks": weeks, "categories": categories_out, "totals": totals}
+    return {"days": list(per_day.values()), "weeks": weeks, "months": months,
+            "categories": categories_out, "totals": totals}
 
 
-def weekly(conn, state, week_day):
-    """گزارش یک هفته (شنبه تا جمعه): چه انجام شد و چه چیزی عقب افتاده است."""
-    start = jalali.week_start(week_day)
-    end = start + timedelta(days=6)
+def period_bounds(period, day):
+    """اولین و آخرین روز یک بازه. period: week، month یا all."""
+    if period == "week":
+        start = jalali.week_start(day)
+        return start, start + timedelta(days=6)
+    if period == "month":
+        return jalali.month_bounds(day)
+    return date(2000, 1, 1), day
+
+
+def summary(conn, state, period, day):
+    """خلاصهٔ یک بازه: چه انجام شد و چه چیزی عقب افتاده است."""
+    start, end = period_bounds(period, day)
     courses = {}
     totals = {"read": 0, "review": 0, "routine": 0}
     done_count = 0
     active_days = set()
+    first_day = None
     for row in _log_rows(conn, start):
-        day = row["date"]
-        if day > end.isoformat():
+        current = row["date"]
+        if current > end.isoformat():
             continue
+        first_day = first_day or current
         course = courses.setdefault(row["item_id"], {"title": row["title"], "read": 0, "review": 0, "routine": 0})
         course[row["task_type"]] += row["minutes"]
         totals[row["task_type"]] += row["minutes"]
         done_count += 1
-        active_days.add(day)
+        active_days.add(current)
 
     # عقب‌افتاده‌ها: مرورهایی که موعدشان گذشته و هنوز انجام نشده‌اند
     titles = {item["id"]: item["title"] for item in state["items"]}
@@ -77,15 +102,21 @@ def weekly(conn, state, week_day):
         for task in plan_day["tasks"]:
             if task.get("overdue"):
                 overdue[task["item_id"]] = overdue.get(task["item_id"], 0) + 1
-    next_start = jalali.week_start(state["today"]) + timedelta(days=7)
-    next_minutes = sum(d["total"] for d in state["plan"]["days"] if next_start <= d["date"] < next_start + timedelta(days=7))
+    # کار برنامه‌ریزی‌شده برای بازهٔ بعد
+    if period == "all":
+        next_minutes = sum(d["total"] for d in state["plan"]["days"])
+    else:
+        next_start, next_end = period_bounds(period, period_bounds(period, state["today"])[1] + timedelta(days=1))
+        next_minutes = sum(d["total"] for d in state["plan"]["days"] if next_start <= d["date"] <= next_end)
     return {
-        "start": start,
+        "period": period,
+        "start": date.fromisoformat(first_day) if period == "all" and first_day else start,
         "end": end,
+        "length": (end - start).days + 1,
         "courses": sorted(courses.values(), key=lambda c: -(c["read"] + c["review"] + c["routine"])),
         "totals": totals,
         "done_count": done_count,
         "active_days": len(active_days),
         "overdue": [{"title": titles.get(i, "؟"), "count": n} for i, n in overdue.items()],
-        "next_week_minutes": next_minutes,
+        "next_minutes": next_minutes,
     }

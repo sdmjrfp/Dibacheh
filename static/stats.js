@@ -5,7 +5,8 @@
 */
 
 const KINDS = [["read", "خواندن"], ["review", "مرور"], ["routine", "روتین"]];
-let reportWeek = null;   // یک روز از هفتهٔ نمایش‌داده‌شده
+let reportPeriod = "week";  // week، month یا all
+let reportDate = null;      // یک روز از بازهٔ نمایش‌داده‌شده
 
 /** یک راهنمای کوچک برای مقدار هر مستطیل نمودار */
 function chartTip() {
@@ -37,20 +38,39 @@ function statTile(value, label) {
   return el("div", { class: "stat-tile" }, el("div", { class: "stat-value" }, value), el("div", { class: "muted small" }, label));
 }
 
-function weeklySection(w, data) {
+/** عنوان بازه، و یک روز از بازهٔ قبل و بعد */
+function periodInfo(w) {
+  if (w.period === "week") {
+    return {
+      title: `هفتهٔ ${Jalali.formatShort(w.start)} تا ${Jalali.format(w.end)}`,
+      previous: Jalali.addDays(w.start, -1), next: Jalali.addDays(w.end, 1), nextLabel: "برنامهٔ هفتهٔ بعد",
+    };
+  }
+  if (w.period === "month") {
+    const { y, m } = Jalali.toJalali(w.start);
+    return {
+      title: `${Jalali.MONTHS[m - 1]} ${fa(y)}`,
+      previous: Jalali.addDays(w.start, -1), next: Jalali.addDays(w.end, 1), nextLabel: "برنامهٔ ماه بعد",
+    };
+  }
+  return { title: `از ${Jalali.format(w.start)} تا امروز`, nextLabel: "کار باقی‌مانده" };
+}
+
+function summarySection(w) {
   const t = w.totals;
   const total = t.read + t.review + t.routine;
-  const isThisWeek = weekStart(state.today) === w.start;
+  const info = periodInfo(w);
+  const reachedNow = !info.next || info.next > state.today;
   return el("section", { class: "stats-section" },
     el("div", { class: "panel-head" },
-      el("h3", {}, `هفتهٔ ${Jalali.formatShort(w.start)} تا ${Jalali.format(w.end)}`),
+      el("h3", {}, info.title),
       el("span", { class: "spacer" }),
-      el("button", { type: "button", class: "icon", title: "هفتهٔ قبل", onclick: () => openStats(Jalali.addDays(w.start, -7)) }, "→"),
-      el("button", { type: "button", class: "icon", title: "هفتهٔ بعد", disabled: isThisWeek, onclick: () => openStats(Jalali.addDays(w.start, 7)) }, "←"),
+      info.previous && el("button", { type: "button", class: "icon", title: "قبلی", onclick: () => openStats(w.period, info.previous) }, "→"),
+      info.previous && el("button", { type: "button", class: "icon", title: "بعدی", disabled: reachedNow, onclick: () => openStats(w.period, info.next) }, "←"),
       el("button", {
         type: "button",
         onclick: async () => {
-          const result = await api("POST", "/api/export/report", { week: w.start });
+          const result = await api("POST", "/api/export/report", { period: w.period, date: reportDate });
           await api("POST", "/api/export/reveal", { name: result.name });
           showMessage(`گزارش ذخیره شد: ${result.name}`, false);
         },
@@ -58,22 +78,22 @@ function weeklySection(w, data) {
     el("div", { class: "stat-row" },
       statTile(minutesText(total), "زمان مطالعه"),
       statTile(fa(w.done_count), "کار انجام‌شده"),
-      statTile(`${fa(w.active_days)} از ۷`, "روز فعال"),
-      statTile(minutesText(w.next_week_minutes), "برنامهٔ هفتهٔ بعد")),
+      statTile(w.period === "all" ? fa(w.active_days) : `${fa(w.active_days)} از ${fa(w.length)}`, "روز فعال"),
+      statTile(minutesText(w.next_minutes), info.nextLabel)),
     w.courses.length
       ? el("table", { class: "sessions" },
           el("thead", {}, el("tr", {}, ...["درس", "خواندن", "مرور", "روتین"].map((h) => el("th", {}, h)))),
           el("tbody", {}, w.courses.map((c) => el("tr", {},
             el("td", {}, c.title), el("td", {}, fa(c.read)), el("td", {}, fa(c.review)), el("td", {}, fa(c.routine))))))
-      : el("p", { class: "muted" }, "در این هفته کاری ثبت نشده."),
+      : el("p", { class: "muted" }, "در این بازه کاری ثبت نشده."),
     w.overdue.length
       ? el("p", {}, `عقب‌افتاده: ${w.overdue.map((o) => `${o.title} (${fa(o.count)})`).join("، ")}`)
       : el("p", { class: "muted small" }, "کار عقب‌افتاده‌ای نیست."),
   );
 }
 
-/** نمودار ستونی انباشته: زمان هر هفته به تفکیک نوع کار */
-function weeksChart(weeks) {
+/** نمودار ستونی انباشته: زمان هر هفته یا ماه به تفکیک نوع کار */
+function stackedChart(weeks, name, label, every) {
   const W = 720, H = 200, top = 12, bottom = 26, left = 8, right = 44;
   const plot = H - top - bottom;
   const max = Math.max(60, ...weeks.map((w) => w.read + w.review + w.routine));
@@ -81,7 +101,7 @@ function weeksChart(weeks) {
   const y = (m) => top + plot - (plot * m) / nice;
   const slot = (W - left - right) / weeks.length;
   const barW = Math.min(30, slot - 8);
-  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "bars-chart", role: "img", "aria-label": "زمان مطالعهٔ ۱۲ هفتهٔ اخیر" });
+  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "bars-chart", role: "img", "aria-label": `زمان مطالعهٔ ۱۲ ${name} اخیر` });
   for (const m of [nice / 2, nice]) {
     chart.append(svg("line", { class: "grid", x1: left, x2: W - right, y1: y(m), y2: y(m) }),
       svg("text", { class: "axis-text", x: W - right + 6, y: y(m) + 4, "text-anchor": "end" }, `${fa(Math.round(m / 60))} ساعت`));
@@ -102,12 +122,12 @@ function weeksChart(weeks) {
     // ناحیهٔ لمس بزرگ‌تر از خود ستون
     group.append(svg("rect", { x: x - 4, y: top, width: barW + 8, height: plot, fill: "transparent" }));
     attachTip(group, [
-      [Jalali.formatShort(w.start), "شروع هفته"],
+      [label(w), ""],
       ...KINDS.map(([kind, label]) => [`${fa(w[kind])} دقیقه`, label]),
     ]);
     chart.append(group);
-    if (i % 3 === 0) {
-      chart.append(svg("text", { class: "axis-text", x: x + barW / 2, y: H - 8, "text-anchor": "middle" }, Jalali.formatShort(w.start)));
+    if (i % every === 0) {
+      chart.append(svg("text", { class: "axis-text", x: x + barW / 2, y: H - 8, "text-anchor": "middle" }, label(w)));
     }
   });
   return chart;
@@ -162,29 +182,52 @@ function categoriesSection(categories) {
   }));
 }
 
-async function openStats(week = null) {
-  reportWeek = week;
-  const url = week ? `/api/stats?week=${week}` : "/api/stats";
-  const data = await (await fetch(url)).json();
+/** نمودار با جدول همان داده‌ها */
+function chartSection(rows, name, label, every, hasWork) {
+  return el("section", { class: "stats-section" },
+    el("h3", {}, `زمان مطالعهٔ ۱۲ ${name} اخیر`),
+    hasWork ? stackedChart(rows, name, label, every) : el("p", { class: "muted" }, "بعد از ثبت اولین کار، نمودار اینجا می‌آید."),
+    chartLegend(),
+    el("details", {}, el("summary", { class: "small" }, "نمایش به شکل جدول"),
+      el("table", { class: "sessions" },
+        el("thead", {}, el("tr", {}, ...[name, "خواندن", "مرور", "روتین"].map((h) => el("th", {}, h)))),
+        el("tbody", {}, rows.map((r) => el("tr", {},
+          el("td", {}, label(r)), el("td", {}, fa(r.read)), el("td", {}, fa(r.review)), el("td", {}, fa(r.routine))))))));
+}
+
+function monthLabel(row) {
+  return Jalali.MONTHS[Jalali.toJalali(row.start).m - 1];
+}
+
+function renderReportTabs() {
+  const tabs = [["week", "هفتگی"], ["month", "ماهانه"], ["all", "کلی"]];
+  $("#report-tabs").replaceChildren(...tabs.map(([key, label]) =>
+    el("button", { type: "button", role: "tab", "aria-selected": String(reportPeriod === key), onclick: () => openStats(key) }, label)));
+}
+
+/** گزارش یک بازه را باز می‌کند. date: یک روز از بازه؛ خالی یعنی بازهٔ فعلی. */
+async function openStats(period = reportPeriod, date = null) {
+  reportPeriod = period;
+  reportDate = date;
+  const query = new URLSearchParams({ period });
+  if (date) query.set("date", date);
+  const data = await (await fetch(`/api/stats?${query}`)).json();
   const hasWork = data.days.length > 0;
-  $("#stats-body").replaceChildren(
-    weeklySection(data.weekly, data),
-    el("section", { class: "stats-section" },
-      el("h3", {}, "زمان مطالعهٔ ۱۲ هفتهٔ اخیر"),
-      hasWork ? weeksChart(data.weeks) : el("p", { class: "muted" }, "بعد از ثبت اولین کار، نمودار اینجا می‌آید."),
-      chartLegend(),
-      el("details", {}, el("summary", { class: "small" }, "نمایش به شکل جدول"),
-        el("table", { class: "sessions" },
-          el("thead", {}, el("tr", {}, ...["شروع هفته", "خواندن", "مرور", "روتین"].map((h) => el("th", {}, h)))),
-          el("tbody", {}, data.weeks.map((w) => el("tr", {},
-            el("td", {}, Jalali.format(w.start)), el("td", {}, fa(w.read)), el("td", {}, fa(w.review)), el("td", {}, fa(w.routine)))))))),
-    el("section", { class: "stats-section" }, el("h3", {}, "نقشهٔ فعالیت یک سال اخیر"), activityMap(data.days)),
-    data.categories.length
-      ? el("section", { class: "stats-section" }, el("h3", {}, "پیشرفت خواندن هر دسته"), categoriesSection(data.categories))
-      : "",
-  );
+  const sections = [summarySection(data.summary)];
+  if (period === "week") {
+    sections.push(chartSection(data.weeks, "هفته", (w) => Jalali.formatShort(w.start), 3, hasWork));
+  } else if (period === "month") {
+    sections.push(chartSection(data.months, "ماه", monthLabel, 1, hasWork));
+  } else {
+    sections.push(el("section", { class: "stats-section" }, el("h3", {}, "نقشهٔ فعالیت یک سال اخیر"), activityMap(data.days)));
+    if (data.categories.length) {
+      sections.push(el("section", { class: "stats-section" }, el("h3", {}, "پیشرفت خواندن هر دسته"), categoriesSection(data.categories)));
+    }
+  }
+  renderReportTabs();
+  $("#stats-body").replaceChildren(...sections);
   if (!$("#stats-dialog").open) $("#stats-dialog").showModal();
 }
 
-$("#stats-button").addEventListener("click", () => openStats());
+$("#stats-button").addEventListener("click", () => openStats("week"));
 $("#close-stats").addEventListener("click", () => $("#stats-dialog").close());

@@ -209,12 +209,23 @@ def test_stats_and_weekly_report(client, tmp_path):
     assert data["days"] == [{"date": state["today"], "read": 60, "review": 20, "routine": 0}]
     assert len(data["weeks"]) == 12 and data["weeks"][-1]["read"] == 60
     assert data["categories"] == [{"name": "زبان", "total": 120, "read": 60, "items": 1}]
-    w = data["weekly"]
+    w = data["summary"]
+    assert w["period"] == "week" and w["length"] == 7
     assert w["done_count"] == 2 and w["active_days"] == 1
     assert w["courses"][0]["title"] == "A" and w["totals"]["review"] == 20
     name = client.post("/api/export/report", json={}).get_json()["name"]
     html = (tmp_path / "out" / name).read_text(encoding="utf-8")
     assert "گزارش هفته" in html and "<td>A</td>" in html
+    month = client.get("/api/stats?period=month").get_json()
+    assert month["summary"]["done_count"] == 2 and len(month["months"]) == 12
+    assert month["months"][-1]["read"] == 60
+    overall = client.get("/api/stats?period=all").get_json()["summary"]
+    assert overall["start"] == state["today"] and overall["totals"]["read"] == 60
+    assert overall["next_minutes"] > 0
+    for period, text in (("month", "گزارش ماه"), ("all", "گزارش کلی")):
+        name = client.post("/api/export/report", json={"period": period}).get_json()["name"]
+        assert text in (tmp_path / "out" / name).read_text(encoding="utf-8")
+    assert client.get("/api/stats?period=year").status_code == 400
 
 
 # ---------------------------------------------------------------------------

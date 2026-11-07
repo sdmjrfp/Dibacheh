@@ -113,11 +113,12 @@ def render(state, scope, start, end, with_content, vault_path):
 
 
 def export_report(report, state, folder):
-    """گزارش هفتگی به شکل یک فایل HTML مستقل."""
+    """گزارش هفتگی، ماهانه یا کلی به شکل یک فایل HTML مستقل."""
     start, end = report["start"], report["end"]
     t = report["totals"]
     total = t["read"] + t["review"] + t["routine"]
     fa = jalali.fa
+    next_label = {"week": "برنامهٔ هفتهٔ بعد", "month": "برنامهٔ ماه بعد", "all": "کار باقی‌مانده"}[report["period"]]
     rows = "".join(
         f"<tr><td>{esc(c['title'])}</td><td>{fa(c['read'])}</td><td>{fa(c['review'])}</td><td>{fa(c['routine'])}</td></tr>"
         for c in report["courses"])
@@ -126,20 +127,27 @@ def export_report(report, state, folder):
         f'<section class="day"><h2>خلاصه</h2>'
         f"<p>{fa(report['done_count'])} کار در {fa(report['active_days'])} روز، جمعاً {fa(total)} دقیقه: "
         f"خواندن {fa(t['read'])}، مرور {fa(t['review'])}، روتین {fa(t['routine'])}.</p>"
-        f"<p>برنامهٔ هفتهٔ بعد: {fa(report['next_week_minutes'])} دقیقه.</p></section>"
+        f"<p>{next_label}: {fa(report['next_minutes'])} دقیقه.</p></section>"
         f'<section class="day"><h2>به تفکیک درس (دقیقه)</h2>'
         + (f'<table class="report"><tr><th>درس</th><th>خواندن</th><th>مرور</th><th>روتین</th></tr>{rows}</table>'
            if rows else '<p class="muted">کاری ثبت نشده.</p>')
         + "</section>"
         + f'<section class="day"><h2>عقب‌افتاده</h2>{"<ul>" + overdue + "</ul>" if overdue else "<p class=muted>هیچ.</p>"}</section>')
-    heading = f"گزارش هفته: {jalali.format_date(start)} تا {jalali.format_date(end)}"
+    y, m, _ = jalali.to_jalali(start)
+    heading = {
+        "week": f"گزارش هفته: {jalali.format_date(start)} تا {jalali.format_date(end)}",
+        "month": f"گزارش ماه: {jalali.MONTHS[m - 1]} {fa(y)}",
+        "all": f"گزارش کلی تا {jalali.format_date(end)}",
+    }[report["period"]]
     page = PAGE.format(title=esc(heading), heading=esc(heading),
                        note=esc(f"ساخته‌شده در {jalali.format_date(state['today'])}."),
                        font=_font_data(), extra_font=_custom_font_css(state.get("settings", {})),
                        **_colors(state.get("settings", {})), body=body)
     folder = Path(folder).expanduser()
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"گزارش هفته از {jalali.iso_name(start)}.html"
+    name = {"week": f"گزارش هفته از {jalali.iso_name(start)}", "month": f"گزارش ماه {jalali.iso_name(start)[:7]}",
+            "all": f"گزارش کلی {jalali.iso_name(end)}"}[report["period"]]
+    path = folder / f"{name}.html"
     path.write_text(page, encoding="utf-8")
     return path
 

@@ -1251,21 +1251,30 @@ def api_delete_type(type_id):
 # آمار و گزارش
 # ---------------------------------------------------------------------------
 
+def _period(value):
+    if value in (None, ""):
+        return "week"
+    if value not in ("week", "month", "all"):
+        raise UserError("بازهٔ گزارش نامعتبر است.")
+    return value
+
+
 @app.route("/api/stats")
 def api_stats():
     state = state_data()
     data = reports.stats(get_db(), state["items"], state["categories"], state["today"])
-    week = _parse_date(request.args.get("week")) or state["today"]
-    data["weekly"] = reports.weekly(get_db(), state, week)
+    data["summary"] = reports.summary(get_db(), state, _period(request.args.get("period")),
+                                      _parse_date(request.args.get("date")) or state["today"])
     return jsonify(_json_ready(data))
 
 
 @app.route("/api/export/report", methods=["POST"])
 def api_export_report():
-    """گزارش هفتگی به شکل فایل HTML، در پوشهٔ خروجی."""
+    """گزارش هفتگی، ماهانه یا کلی به شکل فایل HTML، در پوشهٔ خروجی."""
     state = state_data()
-    week = _parse_date(_body().get("week")) or state["today"]
-    report = reports.weekly(get_db(), state, week)
+    data = _body()
+    report = reports.summary(get_db(), state, _period(data.get("period")),
+                             _parse_date(data.get("date")) or state["today"])
     path = exporter.export_report(report, state, export_folder())
     return jsonify({"name": path.name, "path": str(path), "size": path.stat().st_size})
 
