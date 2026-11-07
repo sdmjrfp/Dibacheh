@@ -19,9 +19,12 @@
 import hmac
 import json
 import os
+import re
 import secrets
 import sqlite3
 import subprocess
+import tempfile
+import zipfile
 from collections import deque
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -32,6 +35,7 @@ import database
 import leitner
 import scheduler
 import exporter
+import reports
 import sources
 
 # آدرس و پورت سرور.
@@ -144,6 +148,11 @@ UNDO_LABELS = {
     "api_set_day": "تغییر سقف روز",
     "api_task_done": "ثبت انجام کار",
     "api_task_undone": "انجام‌نشده کردن کار",
+    "api_set_day_range": "تعطیلی چندروزه",
+    "api_archive_item": "بایگانی درس",
+    "api_bulk_add": "افزودن گروهی",
+    "api_restore_backup": "برگرداندن backup",
+    "api_import_data": "ورود داده‌ها",
     "api_add_category": "افزودن دسته",
     "api_rename_category": "تغییر نام دسته",
     "api_delete_category": "حذف دسته",
@@ -330,6 +339,7 @@ def state_data():
             # چند جلسه از این درس دستی به روز خاصی برده شده‌اند (📌)
             # رنگ منبع: انتخاب کاربر، وگرنه یک رنگ ثابت از فهرست رنگ‌ها
             "display_color": item.get("color") or database.SOURCE_PALETTE[item["id"] % len(database.SOURCE_PALETTE)],
+            "waiting_for": waiting_for(item, inputs["items"], sessions_by_item),
             "pinned": sum(1 for x in sess if x.get("read_manual_date") or x.get("review_manual_date")),
         })
         items[-1]["target"] = target_status(items[-1])
@@ -352,6 +362,21 @@ def state_data():
 
 def build_state():
     return _json_ready(state_data())
+
+
+def waiting_for(item, items, sessions_by_item):
+    """نام پیش‌نیازهایی که هنوز تمام نشده‌اند و این درس منتظرشان است."""
+    titles = {i["id"]: i for i in items}
+    names = []
+    for req in item.get("requires") or []:
+        other = titles.get(req["id"])
+        if other is None or not other["is_active"]:
+            continue
+        status = item_status(sessions_by_item.get(other["id"], []))
+        finished = status == "finished" if req["until"] == "finished" else status in ("read", "finished")
+        if not finished:
+            names.append(other["title"])
+    return names
 
 
 def done_today(conn, now):
@@ -553,6 +578,44 @@ def _apply_auto_split(conn, item_id):
         database.update_session(conn, s["id"], section_start=a, section_end=b)
 
 
+def _save_requires(conn, item_id, requires):
+    """وابستگی‌های یک درس را بررسی و ذخیره می‌کند: فقط درس‌های موجود و بدون دور."""
+    if not isinstance(requires, list):
+        raise UserError("وابستگی‌ها نامعتبرند.")
+    items = {i["id"]: i for i in database.list_items(conn)}
+    cleaned = []
+    for req in requires:
+        other = req.get("id")
+        until = req.get("until", "read")
+        if other not in items or other == item_id or items[other]["item_type"] != "study":
+            raise UserError("پیش‌نیاز باید یک درس دیگر باشد.")
+        if until not in ("read", "finished"):
+            raise UserError("نوع وابستگی نامعتبر است.")
+        cleaned.append({"id": other, "until": until})
+    # اگر پیش‌نیازها خودشان (مستقیم یا غیرمستقیم) به این درس وابسته باشند، هیچ‌کدام شروع نمی‌شوند
+    graph = {k: [r["id"] for r in v] for k, v in database.list_dependencies(conn).items()}
+    stack = [r["id"] for r in cleaned]
+    seen = set()
+    while stack:
+        current = stack.pop()
+        if current == item_id:
+            raise UserError("این وابستگی یک دور می‌سازد: دو درس منتظر هم می‌مانند.")
+        if current not in seen:
+            seen.add(current)
+            stack.extend(graph.get(current, []))
+    database.set_dependencies(conn, item_id, cleaned)
+
+
+def _apply_sections(conn, item_id, unit, sections):
+    """بخش جلسه‌های خوانده‌نشده را از فهرست بخش‌ها (عنوان‌های نوت یا فصل‌های PDF) پر می‌کند."""
+    unread = [s for s in database.list_sessions(conn, item_id) if s["status"] == "unread"]
+    for session, section in zip(unread, sections):
+        database.update_session(conn, session["id"], section_start=str(section.get("start") or "") or None,
+                                section_end=str(section.get("end") or "") or None,
+                                section_label=str(section.get("title") or ""))
+    database.update_item(conn, item_id, section_unit=unit)
+
+
 @app.route("/api/items", methods=["POST"])
 def api_add_item():
     conn = get_db()
@@ -581,8 +644,15 @@ def api_add_item():
     if "color" not in fields:
         used = len(database.list_items(conn))
         fields["color"] = database.SOURCE_PALETTE[used % len(database.SOURCE_PALETTE)]
+    sections = data.get("sections") or []
+    if sections:
+        count = len(sections)
     item_id = database.add_item(conn, title, count, minutes, **fields)
     _apply_auto_split(conn, item_id)
+    if sections:
+        _apply_sections(conn, item_id, fields.get("section_unit", "text"), sections)
+    if data.get("requires"):
+        _save_requires(conn, item_id, data["requires"])
     if first_date and fields.get("item_type") != "routine":
         # جلسهٔ اول دستی به همان روز می‌رود؛ بقیهٔ جلسه‌ها پشت سرش می‌آیند
         first = database.list_sessions(conn, item_id)[0]
@@ -598,6 +668,8 @@ def api_update_item(item_id):
     data = _body()
     fields = _item_fields(data, database.get_settings(conn))
     database.update_item(conn, item_id, **fields)
+    if "requires" in data:
+        _save_requires(conn, item_id, data["requires"])
     if {"range_start", "range_end", "section_unit"} & set(fields):
         _apply_auto_split(conn, item_id)
     return state_response()
@@ -610,13 +682,77 @@ def api_split_item(item_id):
     if database.get_item(conn, item_id) is None:
         abort(404)
     data = _body()
-    count = _positive_int(data.get("session_count"), "تعداد جلسهٔ باقی‌مانده")
+    sections = data.get("sections") or []
+    count = len(sections) or _positive_int(data.get("session_count"), "تعداد جلسهٔ باقی‌مانده")
     minutes = data.get("session_minutes")
     minutes = _positive_int(minutes, "زمان جلسه") if minutes not in (None, "") else None
     _, new = scheduler.resplit_remaining(database.list_sessions(conn, item_id), count, minutes)
     database.replace_unread_sessions(conn, item_id, new)
     _apply_auto_split(conn, item_id)
+    if sections:
+        _apply_sections(conn, item_id, data.get("section_unit", "text"), sections)
     return state_response()
+
+
+@app.route("/api/items/<int:item_id>/archive", methods=["POST"])
+def api_archive_item(item_id):
+    """درس تمام‌شده از فهرست اصلی پنهان می‌شود. سابقه‌اش می‌ماند."""
+    conn = get_db()
+    if database.get_item(conn, item_id) is None:
+        abort(404)
+    archived = bool(_body().get("archived", True))
+    if archived and item_status(database.list_sessions(conn, item_id)) != "finished":
+        raise UserError("فقط درس تمام‌شده بایگانی می‌شود.")
+    database.update_item(conn, item_id, archived=archived)
+    return state_response()
+
+
+@app.route("/api/items/<int:item_id>/outline")
+def api_item_outline(item_id):
+    """ساختار فایل منبع یک درس ثبت‌شده، برای ساختن جلسه‌ها از عنوان‌ها یا فصل‌ها."""
+    conn = get_db()
+    item = database.get_item(conn, item_id)
+    if item is None:
+        abort(404)
+    location = sources.source_location(item, database.get_settings(conn)["vault_path"])
+    return jsonify({"outline": sources.file_outline(location) if location else None})
+
+
+@app.route("/api/items/bulk", methods=["POST"])
+def api_bulk_add():
+    """چند درس با هم. هر خط: عنوان، تعداد جلسه، زمان جلسه (دو عدد آخر اختیاری‌اند)."""
+    conn = get_db()
+    data = _body()
+    defaults = database.get_settings(conn)["new_item_defaults"]
+    rows = []
+    for number, line in enumerate(str(data.get("text", "")).splitlines(), start=1):
+        parts = [p.strip() for p in re.split(r"[،,|\t]", line) if p.strip()]
+        if not parts:
+            continue
+        digits = [_latin_digits(p) for p in parts[1:]]
+        if any(not d.isdigit() or int(d) < 1 for d in digits) or len(digits) > 2:
+            raise UserError(f"خط {number}: بعد از عنوان فقط تعداد جلسه و زمان جلسه بیاید.")
+        rows.append((parts[0], int(digits[0]) if digits else 1,
+                     int(digits[1]) if len(digits) > 1 else defaults["session_minutes"]))
+    if not rows:
+        raise UserError("هیچ درسی نوشته نشده است.")
+    fields = {"max_new_sessions_per_day": defaults.get("max_new_sessions_per_day", 1)}
+    if data.get("category_id"):
+        fields["category_id"] = data["category_id"]
+    if data.get("custom_type_id"):
+        custom = database.get_type(conn, data["custom_type_id"])
+        if custom is None:
+            raise UserError("نوع کار پیدا نشد.")
+        fields.update(custom_type_id=custom["id"], item_type=custom["behavior"])
+    palette = database.SOURCE_PALETTE
+    used = len(database.list_items(conn))
+    for offset, (title, count, minutes) in enumerate(rows):
+        database.add_item(conn, title, count, minutes, color=palette[(used + offset) % len(palette)], **fields)
+    return state_response()
+
+
+def _latin_digits(text):
+    return text.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789"))
 
 
 @app.route("/api/items/<int:item_id>", methods=["DELETE"])
@@ -691,6 +827,8 @@ def api_update_session(session_id):
             fields[key] = str(data[key] or "").strip() or None
     if "section_label" in fields:
         fields["section_label"] = fields["section_label"] or ""
+    if "note" in data:
+        fields["note"] = str(data["note"] or "").strip()[:5000]
     if "minutes" in data:
         fields["minutes"] = _positive_int(data["minutes"], "زمان جلسه")
     if "review_minutes_override" in data:
@@ -864,7 +1002,8 @@ def export_folder():
 
 def _export_file(name):
     """فقط فایلی که خود برنامه در پوشهٔ خروجی ساخته؛ نه هر آدرس دلخواه."""
-    if not isinstance(name, str) or "/" in name or "\\" in name or name.startswith(".") or not name.endswith(".html"):
+    if (not isinstance(name, str) or "/" in name or "\\" in name or name.startswith(".")
+            or not name.endswith((".html", ".zip"))):
         raise UserError("نام فایل نامعتبر است.")
     path = export_folder() / name
     if not path.is_file():
@@ -905,6 +1044,19 @@ def api_export_reveal():
 def api_export_open():
     subprocess.run(["open", str(_export_file(_body().get("name")))], check=False)
     return jsonify({"ok": True})
+
+
+@app.route("/api/days/range", methods=["POST"])
+def api_set_day_range():
+    """تعطیلی چندروزه: همهٔ روزهای بازه با هم. cap_minutes=null یعنی برداشتن تعطیلی."""
+    data = _body()
+    start, end = _parse_date(data.get("start")), _parse_date(data.get("end"))
+    if start is None or end is None or end < start:
+        raise UserError("بازهٔ تاریخ نامعتبر است.")
+    if (end - start).days > 366:
+        raise UserError("بازه نمی‌تواند بیشتر از یک سال باشد.")
+    database.set_day_range(get_db(), start, end, data.get("cap_minutes", 0))
+    return state_response()
 
 
 @app.route("/api/days/<day>", methods=["PUT"])
@@ -950,7 +1102,7 @@ def api_browse():
     if path is None:
         return jsonify({"cancelled": True})
     source_type, stored = sources.classify_path(path, database.get_settings(conn)["vault_path"])
-    return jsonify({"source_type": source_type, "source_path_or_url": stored})
+    return jsonify({"source_type": source_type, "source_path_or_url": stored, "outline": sources.file_outline(path)})
 
 
 # ---------------------------------------------------------------------------
@@ -1084,6 +1236,108 @@ def api_update_type(type_id):
 @app.route("/api/types/<int:type_id>", methods=["DELETE"])
 def api_delete_type(type_id):
     database.delete_type(get_db(), type_id)
+    return state_response()
+
+
+# ---------------------------------------------------------------------------
+# آمار و گزارش
+# ---------------------------------------------------------------------------
+
+@app.route("/api/stats")
+def api_stats():
+    state = state_data()
+    data = reports.stats(get_db(), state["items"], state["categories"], state["today"])
+    week = _parse_date(request.args.get("week")) or state["today"]
+    data["weekly"] = reports.weekly(get_db(), state, week)
+    return jsonify(_json_ready(data))
+
+
+@app.route("/api/export/report", methods=["POST"])
+def api_export_report():
+    """گزارش هفتگی به شکل فایل HTML، در پوشهٔ خروجی."""
+    state = state_data()
+    week = _parse_date(_body().get("week")) or state["today"]
+    report = reports.weekly(get_db(), state, week)
+    path = exporter.export_report(report, state, export_folder())
+    return jsonify({"name": path.name, "path": str(path), "size": path.stat().st_size})
+
+
+# ---------------------------------------------------------------------------
+# Backup و انتقال داده‌ها
+# ---------------------------------------------------------------------------
+
+@app.route("/api/backups")
+def api_backups():
+    folder = database.backup_folder(database.get_settings(get_db()))
+    return jsonify(_json_ready(database.list_backups(folder)))
+
+
+@app.route("/api/backups/restore", methods=["POST"])
+def api_restore_backup():
+    """یک backup را برمی‌گرداند. قبلش یک کپی جدا از وضعیت فعلی گرفته می‌شود."""
+    conn = get_db()
+    folder = database.backup_folder(database.get_settings(conn))
+    name = _body().get("name")
+    if name not in {b["name"] for b in database.list_backups(folder)}:
+        raise UserError("این backup پیدا نشد.")
+    try:
+        database.check_database_file(folder / name)
+    except ValueError as error:
+        raise UserError(str(error))
+    database.safety_copy(conn, folder, datetime.now())
+    database.replace_database(conn, folder / name)
+    return state_response()
+
+
+@app.route("/api/data/export", methods=["POST"])
+def api_export_data():
+    """همهٔ داده‌ها در یک فایل zip: دیتابیس و فونت‌های اضافه‌شده."""
+    conn = get_db()
+    folder = export_folder()
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"dibacheh-data-{today().isoformat()}.zip"
+    with tempfile.TemporaryDirectory() as work:
+        copy = Path(work) / "dibacheh.sqlite3"
+        target = sqlite3.connect(copy)
+        try:
+            conn.backup(target)
+        finally:
+            target.close()
+        with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.write(copy, "dibacheh.sqlite3")
+            if database.FONTS_DIR.is_dir():
+                for font in database.FONTS_DIR.iterdir():
+                    if font.suffix.lower() in FONT_SUFFIXES:
+                        archive.write(font, f"fonts/{font.name}")
+    return jsonify({"name": path.name, "path": str(path), "size": path.stat().st_size})
+
+
+@app.route("/api/data/import", methods=["POST"])
+def api_import_data():
+    """فایل zip داده‌ها را با Browse می‌گیرد و جای داده‌های فعلی می‌گذارد."""
+    conn = get_db()
+    chosen = sources.browse("file", "فایل داده‌های دیباچه را انتخاب کنید (zip)")
+    if chosen is None:
+        return jsonify({"cancelled": True})
+    try:
+        with zipfile.ZipFile(chosen) as archive, tempfile.TemporaryDirectory() as work:
+            if "dibacheh.sqlite3" not in archive.namelist():
+                raise UserError("این فایل دادهٔ دیباچه ندارد.")
+            copy = Path(work) / "incoming.sqlite3"
+            copy.write_bytes(archive.read("dibacheh.sqlite3"))
+            try:
+                database.check_database_file(copy)
+            except ValueError as error:
+                raise UserError(str(error))
+            database.safety_copy(conn, database.backup_folder(database.get_settings(conn)), datetime.now())
+            database.replace_database(conn, copy)
+            # فقط نام فایل استفاده می‌شود، پس فایل zip نمی‌تواند بیرون از پوشهٔ فونت‌ها چیزی بنویسد
+            database.FONTS_DIR.mkdir(parents=True, exist_ok=True)
+            for name in archive.namelist():
+                if name.startswith("fonts/") and Path(name).suffix.lower() in FONT_SUFFIXES:
+                    (database.FONTS_DIR / Path(name).name).write_bytes(archive.read(name))
+    except zipfile.BadZipFile:
+        raise UserError("این فایل zip معتبر نیست.")
     return state_response()
 
 

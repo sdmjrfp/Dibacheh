@@ -11,7 +11,7 @@ import json
 import re
 import sqlite3
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -120,6 +120,18 @@ MIGRATIONS = [
     ALTER TABLE items ADD COLUMN color TEXT;
     ALTER TABLE task_log ADD COLUMN before_state TEXT;
     """,
+    # نسخهٔ 5: وابستگی درس‌ها، یادداشت جلسه، بایگانی
+    #   until: read (بعد از پایان خواندن پیش‌نیاز) یا finished (بعد از پایان مرورهایش)
+    """
+    CREATE TABLE item_dependencies (
+        item_id        INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+        depends_on_id  INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+        until          TEXT NOT NULL DEFAULT 'read',
+        PRIMARY KEY (item_id, depends_on_id)
+    );
+    ALTER TABLE sessions ADD COLUMN note TEXT NOT NULL DEFAULT '';
+    ALTER TABLE items ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;
+    """,
 ]
 
 # رنگ‌های پیش‌فرض منبع‌ها؛ هر منبع تازه رنگ بعدی را می‌گیرد و بعداً قابل تغییر است
@@ -150,6 +162,8 @@ DEFAULT_SETTINGS = {
     "color_mode": "kind",
     # فونت‌هایی که کاربر اضافه کرده: [{"family": "...", "file": "..."}]؛ فایل‌ها در data/fonts
     "custom_fonts": [],
+    # الگوهای درس: [{"name": "...", "fields": {...}}]
+    "item_templates": [],
 }
 
 FONTS_DIR = DATA_DIR / "fonts"
@@ -210,6 +224,8 @@ def _to_python(row):
             data[key] = json.loads(value)
     if "is_active" in data:
         data["is_active"] = bool(data["is_active"])
+    if "archived" in data:
+        data["archived"] = bool(data["archived"])
     return data
 
 
@@ -330,6 +346,19 @@ def clean_setting(key, value):
         if value not in ("kind", "source"):
             raise ValueError("نوع رنگ‌بندی نامعتبر است.")
         return value
+    if key == "item_templates":
+        if not isinstance(value, list):
+            raise ValueError("فهرست الگوها نامعتبر است.")
+        allowed = {"session_count", "session_minutes", "max_new_sessions_per_day", "review_ratio",
+                   "review_intervals", "section_unit", "category_id", "item_type", "custom_type_id", "color"}
+        result = []
+        for template in value:
+            name = str(template.get("name", "")).strip()
+            if not name or len(name) > 60:
+                raise ValueError("نام الگو باید بین 1 تا 60 حرف باشد.")
+            fields = template.get("fields") or {}
+            result.append({"name": name, "fields": {k: v for k, v in fields.items() if k in allowed}})
+        return result
     if key == "custom_fonts":
         if not isinstance(value, list):
             raise ValueError("فهرست فونت‌ها نامعتبر است.")
@@ -433,12 +462,12 @@ ITEM_FIELDS = {
     "title", "category_id", "item_type", "source_type", "source_path_or_url",
     "is_active", "max_new_sessions_per_day", "review_ratio", "review_intervals",
     "start_date", "routine_weekdays", "target_date",
-    "section_unit", "range_start", "range_end", "custom_type_id", "color",
+    "section_unit", "range_start", "range_end", "custom_type_id", "color", "archived",
 }
 SESSION_FIELDS = {
     "section_label", "section_start", "section_end", "minutes", "minutes_done", "status", "leitner_box", "read_at",
     "last_reviewed_on", "next_review_on", "review_minutes_override",
-    "read_manual_date", "review_manual_date",
+    "read_manual_date", "review_manual_date", "note",
 }
 
 
@@ -467,6 +496,35 @@ def add_item(conn, title, session_count, session_minutes, now=None, **fields):
     )
     conn.commit()
     return item_id
+
+
+def list_dependencies(conn):
+    """{شمارهٔ درس: [{"id": پیش‌نیاز، "until": "read" یا "finished"}]}"""
+    result = {}
+    for row in conn.execute("SELECT * FROM item_dependencies"):
+        result.setdefault(row["item_id"], []).append({"id": row["depends_on_id"], "until": row["until"]})
+    return result
+
+
+def set_dependencies(conn, item_id, requires):
+    conn.execute("DELETE FROM item_dependencies WHERE item_id = ?", (item_id,))
+    conn.executemany("INSERT INTO item_dependencies (item_id, depends_on_id, until) VALUES (?, ?, ?)",
+                     [(item_id, r["id"], r["until"]) for r in requires])
+    conn.commit()
+
+
+def set_day_range(conn, start, end, cap_minutes):
+    """سقف یک بازهٔ چندروزه. cap_minutes=0 تعطیل، None برگشت به حالت عادی."""
+    day = start
+    while day <= end:
+        if cap_minutes is None:
+            conn.execute("DELETE FROM day_overrides WHERE date = ?", (day.isoformat(),))
+        else:
+            conn.execute("INSERT INTO day_overrides (date, cap_minutes) VALUES (?, ?) "
+                         "ON CONFLICT(date) DO UPDATE SET cap_minutes = excluded.cap_minutes",
+                         (day.isoformat(), cap_minutes))
+        day += timedelta(days=1)
+    conn.commit()
 
 
 def get_item(conn, item_id):
@@ -554,7 +612,7 @@ def reset_item(conn, item_id):
         (item_id,),
     )
     queue = conn.execute("SELECT COALESCE(MAX(queue_position), 0) + 1 FROM items").fetchone()[0]
-    conn.execute("UPDATE items SET queue_position = ? WHERE id = ?", (queue, item_id))
+    conn.execute("UPDATE items SET queue_position = ?, archived = 0 WHERE id = ?", (queue, item_id))
     conn.commit()
 
 
@@ -622,8 +680,12 @@ def list_log(conn, session_id=None):
 
 def load_plan_inputs(conn):
     """همهٔ داده‌هایی که scheduler.build_plan لازم دارد، به همان شکلی که می‌خواهد."""
+    items = list_items(conn)
+    requires = list_dependencies(conn)
+    for item in items:
+        item["requires"] = requires.get(item["id"], [])
     return {
-        "items": list_items(conn),
+        "items": items,
         "sessions": list_sessions(conn),
         "settings": get_settings(conn),
         "day_overrides": get_day_overrides(conn),
@@ -665,3 +727,56 @@ def daily_backup(conn, folder, retention, today):
     for old in backups[:-retention] if retention > 0 else []:
         old.unlink()
     return target
+
+
+def list_backups(folder):
+    """فهرست backupها، تازه‌ترین اول."""
+    folder = Path(folder)
+    if not folder.exists():
+        return []
+    files = sorted(folder.glob("dibacheh-*.sqlite3"), key=lambda f: f.stat().st_mtime, reverse=True)
+    return [{"name": f.name, "size": f.stat().st_size,
+             "modified": datetime.fromtimestamp(f.stat().st_mtime).date(),
+             "safety": "before" in f.name} for f in files]
+
+
+def check_database_file(path):
+    """آیا این فایل واقعاً دیتابیس دیباچه است و از نسخهٔ تازه‌تر برنامه نیست؟ خطا → ValueError"""
+    try:
+        other = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+            version = other.execute("PRAGMA user_version").fetchone()[0]
+            tables = {r[0] for r in other.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        finally:
+            other.close()
+    except sqlite3.Error:
+        raise ValueError("این فایل دیتابیس معتبری نیست.")
+    if not {"items", "sessions", "settings"} <= tables:
+        raise ValueError("این فایل دیتابیس دیباچه نیست.")
+    if version > len(MIGRATIONS):
+        raise ValueError("این فایل با نسخهٔ تازه‌تری از برنامه ساخته شده است.")
+
+
+def safety_copy(conn, folder, now):
+    """قبل از جایگزینی داده‌ها، یک کپی جدا می‌گیرد. فقط 5 نسخهٔ آخر از این نوع می‌ماند."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / f"dibacheh-before-restore-{now.strftime('%Y-%m-%d-%H%M%S')}.sqlite3"
+    dest = sqlite3.connect(target)
+    try:
+        conn.backup(dest)
+    finally:
+        dest.close()
+    for old in sorted(folder.glob("dibacheh-before-restore-*.sqlite3"))[:-5]:
+        old.unlink()
+    return target
+
+
+def replace_database(conn, path):
+    """دادهٔ دیتابیس فعلی را با یک فایل دیگر عوض می‌کند و به آخرین ساختار می‌رساند."""
+    source = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        source.backup(conn)
+    finally:
+        source.close()
+    migrate(conn)

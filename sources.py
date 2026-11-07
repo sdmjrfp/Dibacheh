@@ -264,3 +264,39 @@ BUNDLED_FONTS = [
     {"family": "Gandom", "label": "گندم", "regular": "gandom/Gandom.woff2", "bold": None},
     {"family": "Tanha", "label": "تنها", "regular": "tanha/Tanha.woff2", "bold": None},
 ]
+
+
+def file_outline(path):
+    """ساختار یک فایل منبع، برای ساختن خودکار جلسه‌ها.
+
+    Markdown: عنوان‌ها. PDF: فهرست مطالب داخل فایل.
+    خروجی: {"unit": "heading" یا "page", "pages": تعداد صفحه, "entries": [{"level", "title", "page"}]}
+    یا None اگر ساختاری پیدا نشد. فقط برای فایلی صدا زده می‌شود که کاربر انتخاب کرده یا برای درس ثبت شده است.
+    """
+    path = Path(path)
+    suffix = path.suffix.lower()
+    if not path.is_file():
+        return None
+    if suffix == ".md":
+        item = {"source_type": "file", "source_path_or_url": str(path)}
+        entries = [{"level": h["level"], "title": h["text"], "page": None} for h in markdown_headings(item, "")]
+        return {"unit": "heading", "pages": None, "entries": entries} if entries else None
+    if suffix == ".pdf":
+        import pypdfium2 as pdfium
+        try:
+            doc = pdfium.PdfDocument(str(path))
+        except Exception:
+            return None
+        try:
+            entries = []
+            for bookmark in doc.get_toc():
+                page = bookmark.get_dest().get_index() if bookmark.get_dest() else None
+                if page is not None:
+                    entries.append({"level": bookmark.level + 1, "title": bookmark.get_title(), "page": page + 1})
+            pages = len(doc)
+        except Exception:
+            return None
+        finally:
+            doc.close()
+        return {"unit": "page", "pages": pages, "entries": entries} if entries else None
+    return None

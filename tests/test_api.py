@@ -171,4 +171,4 @@ def test_browse_inside_vault(client, monkeypatch, tmp_path):
     client.patch("/api/settings", json={"vault_path": str(vault)})
     monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(vault / "n.md"))
     result = client.post("/api/browse", json={"kind": "file"}).get_json()
-    assert result == {"source_type": "vault", "source_path_or_url": "n.md"}
+    assert result == {"source_type": "vault", "source_path_or_url": "n.md", "outline": None}

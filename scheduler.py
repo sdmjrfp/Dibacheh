@@ -230,6 +230,38 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
     item_order = sorted(reads_by_item, key=lambda i: (active[i]["queue_position"], i))
     manual_reads = [st for st in states if st["phase"] == "read" and st["manual_read"]]
 
+    # وابستگی درس‌ها: برای هر درس چند خواندن و چند کار دیگر مانده، و آخرین بار کی انجام شده
+    open_reads = {}
+    open_all = {}
+    for st in states:
+        open_all[st["item_id"]] = open_all.get(st["item_id"], 0) + 1
+        if st["phase"] == "read":
+            open_reads[st["item_id"]] = open_reads.get(st["item_id"], 0) + 1
+    last_read_on = {}
+    last_work_on = {}
+    for s in sessions:
+        if s.get("read_at"):
+            last_read_on[s["item_id"]] = max(s["read_at"], last_read_on.get(s["item_id"], s["read_at"]))
+        work = s.get("last_reviewed_on") or s.get("read_at")
+        if work:
+            last_work_on[s["item_id"]] = max(work, last_work_on.get(s["item_id"], work))
+
+    def waiting_for_prerequisite(item_id, date):
+        """درس وابسته از روز بعد از تمام شدن پیش‌نیازش شروع می‌شود.
+
+        پیش‌نیاز غیرفعال نادیده گرفته می‌شود تا درس برای همیشه گیر نکند.
+        """
+        for req in active[item_id].get("requires") or []:
+            other = req["id"]
+            if other not in active:
+                continue
+            if req.get("until") == "finished":
+                if open_all.get(other, 0) > 0 or last_work_on.get(other, date - timedelta(days=1)) >= date:
+                    return True
+            elif open_reads.get(other, 0) > 0 or last_read_on.get(other, date - timedelta(days=1)) >= date:
+                return True
+        return False
+
     # مرورها در یک heap بر اساس تاریخ موعد نگه داشته می‌شوند تا محاسبه سریع باشد.
     review_heap = []
     manual_reviews = []
@@ -267,6 +299,9 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
             task["manual"] = st["manual_read"] is not None
             task["partial"] = st["partial"]
             info["read_end"] = day.date
+            open_reads[st["item_id"]] -= 1
+            last_read_on[st["item_id"]] = day.date
+            last_work_on[st["item_id"]] = day.date
             # بعد از خواندن، جلسه وارد جعبهٔ 1 می‌شود.
             st.update(phase="review", box=1, read_day=day.date, last_day=day.date,
                       manual_read=None, manual_review=None, partial=False)
@@ -275,14 +310,17 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
             else:
                 st["phase"] = "done"
                 remaining -= 1
+                open_all[st["item_id"]] -= 1
         else:
             task["manual"] = st["manual_review"] is not None
             task["review_round"] = st["box"]
             task["overdue"] = _due(st, today) < today if st["manual_review"] is None else False
             info["review_end"] = day.date
+            last_work_on[st["item_id"]] = day.date
             if st["box"] >= len(st["intervals"]):
                 st["phase"] = "done"
                 remaining -= 1
+                open_all[st["item_id"]] -= 1
             else:
                 st.update(box=st["box"] + 1, last_day=day.date, manual_review=None)
                 schedule_review(st)
@@ -357,6 +395,8 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
             # 5. جلسه‌های جدید. مرور همیشه اول است، مگر سقف مرور روشن باشد.
             if not reviews_left or review_limit is not None:
                 for item_id in item_order:
+                    if waiting_for_prerequisite(item_id, date):
+                        continue  # کار دستی این درس همچنان در مرحلهٔ 3 می‌آید
                     queue = reads_by_item[item_id]
                     # جلسه‌های خوانده‌شده را از ابتدای صف بردار (فقط برای سرعت)
                     while queue and queue[0]["phase"] != "read":

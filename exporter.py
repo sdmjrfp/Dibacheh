@@ -112,6 +112,38 @@ def render(state, scope, start, end, with_content, vault_path):
                        body="\n".join(body))
 
 
+def export_report(report, state, folder):
+    """گزارش هفتگی به شکل یک فایل HTML مستقل."""
+    start, end = report["start"], report["end"]
+    t = report["totals"]
+    total = t["read"] + t["review"] + t["routine"]
+    fa = jalali.fa
+    rows = "".join(
+        f"<tr><td>{esc(c['title'])}</td><td>{fa(c['read'])}</td><td>{fa(c['review'])}</td><td>{fa(c['routine'])}</td></tr>"
+        for c in report["courses"])
+    overdue = "".join(f"<li>{esc(o['title'])}: {fa(o['count'])} کار</li>" for o in report["overdue"])
+    body = (
+        f'<section class="day"><h2>خلاصه</h2>'
+        f"<p>{fa(report['done_count'])} کار در {fa(report['active_days'])} روز، جمعاً {fa(total)} دقیقه: "
+        f"خواندن {fa(t['read'])}، مرور {fa(t['review'])}، روتین {fa(t['routine'])}.</p>"
+        f"<p>برنامهٔ هفتهٔ بعد: {fa(report['next_week_minutes'])} دقیقه.</p></section>"
+        f'<section class="day"><h2>به تفکیک درس (دقیقه)</h2>'
+        + (f'<table class="report"><tr><th>درس</th><th>خواندن</th><th>مرور</th><th>روتین</th></tr>{rows}</table>'
+           if rows else '<p class="muted">کاری ثبت نشده.</p>')
+        + "</section>"
+        + f'<section class="day"><h2>عقب‌افتاده</h2>{"<ul>" + overdue + "</ul>" if overdue else "<p class=muted>هیچ.</p>"}</section>')
+    heading = f"گزارش هفته: {jalali.format_date(start)} تا {jalali.format_date(end)}"
+    page = PAGE.format(title=esc(heading), heading=esc(heading),
+                       note=esc(f"ساخته‌شده در {jalali.format_date(state['today'])}."),
+                       font=_font_data(), extra_font=_custom_font_css(state.get("settings", {})),
+                       **_colors(state.get("settings", {})), body=body)
+    folder = Path(folder).expanduser()
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"گزارش هفته از {jalali.iso_name(start)}.html"
+    path.write_text(page, encoding="utf-8")
+    return path
+
+
 def day_html(day, plan_day, done_entries, sessions, today, with_content, vault_path, show_title):
     parts = []
     if show_title:
@@ -151,8 +183,10 @@ def task_html(task, item, session, with_content, vault_path, key):
             f'<strong>{esc(item["title"])}</strong>'
             f'<span class="meta">{esc(" · ".join(meta))}</span></label>')
     content = ""
+    if session.get("note"):
+        content += f'<div class="note">📝 {esc(session["note"])}</div>'
     if with_content and task["kind"] != "routine":
-        content = content_html(item, session, vault_path)
+        content += content_html(item, session, vault_path)
     style = ""
     if item.get("paint"):
         color = esc(item["paint"])
@@ -396,6 +430,9 @@ figure {{ margin: 8px 0; }}
 figure img {{ border: 1px solid var(--border); }}
 figcaption {{ color: var(--muted); font-size: 0.8em; text-align: center; }}
 .url {{ word-break: break-all; }}
+.note {{ margin-top: 6px; font-size: 0.9em; white-space: pre-wrap; }}
+table.report {{ border-collapse: collapse; width: 100%; }}
+table.report td, table.report th {{ border-bottom: 1px solid var(--border); padding: 4px 8px; text-align: start; }}
 </style>
 </head>
 <body>
