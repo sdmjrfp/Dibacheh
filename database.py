@@ -8,28 +8,15 @@
 """
 
 import json
-import os
 import re
 import sqlite3
-import sys
 import threading
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-def _app_home():
-    """پوشه‌ای که داده‌ها در آن است.
+import platform_tools
 
-    اجرا از سورس: پوشهٔ پروژه. نسخهٔ نصبی: Application Support کاربر، تا با به‌روزرسانی
-    یا حذف برنامه داده‌ها از بین نرود. DIBACHEH_HOME برای تست نسخهٔ نصبی است.
-    """
-    if os.environ.get("DIBACHEH_HOME"):
-        return Path(os.environ["DIBACHEH_HOME"])
-    if getattr(sys, "frozen", False):
-        return Path.home() / "Library" / "Application Support" / "Dibacheh"
-    return Path(__file__).resolve().parent
-
-
-PROJECT_DIR = _app_home()
+PROJECT_DIR = platform_tools.app_home()
 DATA_DIR = PROJECT_DIR / "data"
 DB_PATH = DATA_DIR / "dibacheh.sqlite3"
 
@@ -755,10 +742,15 @@ def list_backups(folder):
              "safety": "before" in f.name} for f in files]
 
 
+def _read_only_uri(path):
+    """آدرس فقط‌خواندنی فایل دیتابیس؛ as_uri فاصله و حرف فارسی و مسیر ویندوز را درست می‌کند."""
+    return Path(path).resolve().as_uri() + "?mode=ro"
+
+
 def check_database_file(path):
     """آیا این فایل واقعاً دیتابیس دیباچه است و از نسخهٔ تازه‌تر برنامه نیست؟ خطا → ValueError"""
     try:
-        other = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        other = sqlite3.connect(_read_only_uri(path), uri=True)
         try:
             version = other.execute("PRAGMA user_version").fetchone()[0]
             tables = {r[0] for r in other.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
@@ -789,7 +781,7 @@ def safety_copy(conn, folder, now):
 
 def replace_database(conn, path):
     """دادهٔ دیتابیس فعلی را با یک فایل دیگر عوض می‌کند و به آخرین ساختار می‌رساند."""
-    source = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    source = sqlite3.connect(_read_only_uri(path), uri=True)
     try:
         source.backup(conn)
     finally:

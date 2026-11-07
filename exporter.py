@@ -105,8 +105,8 @@ def render(state, scope, start, end, with_content, vault_path):
 
     note = f"ساخته‌شده در {jalali.format_date(today)}."
     if end > today:
-        note += " برنامهٔ روزهای آینده پیش‌بینی است و با هر تغییر روی Mac عوض می‌شود."
-    note += " تیک‌های این صفحه فقط برای خودتان است و به Mac برنمی‌گردد."
+        note += " برنامهٔ روزهای آینده پیش‌بینی است و با هر تغییر در برنامه عوض می‌شود."
+    note += " تیک‌های این صفحه فقط برای خودتان است و به برنامه برنمی‌گردد."
     return PAGE.format(title=esc(heading), heading=esc(heading), note=esc(note),
                        font=_font_data(), extra_font=_custom_font_css(state.get("settings", {})),
                        **_colors(state.get("settings", {})),

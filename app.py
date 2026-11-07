@@ -22,9 +22,10 @@ import os
 import re
 import secrets
 import sqlite3
-import subprocess
 import sys
 import tempfile
+import threading
+import urllib.request
 import zipfile
 from collections import deque
 from datetime import date, datetime, timedelta
@@ -34,19 +35,22 @@ from flask import Flask, abort, g, jsonify, render_template, request, send_file
 
 import database
 import leitner
+import platform_tools
 import scheduler
 import exporter
 import reports
 import sources
 
 # آدرس و پورت سرور.
-# 127.0.0.1 یعنی فقط خود همین Mac می‌تواند به برنامه وصل شود،
+# 127.0.0.1 یعنی فقط خود همین کامپیوتر می‌تواند به برنامه وصل شود،
 # نه گوشی یا کامپیوتر دیگری در شبکه.
 HOST = "127.0.0.1"
 # پورت را می‌شود برای امتحان عوض کرد: DIBACHEH_PORT=5001 .venv/bin/python app.py
 # نسخهٔ نصبی پورت دیگری دارد، چون AirPlay Receiver روی خیلی از Macها پورت 5000 را گرفته است.
-FROZEN = getattr(sys, "frozen", False)
+FROZEN = platform_tools.is_frozen()
 PORT = int(os.environ.get("DIBACHEH_PORT") or (5847 if FROZEN else 5000))
+# نسخهٔ نصبی ویندوز و لینوکس آیکون Dock ندارد، پس دکمهٔ «بستن برنامه» در صفحه می‌آید
+CAN_QUIT = FROZEN and platform_tools.system() != "mac"
 ALLOWED_HOSTS = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
 
 # توکن CSRF: هر بار که برنامه اجرا می‌شود یک رمز تصادفی تازه ساخته می‌شود.
@@ -83,6 +87,11 @@ def check_security():
 
 class UserError(Exception):
     """خطایی که متنش باید به کاربر نشان داده شود (مثلاً «عنوان خالی است»)."""
+
+
+@app.errorhandler(platform_tools.BrowseUnavailable)
+def handle_browse_unavailable(error):
+    return jsonify({"error": str(error)}), 400
 
 
 @app.errorhandler(UserError)
@@ -362,6 +371,8 @@ def state_data():
         "categories": database.list_categories(conn),
         "types": database.list_types(conn),
         "palette": database.SOURCE_PALETTE,
+        "system": platform_tools.system(),
+        "can_quit": CAN_QUIT,
         "bundled_fonts": sources.BUNDLED_FONTS,
         "settings": settings,
         "plan": plan,
@@ -770,7 +781,7 @@ def _latin_digits(text):
 
 @app.route("/api/items/<int:item_id>", methods=["DELETE"])
 def api_delete_item(item_id):
-    """درس، جلسه‌ها و سابقه‌اش پاک می‌شود. فایل منبع روی Mac دست نمی‌خورد."""
+    """درس، جلسه‌ها و سابقه‌اش پاک می‌شود. فایل منبع روی کامپیوتر دست نمی‌خورد."""
     database.delete_item(get_db(), item_id)
     return state_response()
 
@@ -1049,13 +1060,13 @@ def api_export_file(name):
 @app.route("/api/export/reveal", methods=["POST"])
 def api_export_reveal():
     """فایل را در Finder انتخاب‌شده نشان می‌دهد تا بشود آن را به تلگرام یا هر برنامه‌ای کشید."""
-    subprocess.run(["open", "-R", str(_export_file(_body().get("name")))], check=False)
+    platform_tools.launch(platform_tools.reveal_args(_export_file(_body().get("name"))))
     return jsonify({"ok": True})
 
 
 @app.route("/api/export/open", methods=["POST"])
 def api_export_open():
-    subprocess.run(["open", str(_export_file(_body().get("name")))], check=False)
+    platform_tools.launch(platform_tools.open_args(_export_file(_body().get("name"))))
     return jsonify({"ok": True})
 
 
@@ -1374,6 +1385,49 @@ def api_reorder_categories():
     return state_response()
 
 
+@app.route("/api/quit", methods=["POST"])
+def api_quit():
+    """نسخهٔ نصبی ویندوز و لینوکس: برنامه را می‌بندد. (روی Mac، Quit از Dock این کار را می‌کند.)"""
+    if not CAN_QUIT:
+        abort(404)
+    threading.Timer(0.3, os._exit, [0]).start()   # اول جواب به صفحه برسد
+    return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------------------
+# اجرا
+# ---------------------------------------------------------------------------
+
+def _already_running():
+    """آیا دیباچه همین حالا روی این پورت باز است؟"""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(f"http://{HOST}:{PORT}/", timeout=2) as response:
+            return b'name="csrf-token"' in response.read()
+    except OSError:
+        return False
+
+
+def _open_page():
+    platform_tools.launch(platform_tools.open_args(f"http://{HOST}:{PORT}/"))
+
+
+def _start_desktop():
+    """نسخهٔ نصبی ویندوز و لینوکس: صفحه را هم خودش باز می‌کند.
+
+    خروجی True یعنی برنامه از قبل باز بود و فقط صفحه باز شد.
+    """
+    if _already_running():
+        _open_page()
+        return True
+    threading.Timer(1.0, _open_page).start()
+    return False
+
+
 if __name__ == "__main__":
-    # debug خاموش است، چون حالت debug اجازهٔ اجرای کد از راه مرورگر را می‌دهد.
-    app.run(host=HOST, port=PORT, debug=False)
+    if sys.stdout is None or sys.stderr is None:   # برنامهٔ ویندوزی بدون پنجرهٔ کنسول
+        database.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        sys.stdout = sys.stderr = open(database.DATA_DIR / "app.log", "a", encoding="utf-8")
+    if not (CAN_QUIT and not os.environ.get("DIBACHEH_NO_LAUNCH") and _start_desktop()):
+        # debug خاموش است، چون حالت debug اجازهٔ اجرای کد از راه مرورگر را می‌دهد.
+        app.run(host=HOST, port=PORT, debug=False)

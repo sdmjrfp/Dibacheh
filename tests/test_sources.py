@@ -37,11 +37,11 @@ def test_broken_link_is_reported(tmp_path):
 def test_open_command_for_each_source_type(tmp_path):
     vault = tmp_path / "My Vault"
     cmd = sources.open_command(study(source_type="vault", source_path_or_url="زبان/درس 1.md"), str(vault))
-    assert cmd[0] == "open"
-    assert cmd[1].startswith("obsidian://open?vault=My%20Vault&file=")
-    assert "%2F" in cmd[1]                                 # «/» داخل آدرس رمزگذاری شده
-    assert sources.open_command(study(source_type="file", source_path_or_url="/tmp/a.pdf"), "") == ["open", "/tmp/a.pdf"]
-    assert sources.open_command(study(source_type="url", source_path_or_url="https://youtu.be/x"), "") == ["open", "https://youtu.be/x"]
+    assert cmd[-1].startswith("obsidian://open?vault=My%20Vault&file=")
+    assert "%2F" in cmd[-1]                                # «/» داخل آدرس رمزگذاری شده
+    pdf = tmp_path / "a.pdf"
+    assert sources.open_command(study(source_type="file", source_path_or_url=str(pdf)), "")[-1] == str(pdf)
+    assert sources.open_command(study(source_type="url", source_path_or_url="https://youtu.be/x"), "")[-1] == "https://youtu.be/x"
 
 
 def test_only_web_links_are_opened():

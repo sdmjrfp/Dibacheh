@@ -509,6 +509,10 @@ function openDayMenu(iso, day, anchor) {
 // خروجی HTML و اشتراک‌گذاری
 // ---------------------------------------------------------------------------
 
+function fileManager() {
+  return { mac: "Finder", windows: "File Explorer" }[state.system] || "پوشه";
+}
+
 function openExportMenu(anchor, scope = "day", date = null) {
   const choice = { scope, date: date || Jalali.addDays(state.today, 1) };  // پیش‌فرض: فردا
   const picker = el("span", { class: "jalali-input" });
@@ -573,13 +577,13 @@ async function showExportResult(anchor, result) {
         try {
           await navigator.share({ files: [file], title: result.name });
         } catch (error) {
-          if (error.name !== "AbortError") { showMessage("پنجرهٔ Share باز نشد؛ فایل در Finder نشان داده می‌شود."); reveal(); }
+          if (error.name !== "AbortError") { showMessage(`پنجرهٔ Share باز نشد؛ فایل در ${fileManager()} نشان داده می‌شود.`); reveal(); }
         }
       },
     }, "اشتراک‌گذاری… (تلگرام و برنامه‌های دیگر)"),
-    el("button", { onclick: reveal }, "نمایش در Finder (برای کشیدن به تلگرام)"),
+    el("button", { onclick: reveal }, `نمایش در ${fileManager()} (برای کشیدن به تلگرام)`),
     el("button", { onclick: () => api("POST", "/api/export/open", { name: result.name }) }, "باز کردن فایل"),
-    !canShare && el("p", { class: "muted small" }, "این مرورگر پنجرهٔ Share را برای فایل پشتیبانی نمی‌کند. فایل را از Finder به تلگرام بکشید."),
+    !canShare && el("p", { class: "muted small" }, `این مرورگر پنجرهٔ Share را برای فایل پشتیبانی نمی‌کند. فایل را از ${fileManager()} به تلگرام بکشید.`),
   );
 }
 

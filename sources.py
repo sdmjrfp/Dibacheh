@@ -3,41 +3,22 @@
 قانون امنیتی مهم: برنامه فقط منبعی را باز یا می‌خواند که برای یک درس ثبت شده است.
 هیچ تابعی در این فایل آدرس دلخواه را از مرورگر نمی‌گیرد تا باز کند.
 
-برای اجرای open و osascript از subprocess با فهرست آرگومان (بدون shell=True)
-استفاده می‌شود، تا نام فایل‌های عجیب نتوانند دستور اضافه اجرا کنند.
+چیزهایی که بین سیستم‌عامل‌ها فرق دارد، در platform_tools.py است.
 """
 
 import re
-import subprocess
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
+import platform_tools
+
 # ---------------------------------------------------------------------------
-# Browse با پنجرهٔ انتخاب فایل خود macOS
+# Browse با پنجرهٔ انتخاب فایل خود سیستم
 # ---------------------------------------------------------------------------
 
 def browse(kind="file", prompt="یک فایل انتخاب کنید"):
-    """پنجرهٔ انتخاب فایل یا پوشهٔ macOS را باز می‌کند و آدرس کامل را برمی‌گرداند.
-
-    مرورگر به دلایل امنیتی آدرس کامل فایل را نمی‌دهد، برای همین این کار
-    در بخش پایتون و با osascript انجام می‌شود.
-    خروجی None یعنی کاربر Cancel زد.
-    """
-    what = "folder" if kind == "folder" else "file"
-    # متن prompt داخل AppleScript قرار می‌گیرد، پس علامت " از آن حذف می‌شود
-    safe_prompt = prompt.replace('"', "").replace("\\", "")
-    script = f'POSIX path of (choose {what} with prompt "{safe_prompt}")'
-    # activate باعث می‌شود پنجره جلوی مرورگر باز شود
-    result = subprocess.run(
-        ["osascript", "-e", "activate", "-e", script],
-        capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        return None
-    path = result.stdout.strip()
-    if kind == "folder":
-        path = path.rstrip("/")
-    return path or None
+    """پنجرهٔ انتخاب فایل یا پوشهٔ سیستم. خروجی None یعنی کاربر Cancel زد."""
+    return platform_tools.choose(kind, prompt)
 
 
 def classify_path(path, vault_path):
@@ -56,7 +37,7 @@ def classify_path(path, vault_path):
 
 
 def source_location(item, vault_path):
-    """آدرس کامل فایل یک درس روی Mac، یا None برای لینک و کار بدون منبع."""
+    """آدرس کامل فایل یک درس، یا None برای لینک و کار بدون منبع."""
     stored = item.get("source_path_or_url")
     if not stored:
         return None
@@ -94,11 +75,11 @@ def open_command(item, vault_path):
     if kind == "vault":
         vault_name = Path(vault_path).expanduser().name
         url = f"obsidian://open?vault={quote(vault_name, safe='')}&file={quote(stored, safe='')}"
-        return ["open", url]
+        return platform_tools.open_args(url)
     if kind == "file":
-        return ["open", str(Path(stored).expanduser())]
+        return platform_tools.open_args(Path(stored).expanduser())
     if kind == "url" and is_web_url(stored):
-        return ["open", stored]
+        return platform_tools.open_args(stored)
     return None
 
 
@@ -110,7 +91,7 @@ def open_source(item, vault_path):
     command = open_command(item, vault_path)
     if command is None:
         return "این کار منبعی برای باز کردن ندارد."
-    subprocess.run(command, check=False)
+    platform_tools.launch(command)
     return None
 
 

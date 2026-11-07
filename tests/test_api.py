@@ -32,12 +32,12 @@ def test_page_contains_csrf_token(client):
 
 def test_open_uses_only_registered_source(client, monkeypatch):
     calls = []
-    monkeypatch.setattr(app_module.sources.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
+    monkeypatch.setattr(app_module.platform_tools.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
     state = add(client, "L", source_type="url", source_path_or_url="https://youtu.be/abc")
     item_id = item_named(state, "L")["id"]
     # حتی اگر مرورگر آدرس دیگری بفرستد، فقط آدرس ثبت‌شده باز می‌شود
     client.post(f"/api/items/{item_id}/open", json={"path": "/etc/passwd"})
-    assert calls == [["open", "https://youtu.be/abc"]]
+    assert calls == [app_module.platform_tools.open_args("https://youtu.be/abc")]
 
 
 # ---------------------------------------------------------------------------

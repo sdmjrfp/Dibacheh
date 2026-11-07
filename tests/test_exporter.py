@@ -166,9 +166,9 @@ def test_export_file_endpoint_only_serves_export_files(client, export_dir):
 
 def test_reveal_in_finder(client, export_dir, monkeypatch):
     calls = []
-    monkeypatch.setattr(app_module.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
+    monkeypatch.setattr(app_module.platform_tools.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
     add(client, "A", count=1)
     name = export(client, scope="day")["name"]
     client.post("/api/export/reveal", json={"name": name})
-    assert calls == [["open", "-R", str(export_dir / name)]]
+    assert calls == [app_module.platform_tools.reveal_args(export_dir / name)]
     assert client.post("/api/export/reveal", json={"name": "../x.html"}).status_code == 400

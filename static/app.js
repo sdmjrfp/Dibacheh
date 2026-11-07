@@ -135,6 +135,7 @@ function renderNow() {
   renderWorkload();
   for (const warning of state.plan.warnings) showMessage(warning);
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
+  $("#quit-button").hidden = !state.can_quit;
   // دکمه‌های برگرداندن و بازگرداندن، با تعداد مرحله‌ها
   const undo = $("#undo-button");
   const redo = $("#redo-button");
@@ -752,7 +753,7 @@ $("#reset-item").addEventListener("click", () => {
 
 $("#delete-item").addEventListener("click", async () => {
   const item = itemById(editing.id);
-  if (!confirm(`«${item.title}» با همهٔ جلسه‌ها و سابقه‌اش حذف شود؟ فایل منبع روی Mac دست نمی‌خورد. این کار برگشت ندارد.`)) return;
+  if (!confirm(`«${item.title}» با همهٔ جلسه‌ها و سابقه‌اش حذف شود؟ فایل منبع روی کامپیوتر دست نمی‌خورد. این کار برگشت ندارد.`)) return;
   await api("DELETE", `/api/items/${editing.id}`);
   $("#item-dialog").close();
 });
@@ -842,6 +843,11 @@ $("#type-form").addEventListener("submit", async (e) => {
 });
 $("#close-type").addEventListener("click", () => $("#type-dialog").close());
 $("#add-type").addEventListener("click", openTypeDialog);
+$("#quit-button").addEventListener("click", async () => {
+  if (!confirm("برنامه بسته شود؟")) return;
+  await api("POST", "/api/quit", {});
+  document.body.replaceChildren(el("p", { class: "quit-note" }, "برنامه بسته شد. می‌توانید این صفحه را ببندید."));
+});
 
 // ---------------------------------------------------------------------------
 // افزودن گروهی و جست‌وجو
