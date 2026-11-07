@@ -117,6 +117,7 @@ function renderNow() {
   $("#vault-path").textContent = vault ? vault.split("/").filter(Boolean).pop() : "ثبت نشده";
   $("#vault-button").title = vault ? `مسیر والت: ${vault}\nبرای تغییر کلیک کنید` : "انتخاب پوشهٔ والت Obsidian";
   document.documentElement.dataset.theme = state.settings.theme || "light";
+  document.documentElement.dataset.colorMode = state.settings.color_mode || "kind";
   // فونت و اندازهٔ فونت از تنظیمات
   const root = document.documentElement.style;
   root.setProperty("--font", `"${state.settings.font_family || "Vazirmatn"}", "Vazirmatn", system-ui, Tahoma, sans-serif`);
@@ -353,6 +354,10 @@ function itemCard(item) {
       onclick: () => { selectedItemId = selectedItemId === item.id ? null : item.id; render(); },
     }, item.title),
     el("span", { class: "actions" },
+      el("input", {
+        type: "color", class: "swatch", value: item.display_color, title: "رنگ این منبع",
+        onchange: (e) => api("PATCH", `/api/items/${item.id}`, { color: e.target.value }),
+      }),
       item.source_type !== "none" && el("button", {
         class: "icon", title: "باز کردن منبع",
         onclick: () => api("POST", `/api/items/${item.id}/open`, {}),
@@ -455,6 +460,7 @@ function openItemDialog(item, type = "study", firstDate = null, customType = nul
   fields.title.value = item ? item.title : "";
   fields.category_id.replaceChildren(...categoryOptions(item ? item.category_id : defaults.category_id, "بدون دسته"));
   fields.is_active.checked = item ? item.is_active : true;
+  fields.color.value = item ? item.display_color : state.palette[state.items.length % state.palette.length];
   fields.session_count.value = isRoutine ? 10 : 1;
   fields.session_minutes.value = isRoutine ? 10 : (defaults.session_minutes || 60);
   fields.max_new_sessions_per_day.value = item ? item.max_new_sessions_per_day : (defaults.max_new_sessions_per_day || 1);
@@ -520,6 +526,7 @@ function collectForm() {
     item_type: editing.type,
     category_id: fields.category_id.value ? Number(fields.category_id.value) : null,
     is_active: fields.is_active.checked,
+    color: fields.color.value,
     section_unit: fields.section_unit.value,
     range_start: fields.range_start.value,
     range_end: fields.range_end.value,
@@ -699,8 +706,13 @@ function renderCustomFonts() {
     style = el("style", { id: "custom-font-faces" });
     document.head.append(style);
   }
-  const css = (state.settings.custom_fonts || []).map((f) =>
-    `@font-face { font-family: "${f.family}"; src: url("/fonts/${encodeURIComponent(f.file)}"); }`).join("\n");
+  const bundled = state.bundled_fonts.flatMap((f) => [
+    `@font-face { font-family: "${f.family}"; font-weight: 400; src: url("/static/vendor/fonts/${f.regular}") format("woff2"); }`,
+    f.bold ? `@font-face { font-family: "${f.family}"; font-weight: 700; src: url("/static/vendor/fonts/${f.bold}") format("woff2"); }` : "",
+  ]);
+  const custom = (state.settings.custom_fonts || []).map((f) =>
+    `@font-face { font-family: "${f.family}"; src: url("/fonts/${encodeURIComponent(f.file)}"); }`);
+  const css = [...bundled, ...custom].join("\n");
   if (style.textContent !== css) style.textContent = css;
 }
 
@@ -799,6 +811,8 @@ function openSettings() {
   sf.color_read.value = colors.read || "#e5484d";
   sf.color_review.value = colors.review || "#3b82f6";
   sf.color_routine.value = colors.routine || "#f5b400";
+  sf.color_mode.value = s.color_mode || "kind";
+  updateColorMode();
   sf.theme.value = s.theme;
   sf.font_size.value = s.font_size;
   sf.font_family.value = s.font_family;
@@ -923,6 +937,7 @@ function renderIntervalChart() {
     el("li", {}, `${fa(d)} روز بعد از ${i ? `مرور ${fa(i)}` : "خواندن"}`
       + ` (یعنی روز ${fa(points[i])} بعد از خواندن)`)));
   updateRatioExplain();
+  renderIntervalPresets();
 }
 
 (function setupIntervalChart() {
@@ -978,13 +993,44 @@ $("#interval-add").addEventListener("click", () => {
   chartMax = niceChartMax(intervalDraft);
   renderIntervalChart();
 });
-$("#interval-reset").addEventListener("click", () => {
-  intervalDraft = [1, 3, 7, 30];
-  chartMax = niceChartMax(intervalDraft);
-  renderIntervalChart();
-});
+// فاصله‌های آماده. بعد از انتخاب، باز هم می‌شود نقطه‌ها را روی نمودار جابه‌جا کرد.
+const INTERVAL_PRESETS = [
+  ["استاندارد", [1, 3, 7, 30]],
+  ["فشرده (امتحان نزدیک)", [1, 2, 4, 7]],
+  ["لایتنر کلاسیک", [1, 2, 4, 8, 16]],
+  ["بلندمدت", [1, 3, 7, 14, 30, 60, 120]],
+  ["سبک (مرور کم)", [3, 14, 45]],
+];
+
+function renderIntervalPresets() {
+  const current = intervalDraft.join();
+  $("#interval-presets").replaceChildren(...INTERVAL_PRESETS.map(([name, days]) =>
+    el("button", {
+      type: "button", "aria-selected": String(days.join() === current),
+      title: `${days.map(fa).join("، ")} روز`,
+      onclick: () => {
+        intervalDraft = [...days];
+        chartMax = niceChartMax(intervalDraft);
+        renderIntervalChart();
+      },
+    }, `${name}: ${days.map(fa).join("، ")}`)));
+}
 
 // ---------- نوع‌های کار و فونت‌ها
+
+/** در رنگ‌بندی بر اساس منبع، فهرست رنگ منبع‌ها دیده می‌شود؛ وگرنه رنگ خواندن و مرور و روتین */
+function updateColorMode() {
+  const bySource = sf.color_mode.value === "source";
+  $("#kind-colors").hidden = bySource;
+  $("#source-colors").hidden = !bySource;
+  $("#source-colors").replaceChildren(...state.items.map((item) =>
+    el("li", { "data-source": item.id },
+      el("input", { type: "color", value: item.display_color }),
+      el("span", {}, item.title))));
+  if (!state.items.length) $("#source-colors").append(el("li", { class: "muted small" }, "هنوز منبعی اضافه نشده."));
+}
+
+for (const radio of sf.color_mode) radio.addEventListener("change", updateColorMode);
 
 function renderTypeSettings() {
   $("#type-settings").replaceChildren(...state.types.map((t) =>
@@ -1007,6 +1053,11 @@ function renderTypeSettings() {
 
 function renderFontSettings() {
   const custom = state.settings.custom_fonts || [];
+  $("#bundled-fonts").replaceChildren(...[{ family: "Vazirmatn", label: "وزیرمتن" }, ...state.bundled_fonts].map((f) =>
+    el("button", {
+      type: "button", style: `font-family:"${f.family}"`, title: f.family,
+      onclick: () => { sf.font_family.value = f.family; },
+    }, f.label)));
   $("#custom-font-list").replaceChildren(...custom.map((f) =>
     el("li", {},
       el("span", { style: `font-family:"${f.family}"` }, `${f.family} — نمونهٔ متن فارسی`),
@@ -1020,7 +1071,7 @@ function renderFontSettings() {
       }, "حذف"))));
   if (!fontsLoaded) {
     fetch("/api/fonts").then((r) => r.json()).then((fonts) => {
-      const names = ["Vazirmatn", ...custom.map((f) => f.family), ...fonts];
+      const names = ["Vazirmatn", ...state.bundled_fonts.map((f) => f.family), ...custom.map((f) => f.family), ...fonts];
       $("#font-list").replaceChildren(...[...new Set(names)].map((f) => el("option", { value: f })));
       fontsLoaded = true;
     });
@@ -1058,6 +1109,7 @@ function collectSettings() {
       category_id: sf.default_category.value ? Number(sf.default_category.value) : null,
     },
     colors: { read: sf.color_read.value, review: sf.color_review.value, routine: sf.color_routine.value },
+    color_mode: sf.color_mode.value,
     theme: sf.theme.value,
     font_size: Number(sf.font_size.value),
     font_family: sf.font_family.value.trim(),
@@ -1076,6 +1128,12 @@ settingsForm.addEventListener("submit", async (e) => {
     const name = row.querySelector('[data-field="name"]').value.trim();
     const color = row.querySelector('[data-field="color"]').value;
     if (t && (name !== t.name || color !== t.color)) await api("PATCH", `/api/types/${t.id}`, { name, color });
+  }
+  // رنگ منبع‌هایی که عوض شده‌اند
+  for (const row of $$("#source-colors li[data-source]")) {
+    const item = itemById(Number(row.dataset.source));
+    const color = row.querySelector("input").value;
+    if (item && color !== item.display_color) await api("PATCH", `/api/items/${item.id}`, { color });
   }
   await api("PATCH", "/api/settings", collectSettings());
   $("#settings-dialog").close();

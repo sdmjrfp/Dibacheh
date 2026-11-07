@@ -115,7 +115,16 @@ MIGRATIONS = [
     );
     ALTER TABLE items ADD COLUMN custom_type_id INTEGER REFERENCES item_types(id) ON DELETE SET NULL;
     """,
+    # نسخهٔ 4: رنگ اختصاصی هر منبع، و وضعیت جلسه قبل از هر تیک (برای «انجام نشده»)
+    """
+    ALTER TABLE items ADD COLUMN color TEXT;
+    ALTER TABLE task_log ADD COLUMN before_state TEXT;
+    """,
 ]
+
+# رنگ‌های پیش‌فرض منبع‌ها؛ هر منبع تازه رنگ بعدی را می‌گیرد و بعداً قابل تغییر است
+SOURCE_PALETTE = ["#e5484d", "#3b82f6", "#f5b400", "#10b981", "#8b5cf6", "#f97316",
+                  "#ec4899", "#14b8a6", "#84cc16", "#6366f1", "#a16207", "#06b6d4"]
 
 # مقدار پیش‌فرض تنظیمات. فقط تنظیم‌هایی که کاربر عوض کند در جدول settings ذخیره می‌شوند.
 DEFAULT_SETTINGS = {
@@ -137,6 +146,8 @@ DEFAULT_SETTINGS = {
     "backup_retention": 30,
     # رنگ کارها در تقویم. پیش‌فرض: روتین زرد، مرور آبی، خواندن قرمز
     "colors": {"read": "#e5484d", "review": "#3b82f6", "routine": "#f5b400"},
+    # رنگ‌بندی تقویم: kind = بر اساس خواندن و مرور و روتین، source = بر اساس رنگ خود منبع
+    "color_mode": "kind",
     # فونت‌هایی که کاربر اضافه کرده: [{"family": "...", "file": "..."}]؛ فایل‌ها در data/fonts
     "custom_fonts": [],
 }
@@ -315,6 +326,10 @@ def clean_setting(key, value):
             if kind in value:
                 result[kind] = _color(value[kind])
         return result
+    if key == "color_mode":
+        if value not in ("kind", "source"):
+            raise ValueError("نوع رنگ‌بندی نامعتبر است.")
+        return value
     if key == "custom_fonts":
         if not isinstance(value, list):
             raise ValueError("فهرست فونت‌ها نامعتبر است.")
@@ -418,7 +433,7 @@ ITEM_FIELDS = {
     "title", "category_id", "item_type", "source_type", "source_path_or_url",
     "is_active", "max_new_sessions_per_day", "review_ratio", "review_intervals",
     "start_date", "routine_weekdays", "target_date",
-    "section_unit", "range_start", "range_end", "custom_type_id",
+    "section_unit", "range_start", "range_end", "custom_type_id", "color",
 }
 SESSION_FIELDS = {
     "section_label", "section_start", "section_end", "minutes", "minutes_done", "status", "leitner_box", "read_at",
@@ -565,11 +580,31 @@ def get_day_overrides(conn):
     return {date.fromisoformat(r["date"]): r["cap_minutes"] for r in rows}
 
 
-def add_log(conn, session_id, day, task_type, minutes, result):
+# ستون‌هایی از جلسه که با تیک زدن عوض می‌شوند
+TICK_FIELDS = ("status", "minutes_done", "leitner_box", "read_at", "last_reviewed_on",
+               "next_review_on", "read_manual_date", "review_manual_date")
+
+
+def add_log(conn, session_id, day, task_type, minutes, result, before=None):
+    """یک کار انجام‌شده را ثبت می‌کند. before: جلسه قبل از این تیک، برای «انجام نشده»."""
+    snapshot = None
+    if before is not None:
+        snapshot = json.dumps({k: _to_db(k, before.get(k)) for k in TICK_FIELDS})
     conn.execute(
-        "INSERT INTO task_log (session_id, date, task_type, minutes, result) VALUES (?, ?, ?, ?, ?)",
-        (session_id, day.isoformat(), task_type, minutes, result),
+        "INSERT INTO task_log (session_id, date, task_type, minutes, result, before_state) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (session_id, day.isoformat(), task_type, minutes, result, snapshot),
     )
+    conn.commit()
+
+
+def get_log(conn, log_id):
+    row = conn.execute("SELECT * FROM task_log WHERE id = ?", (log_id,)).fetchone()
+    return _to_python(row) if row else None
+
+
+def delete_log(conn, log_id):
+    conn.execute("DELETE FROM task_log WHERE id = ?", (log_id,))
     conn.commit()
 
 

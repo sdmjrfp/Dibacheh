@@ -17,6 +17,7 @@
 """
 
 import hmac
+import json
 import os
 import secrets
 import sqlite3
@@ -142,6 +143,7 @@ UNDO_LABELS = {
     "api_move_task": "جابه‌جایی کار",
     "api_set_day": "تغییر سقف روز",
     "api_task_done": "ثبت انجام کار",
+    "api_task_undone": "انجام‌نشده کردن کار",
     "api_add_category": "افزودن دسته",
     "api_rename_category": "تغییر نام دسته",
     "api_delete_category": "حذف دسته",
@@ -326,6 +328,8 @@ def state_data():
             "source_problem": sources.check_source(item, settings["vault_path"]),
             "range_problems": sources.check_ranges(item, sess),
             # چند جلسه از این درس دستی به روز خاصی برده شده‌اند (📌)
+            # رنگ منبع: انتخاب کاربر، وگرنه یک رنگ ثابت از فهرست رنگ‌ها
+            "display_color": item.get("color") or database.SOURCE_PALETTE[item["id"] % len(database.SOURCE_PALETTE)],
             "pinned": sum(1 for x in sess if x.get("read_manual_date") or x.get("review_manual_date")),
         })
         items[-1]["target"] = target_status(items[-1])
@@ -334,6 +338,8 @@ def state_data():
         "items": items,
         "categories": database.list_categories(conn),
         "types": database.list_types(conn),
+        "palette": database.SOURCE_PALETTE,
+        "bundled_fonts": sources.BUNDLED_FONTS,
         "settings": settings,
         "plan": plan,
         "workload": workload(plan, now),
@@ -473,6 +479,11 @@ def _item_fields(data, settings):
         fields["category_id"] = data["category_id"] or None
     if "is_active" in data:
         fields["is_active"] = bool(data["is_active"])
+    if "color" in data:
+        try:
+            fields["color"] = database._color(data["color"])
+        except ValueError as error:
+            raise UserError(str(error))
     if "max_new_sessions_per_day" in data:
         fields["max_new_sessions_per_day"] = _positive_int(data["max_new_sessions_per_day"], "سرعت")
     if "review_ratio" in data:
@@ -567,6 +578,9 @@ def api_add_item():
     first_date = _parse_date(data.get("first_date"))
     if fields.get("item_type") == "routine":
         fields["start_date"] = fields.get("start_date") or first_date or today()
+    if "color" not in fields:
+        used = len(database.list_items(conn))
+        fields["color"] = database.SOURCE_PALETTE[used % len(database.SOURCE_PALETTE)]
     item_id = database.add_item(conn, title, count, minutes, **fields)
     _apply_auto_split(conn, item_id)
     if first_date and fields.get("item_type") != "routine":
@@ -748,7 +762,7 @@ def api_task_done():
         if item["item_type"] != "routine" or session["status"] == "finished":
             raise UserError("این کار روتین قبلاً ثبت شده است.")
         database.update_session(conn, session["id"], status="finished", minutes_done=session["minutes"])
-        database.add_log(conn, session["id"], day, "routine", session["minutes"], "done")
+        database.add_log(conn, session["id"], day, "routine", session["minutes"], "done", before=session)
 
     elif kind == "read":
         if session["status"] not in ("unread", "reading"):
@@ -761,14 +775,14 @@ def api_task_done():
                 database.update_session(conn, session["id"], status="reading",
                                         minutes_done=already + minutes,
                                         read_manual_date=day + timedelta(days=1))
-                database.add_log(conn, session["id"], day, "read", minutes, "partial")
+                database.add_log(conn, session["id"], day, "read", minutes, "partial", before=session)
                 return state_response()
             # اگر با این مقدار کل جلسه خوانده شد، مثل «انجام شد» ثبت می‌شود
         elif result != "done":
             raise UserError("نتیجهٔ نامعتبر.")
         updated = leitner.finish_reading(session, day, intervals)
         _save_session(conn, updated)
-        database.add_log(conn, session["id"], day, "read", session["minutes"] - already, "done")
+        database.add_log(conn, session["id"], day, "read", session["minutes"] - already, "done", before=session)
 
     elif kind == "review":
         if session["status"] != "reviewing":
@@ -781,10 +795,57 @@ def api_task_done():
         else:
             raise UserError("نتیجهٔ نامعتبر.")
         _save_session(conn, updated)
-        database.add_log(conn, session["id"], day, "review", minutes, result)
+        database.add_log(conn, session["id"], day, "review", minutes, result, before=session)
     else:
         raise UserError("نوع کار نامعتبر است.")
     return state_response()
+
+
+@app.route("/api/tasks/undone", methods=["POST"])
+def api_task_undone():
+    """یک کار تیک‌خورده را به حالت انجام‌نشده برمی‌گرداند.
+
+    جلسه دقیقاً به وضعیت قبل از همان تیک برمی‌گردد و کار دوباره وارد برنامه می‌شود.
+    چون هر تیک روی تیک قبلی همان جلسه سوار است، فقط آخرین تیک هر جلسه برمی‌گردد.
+    """
+    conn = get_db()
+    log = database.get_log(conn, _body().get("log_id"))
+    if log is None:
+        raise UserError("این کار در سابقه پیدا نشد.")
+    logs = database.list_log(conn, log["session_id"])
+    if logs[-1]["id"] != log["id"]:
+        raise UserError("اول کار بعدیِ همین جلسه را انجام‌نشده کنید.")
+    session = database.get_session(conn, log["session_id"])
+    if session["status"] == "unread" and not session["minutes_done"]:
+        raise UserError("این درس بعد از این کار به خوانده‌نشده برگردانده شده است.")
+    if log.get("before_state"):
+        before = json.loads(log["before_state"])
+        restored = {k: (date.fromisoformat(v) if v and k in database.DATE_COLUMNS else v)
+                    for k, v in before.items()}
+    else:
+        restored = _replay_session(conn, session, logs[:-1])
+    database.update_session(conn, session["id"], **restored)
+    database.delete_log(conn, log["id"])
+    return state_response()
+
+
+def _replay_session(conn, session, logs):
+    """تیک‌هایی که قبل از ذخیره شدن وضعیت ثبت شده‌اند: جلسه از اول با سابقه‌اش بازسازی می‌شود."""
+    item = database.get_item(conn, session["item_id"])
+    intervals = leitner.intervals_for(item, database.get_settings(conn))
+    s = leitner.reset_session(session)
+    for entry in logs:
+        if entry["task_type"] == "routine":
+            s.update(status="finished", minutes_done=s["minutes"])
+        elif entry["task_type"] == "read" and entry["result"] == "partial":
+            s.update(status="reading", minutes_done=s["minutes_done"] + entry["minutes"])
+        elif entry["task_type"] == "read":
+            s = leitner.finish_reading(s, entry["date"], intervals)
+        elif entry["result"] == "needs_more":
+            s = leitner.needs_more_review(s, entry["date"], intervals)
+        else:
+            s = leitner.record_review(s, entry["date"], intervals)
+    return {k: s.get(k) for k in database.TICK_FIELDS}
 
 
 def _save_session(conn, session):

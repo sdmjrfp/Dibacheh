@@ -280,3 +280,16 @@ def font_family_name(path):
     """نام خانوادهٔ یک فایل فونت، مثلاً «Shabnam»."""
     from PIL import ImageFont
     return ImageFont.truetype(str(path), 12).getname()[0]
+
+
+# فونت‌های فارسی رایگان و متن‌باز که همراه برنامه‌اند (static/vendor/fonts).
+# مجوز هر فونت کنار فایل‌هایش است. فونت‌هایی که bold ندارند، ضخیمی را مرورگر می‌سازد.
+BUNDLED_FONTS = [
+    {"family": "Samim", "label": "صمیم", "regular": "samim/Samim.woff2", "bold": "samim/Samim-Bold.woff2"},
+    {"family": "Shabnam", "label": "شبنم", "regular": "shabnam/Shabnam.woff2", "bold": "shabnam/Shabnam-Bold.woff2"},
+    {"family": "Sahel", "label": "ساحل", "regular": "sahel/Sahel.woff2", "bold": "sahel/Sahel-Bold.woff2"},
+    {"family": "Estedad", "label": "استعداد", "regular": "estedad/Estedad.woff2", "bold": "estedad/Estedad-Bold.woff2"},
+    {"family": "Parastoo", "label": "پرستو", "regular": "parastoo/Parastoo.woff2", "bold": "parastoo/Parastoo-Bold.woff2"},
+    {"family": "Gandom", "label": "گندم", "regular": "gandom/Gandom.woff2", "bold": None},
+    {"family": "Tanha", "label": "تنها", "regular": "tanha/Tanha.woff2", "bold": None},
+]

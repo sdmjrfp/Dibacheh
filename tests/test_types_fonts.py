@@ -84,3 +84,40 @@ def test_add_font_rejects_other_files(client, tmp_path, monkeypatch):
     other.write_text("x")
     monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(other))
     assert client.post("/api/fonts/add", json={}).status_code == 400
+
+
+def test_new_sources_get_different_colors_and_can_change(client):
+    add(client, "الف", count=1)
+    state = add(client, "ب", count=1)
+    a, b = item_named(state, "الف"), item_named(state, "ب")
+    assert a["display_color"] != b["display_color"]
+    state = client.patch(f"/api/items/{a['id']}", json={"color": "#123456"}).get_json()
+    assert item_named(state, "الف")["display_color"] == "#123456"
+    assert client.patch(f"/api/items/{a['id']}", json={"color": "red"}).status_code == 400
+
+
+def test_color_mode_setting(client):
+    state = client.patch("/api/settings", json={"color_mode": "source"}).get_json()
+    assert state["settings"]["color_mode"] == "source"
+    assert client.patch("/api/settings", json={"color_mode": "rainbow"}).status_code == 400
+
+
+def test_export_uses_source_colors_and_bundled_font(client, tmp_path):
+    client.patch("/api/settings", json={"color_mode": "source", "font_family": "Samim",
+                                        "export_folder": str(tmp_path / "out")})
+    state = add(client, "A", count=1, color="#123456")
+    name = client.post("/api/export", json={"scope": "day"}).get_json()["name"]
+    html = (tmp_path / "out" / name).read_text(encoding="utf-8")
+    assert "#123456" in html
+    assert 'font-family: "Samim"' in html
+
+
+def test_bundled_fonts_exist_with_licenses(client):
+    state = client.get("/api/state").get_json()
+    root = Path(app_module.app.static_folder) / "vendor" / "fonts"
+    assert len(state["bundled_fonts"]) >= 5
+    for font in state["bundled_fonts"]:
+        assert (root / font["regular"]).is_file()
+        assert (root / font["regular"]).parent.joinpath("LICENSE.txt").is_file()
+        if font["bold"]:
+            assert (root / font["bold"]).is_file()

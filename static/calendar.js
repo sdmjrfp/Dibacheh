@@ -7,7 +7,7 @@
    تقویم عمداً هیچ گزینهٔ حذفی ندارد.
 */
 
-let calView = "week";     // "week" یا "month"
+let calView = "week";     // "day"، "week" یا "month"
 let calAnchor = null;     // یک روز از هفته یا ماهی که نشان داده می‌شود
 
 const KIND_LABEL = { read: "خواندن", review: "مرور", routine: "روتین" };
@@ -75,6 +75,7 @@ function whyNotMovable(task, date, index, firstReviews) {
 
 function renderCalendar() {
   if (!calAnchor) calAnchor = state.today;
+  $("#view-day").setAttribute("aria-selected", String(calView === "day"));
   $("#view-week").setAttribute("aria-selected", String(calView === "week"));
   $("#view-month").setAttribute("aria-selected", String(calView === "month"));
 
@@ -87,7 +88,13 @@ function renderCalendar() {
     days: planDays(), index: sessionIndex(), firstReviews: firstReviewDates(), history: historyByDate(),
   };
   const box = $("#calendar");
-  if (calView === "week") {
+  // راهنمای رنگ: در رنگ‌بندی بر اساس منبع، هر درس رنگ خودش را دارد
+  $("#legend-kinds").hidden = state.settings.color_mode === "source";
+  $("#legend-source").hidden = state.settings.color_mode !== "source";
+  if (calView === "day") {
+    $("#cal-title").textContent = `${Jalali.weekday(calAnchor)} ${Jalali.format(calAnchor)}`;
+    box.replaceChildren(el("div", { class: "day-view" }, dayColumn(calAnchor, context, "cal-day day-column")));
+  } else if (calView === "week") {
     const start = weekStart(calAnchor);
     const end = Jalali.addDays(start, 6);
     $("#cal-title").textContent = `${Jalali.formatShort(start)} تا ${Jalali.format(end)}`;
@@ -102,20 +109,33 @@ function renderCalendar() {
 function weekView(start, context) {
   const grid = el("div", { class: "week" });
   for (let i = 0; i < 7; i++) {
-    const iso = Jalali.addDays(start, i);
-    const day = context.days.get(iso);
-    const column = el("div", { class: dayClasses(iso, day, "cal-day week-day"), "data-date": iso },
-      dayHeader(iso, day),
-      el("div", { class: "tasks" },
-        (context.history.get(iso) || []).map((entry) => historyChip(entry, context)),
-        day ? day.tasks.map((t) => taskChip(t, iso, context, false)) : []),
-    );
-    if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
-    else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, "کاری نمانده"));
-    else if (day.is_off) column.append(el("p", { class: "muted small" }, "تعطیل"));
-    grid.append(column);
+    grid.append(dayColumn(Jalali.addDays(start, i), context, "cal-day week-day"));
   }
   return grid;
+}
+
+/** ستون کامل یک روز، برای نمای هفتگی و روزانه */
+function dayColumn(iso, context, classes) {
+  const day = context.days.get(iso);
+  const column = el("div", { class: dayClasses(iso, day, classes), "data-date": iso },
+    dayHeader(iso, day),
+    el("div", { class: "tasks" },
+      (context.history.get(iso) || []).map((entry) => historyChip(entry, context)),
+      day ? day.tasks.map((t) => taskChip(t, iso, context, false)) : []),
+  );
+  if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
+  else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, "کاری نمانده"));
+  else if (day && day.is_off) column.append(el("p", { class: "muted small" }, "تعطیل"));
+  return column;
+}
+
+/** رنگ اختصاصی یک کار، یا null برای رنگ عادی نوعش (خواندن، مرور، روتین) */
+function paintFor(item, kind) {
+  if (!item) return null;
+  if (state.settings.color_mode === "source") return item.display_color;
+  // نوع کار ساخت کاربر: برای خواندن و روتینِ آن نوع؛ مرور همیشه رنگ مرور است
+  const custom = typeOf(item);
+  return custom && kind !== "review" ? custom.color : null;
 }
 
 function monthView(y, m, context) {
@@ -207,9 +227,8 @@ function taskChip(task, iso, context, compact) {
     onchange: () => markDone(task, "done"),
   });
 
-  // رنگ نوع کار ساخت کاربر (برای خواندن و روتینِ آن نوع؛ مرور همیشه رنگ مرور است)
-  const custom = item ? typeOf(item) : null;
-  const style = custom && task.kind !== "review" ? `--c:${custom.color}` : null;
+  const paint = paintFor(item, task.kind);
+  const style = paint ? `--c:${paint}` : null;
   const chip = el("div", {
     class: classes.join(" "), style, "data-session": task.session_id, "data-kind": task.kind,
     "data-flip": taskKey(task),
@@ -237,13 +256,33 @@ function historyChip(entry, context) {
   let label = KIND_LABEL[kind] || kind;
   if (entry.result === "partial") label += " (بخشی)";
   if (entry.result === "needs_more") label += " · نیاز به مرور بیشتر";
-  return el("div", { class: `task done kind-${kind}`, "data-flip": `h-${entry.id}`,
-    title: "انجام شد. برای برگرداندن اشتباه، از دکمهٔ «برگرداندن» استفاده کنید." },
+  const paint = info ? paintFor(info.item, kind) : null;
+  return el("div", {
+    class: `task done kind-${kind}`, "data-flip": `h-${entry.id}`, style: paint ? `--c:${paint}` : null,
+    title: "برای برگرداندن به حالت انجام‌نشده کلیک کنید",
+    onclick: (e) => openDoneMenu(entry, title, label, e.currentTarget),
+  },
     el("div", { class: "task-title" }, "✓ ", title),
     el("div", { class: "task-meta" },
       el("span", {}, label),
       info && el("span", {}, `جلسهٔ ${fa(entry.sequence)}`),
       el("span", {}, `${fa(entry.minutes)} دقیقه`)));
+}
+
+/** منوی کار انجام‌شده: برگرداندن به حالت انجام‌نشده */
+function openDoneMenu(entry, title, label, anchor) {
+  // هر تیک روی تیک قبلی همان جلسه سوار است، پس فقط آخرین تیک هر جلسه برمی‌گردد
+  const later = state.history.some((h) => h.session_id === entry.session_id && h.id > entry.id);
+  openPopover(anchor,
+    el("div", { class: "pop-title" }, `✓ ${title}`),
+    el("div", { class: "muted small" }, `${label} · ${fa(entry.minutes)} دقیقه · ${Jalali.format(entry.date)}`),
+    later
+      ? el("p", { class: "muted small" }, "بعد از این، کار دیگری از همین جلسه ثبت شده. اول آن را انجام‌نشده کنید.")
+      : el("button", {
+          class: "primary",
+          onclick: () => { closePopover(); api("POST", "/api/tasks/undone", { log_id: entry.id }); },
+        }, "↩ انجام نشده"),
+  );
 }
 
 /** آیا این کار را می‌شود امروز تیک زد؟ */
@@ -433,6 +472,11 @@ function openDayMenu(iso, day, anchor) {
         + ` · ${fa(t.minutes)} دقیقه · الان ${Jalali.formatShort(date)}`);
     })));
   }
+  if (calView !== "day") {
+    content.push(el("button", {
+      onclick: () => { closePopover(); calView = "day"; calAnchor = iso; renderCalendar(); },
+    }, "نمای روزانهٔ این روز"));
+  }
   content.push(el("button", { onclick: () => openExportMenu(anchor, "day", iso) }, "⇪ خروجی این روز"));
   content.push(el("div", { class: "pop-row" },
     el("button", { onclick: () => { closePopover(); openItemDialog(null, "study", iso); } }, "+ درس جدید از این روز"),
@@ -523,7 +567,9 @@ async function showExportResult(anchor, result) {
 // ---------------------------------------------------------------------------
 
 function shiftCalendar(direction) {
-  if (calView === "week") {
+  if (calView === "day") {
+    calAnchor = Jalali.addDays(calAnchor, direction);
+  } else if (calView === "week") {
     calAnchor = Jalali.addDays(calAnchor, 7 * direction);
   } else {
     let { y, m } = Jalali.toJalali(calAnchor);
@@ -535,6 +581,7 @@ function shiftCalendar(direction) {
   renderCalendar();
 }
 
+$("#view-day").addEventListener("click", () => { calView = "day"; renderCalendar(); });
 $("#view-week").addEventListener("click", () => { calView = "week"; renderCalendar(); });
 $("#view-month").addEventListener("click", () => { calView = "month"; renderCalendar(); });
 $("#cal-prev").addEventListener("click", () => shiftCalendar(-1));

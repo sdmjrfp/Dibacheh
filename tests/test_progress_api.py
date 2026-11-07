@@ -122,3 +122,85 @@ def test_target_status_read_and_review_separately(client):
     assert t["read"] == {"done": False, "days": (target - read_end).days}
     assert t["review"]["days"] == (target - review_end).days
     assert t["read"]["days"] > 0 > t["review"]["days"]   # خواندن جلوتر، مرور عقب‌تر از هدف
+
+
+# ---------------------------------------------------------------------------
+# انجام‌نشده کردن کار
+# ---------------------------------------------------------------------------
+
+def undone(client, log_id):
+    return client.post("/api/tasks/undone", json={"log_id": log_id})
+
+
+def test_undone_reading_returns_session_to_plan(client):
+    state = add(client, "A", count=1)
+    s1 = session_of(state, "A")["id"]
+    today = today_of(state)
+    state = done(client, s1, "read").get_json()
+    state = undone(client, state["history"][-1]["id"]).get_json()
+    s = session_of(state, "A")
+    assert (s["status"], s["leitner_box"], s["read_at"], s["minutes_done"]) == ("unread", 0, None, 0)
+    assert state["history"] == []
+    assert days_of(state, s1, "read") == [today]
+
+
+def test_undone_review_restores_box(client):
+    state = add(client, "A", count=1)
+    s1 = session_of(state, "A")["id"]
+    done(client, s1, "read")
+    done(client, s1, "review")
+    state = done(client, s1, "review", "needs_more").get_json()
+    assert session_of(state, "A")["leitner_box"] == 1
+    state = undone(client, state["history"][-1]["id"]).get_json()
+    assert session_of(state, "A")["leitner_box"] == 2
+
+
+def test_only_latest_tick_of_a_session_can_be_undone(client):
+    state = add(client, "A", count=1)
+    s1 = session_of(state, "A")["id"]
+    done(client, s1, "read")
+    state = done(client, s1, "review").get_json()
+    response = undone(client, state["history"][0]["id"])
+    assert response.status_code == 400
+    state = undone(client, state["history"][1]["id"]).get_json()
+    state = undone(client, state["history"][0]["id"]).get_json()
+    assert session_of(state, "A")["status"] == "unread"
+
+
+def test_undone_partial_and_routine(client):
+    state = add(client, "A", count=1, minutes=60)
+    s1 = session_of(state, "A")["id"]
+    state = done(client, s1, "read", "partial", 20).get_json()
+    state = undone(client, state["history"][-1]["id"]).get_json()
+    s = session_of(state, "A")
+    assert (s["status"], s["minutes_done"], s["read_manual_date"]) == ("unread", 0, None)
+    state = add(client, "ورزش", count=2, minutes=10, item_type="routine")
+    w1 = session_of(state, "ورزش")["id"]
+    state = done(client, w1, "routine").get_json()
+    state = undone(client, state["history"][-1]["id"]).get_json()
+    assert session_of(state, "ورزش")["status"] == "unread"
+    assert days_of(state, w1, "routine") == [today_of(state)]
+
+
+def test_undone_old_tick_without_saved_state(client):
+    """تیک‌هایی که قبل از این قابلیت ثبت شده‌اند هم برمی‌گردند."""
+    import app as app_module
+    state = add(client, "A", count=1)
+    s1 = session_of(state, "A")["id"]
+    done(client, s1, "read")
+    state = done(client, s1, "review").get_json()
+    conn = app_module.database.connect(app_module.app.config["DB_PATH"])
+    conn.execute("UPDATE task_log SET before_state = NULL")
+    conn.commit()
+    conn.close()
+    state = undone(client, state["history"][-1]["id"]).get_json()
+    s = session_of(state, "A")
+    assert (s["status"], s["leitner_box"], s["read_at"]) == ("reviewing", 1, state["today"])
+
+
+def test_reset_course_blocks_undoing_old_ticks(client):
+    state = add(client, "A", count=1)
+    item_id = item_named(state, "A")["id"]
+    state = done(client, session_of(state, "A")["id"], "read").get_json()
+    client.post(f"/api/items/{item_id}/reset", json={})
+    assert undone(client, state["history"][-1]["id"]).status_code == 400

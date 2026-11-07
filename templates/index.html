@@ -55,6 +55,7 @@
       <div class="panel-head">
         <h2>برنامه</h2>
         <div class="tabs" role="tablist">
+          <button id="view-day" role="tab">روزانه</button>
           <button id="view-week" role="tab">هفتگی</button>
           <button id="view-month" role="tab">ماهانه</button>
         </div>
@@ -65,9 +66,12 @@
         <span class="spacer"></span>
         <button id="export-button" title="خروجی HTML برای خواندن روی گوشی و فرستادن">⇪ خروجی</button>
         <span class="legend">
-          <span class="kind-routine">روتین</span>
-          <span class="kind-review">مرور</span>
-          <span class="kind-read">خواندن</span>
+          <span id="legend-kinds" class="legend-group">
+            <span class="kind-routine">روتین</span>
+            <span class="kind-review">مرور</span>
+            <span class="kind-read">خواندن</span>
+          </span>
+          <span id="legend-source" class="muted small" hidden>هر درس با رنگ خودش · خط‌چین = مرور</span>
           <span class="muted small">📌 = دستی جابه‌جا شده</span>
         </span>
       </div>
@@ -86,6 +90,9 @@
         </label>
         <label>دسته
           <select name="category_id"></select>
+        </label>
+        <label class="check">
+          <input type="color" name="color"> رنگ این منبع
         </label>
         <label class="check">
           <input type="checkbox" name="is_active" checked> فعال (روی تقویم)
@@ -229,10 +236,10 @@
       <fieldset>
         <legend>فاصله‌های لایتنر</legend>
         <p class="muted small">هر نقطه یک مرور است. نقطه‌ها را به چپ و راست بکشید. دوبار کلیک روی یک نقطه آن را حذف می‌کند.</p>
+        <div id="interval-presets" class="presets"></div>
         <div id="interval-chart" class="interval-chart"></div>
         <div class="pop-row">
           <button type="button" id="interval-add">+ یک مرور دیگر</button>
-          <button type="button" id="interval-reset">پیش‌فرض (۱، ۳، ۷، ۳۰)</button>
         </div>
         <ol id="interval-explain" class="explain"></ol>
         <p class="muted small">با تغییر فاصله‌ها، تاریخ همهٔ مرورها (جز درس‌هایی که فاصلهٔ اختصاصی دارند) دوباره حساب می‌شود.</p>
@@ -248,12 +255,15 @@
       </fieldset>
 
       <fieldset>
-        <legend>رنگ‌ها و نوع‌های کار</legend>
-        <div class="settings-rows">
+        <legend>رنگ‌بندی برنامه</legend>
+        <label class="check"><input type="radio" name="color_mode" value="kind"> بر اساس نوع کار: خواندن، مرور، روتین</label>
+        <label class="check"><input type="radio" name="color_mode" value="source"> بر اساس منبع: هر درس با رنگ خودش (مرورها خط‌چین)</label>
+        <div class="settings-rows" id="kind-colors">
           <label class="check"><input type="color" name="color_read"> خواندن</label>
           <label class="check"><input type="color" name="color_review"> مرور</label>
           <label class="check"><input type="color" name="color_routine"> روتین</label>
         </div>
+        <ul id="source-colors" class="type-settings"></ul>
         <ul id="type-settings" class="type-settings"></ul>
       </fieldset>
 
@@ -267,6 +277,8 @@
             <input name="font_family" list="font-list" autocomplete="off">
             <datalist id="font-list"></datalist></label>
         </div>
+        <p class="small">فونت‌های فارسی رایگان و متن‌باز همراه برنامه:</p>
+        <div id="bundled-fonts" class="presets"></div>
         <div class="pop-row">
           <button type="button" id="font-add">+ افزودن فایل فونت…</button>
           <span class="muted small">ttf، otf، woff یا woff2. یک کپی داخل برنامه نگه داشته می‌شود.</span>

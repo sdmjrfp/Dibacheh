@@ -75,6 +75,10 @@ def export(state, scope, day, with_content, vault_path, folder):
 
 def render(state, scope, start, end, with_content, vault_path):
     items = {item["id"]: item for item in state["items"]}
+    # رنگ‌بندی بر اساس منبع: هر کار با رنگ منبع خودش
+    by_source = state.get("settings", {}).get("color_mode") == "source"
+    for item in items.values():
+        item["paint"] = item.get("display_color") if by_source else None
     sessions = {s["id"]: (items[s["item_id"]], s) for item in state["items"] for s in item["sessions"]}
     plan_days = {d["date"]: d for d in state["plan"]["days"]}
     done = {}
@@ -149,7 +153,12 @@ def task_html(task, item, session, with_content, vault_path, key):
     content = ""
     if with_content and task["kind"] != "routine":
         content = content_html(item, session, vault_path)
-    return f'<div class="task kind-{task["kind"]}">{head}{content}</div>'
+    style = ""
+    if item.get("paint"):
+        color = esc(item["paint"])
+        style = (f' style="border-inline-start-color:{color};'
+                 f'background:color-mix(in srgb, {color} 14%, var(--panel))"')
+    return f'<div class="task kind-{task["kind"]}"{style}>{head}{content}</div>'
 
 
 # ---------------------------------------------------------------------------
@@ -311,6 +320,15 @@ def _custom_font_css(settings):
     import database  # فقط برای آدرس پوشهٔ فونت‌ها
 
     family = settings.get("font_family")
+    for font in sources.BUNDLED_FONTS:
+        if font["family"] == family:
+            faces = []
+            for weight, name in (("400", font["regular"]), ("700", font["bold"])):
+                if name:
+                    data = base64.b64encode((FONT_FILE.parent.parent / "fonts" / name).read_bytes()).decode()
+                    faces.append(f'@font-face {{ font-family: "{family}"; font-weight: {weight}; '
+                                 f'src: url(data:font/woff2;base64,{data}) format("woff2"); }}')
+            return "\n".join(faces) + f'\nbody {{ font-family: "{family}", "Vazirmatn", system-ui, sans-serif; }}'
     for font in settings.get("custom_fonts", []):
         path = database.FONTS_DIR / font["file"]
         if font["family"] == family and path.is_file():

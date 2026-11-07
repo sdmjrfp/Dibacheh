@@ -469,3 +469,19 @@ button { white-space: nowrap; }
 
 .item .pinned { color: var(--text); }
 button.link { border: none; background: none; padding: 0 4px; color: var(--accent); text-decoration: underline; cursor: pointer; font-size: inherit; }
+
+/* =====================================================================
+   نمای روزانه، رنگ منبع، پیش‌فرض‌های لایتنر و فونت‌ها
+   ===================================================================== */
+.day-view { max-width: 760px; margin: 8px auto 0; }
+.day-column { min-height: 60vh; padding: 12px; }
+.day-column .task { font-size: 1.05em; padding: 8px 12px; }
+.legend-group { display: inline-flex; gap: 10px; align-items: center; }
+.legend-group > span { padding: 1px 10px; border-radius: 6px; border-width: 1px; border-style: solid;
+  background: color-mix(in srgb, var(--c) var(--tint), var(--panel)); border-color: var(--c); }
+.task.done { cursor: pointer; }
+/* رنگ‌بندی بر اساس منبع: مرور با خط‌چین از خواندن جدا می‌شود */
+:root[data-color-mode="source"] .task.kind-review { border-inline-start-style: dashed; }
+input.swatch { width: 26px; height: 26px; padding: 1px; border-radius: 6px; cursor: pointer; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.presets button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
