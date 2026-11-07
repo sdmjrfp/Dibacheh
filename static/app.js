@@ -815,7 +815,6 @@ function openSettings() {
   updateColorMode();
   sf.theme.value = s.theme;
   sf.font_size.value = s.font_size;
-  sf.font_family.value = s.font_family;
   sf.vault_path.value = s.vault_path || "";
   sf.export_folder.value = s.export_folder || "";
   sf.backup_folder.value = s.backup_folder || "";
@@ -832,7 +831,7 @@ function openSettings() {
       el("label", {}, el("input", { type: "checkbox", "data-off": num, checked: off.includes(num) }), " تعطیل"))));
 
   renderTypeSettings();
-  renderFontSettings();
+  renderFontSettings(s.font_family);
   $("#settings-dialog").showModal();
   updateRatioExplain();
   renderIntervalChart();
@@ -894,9 +893,40 @@ function cumulative(intervals) {
   return intervals.map((d) => (sum += d));
 }
 
+const CHART_STEP = 30;        // طول نمودار یک ماه یک ماه عوض می‌شود
+const CHART_LIMIT = 3650;
+
+function lastReviewDay() {
+  return cumulative(intervalDraft).at(-1) || 0;
+}
+
+/** طول پیشنهادی نمودار: کمی بیشتر از آخرین مرور، مضربی از یک ماه */
 function niceChartMax(intervals) {
   const last = cumulative(intervals).at(-1) || 30;
-  return [30, 60, 90, 120, 180, 365, 730, 1825, 3650].find((m) => m >= last * 1.25) || last * 1.25;
+  return Math.max(60, Math.ceil((last * 1.25) / CHART_STEP) * CHART_STEP);
+}
+
+/** اگر مرور آخر از انتهای نمودار رد شد، نمودار بلندتر می‌شود؛ کوتاه‌تر را خود کاربر انتخاب می‌کند */
+function fitChart() {
+  chartMax = Math.max(chartMax, Math.ceil(lastReviewDay() / CHART_STEP) * CHART_STEP);
+}
+
+function renderChartLength() {
+  const months = chartMax / CHART_STEP;
+  $("#chart-length-label").textContent = `${fa(months)} ماه`;
+  $("#chart-length-label").title = `${fa(chartMax)} روز`;
+  $("#chart-longer").disabled = chartMax + CHART_STEP > CHART_LIMIT;
+  const blocked = chartMax - CHART_STEP < Math.max(CHART_STEP, lastReviewDay());
+  $("#chart-shorter").disabled = blocked;
+  $("#chart-shorter").title = blocked ? `مرور آخر روز ${fa(lastReviewDay())} است؛ اول آن را جلوتر بیاورید` : "یک ماه کمتر";
+}
+
+function removeInterval(index) {
+  if (intervalDraft.length <= 1) return;
+  // با حذف یک مرور، مرورهای بعدی سر روز خودشان می‌مانند
+  const points = cumulative(intervalDraft).filter((_, j) => j !== index);
+  intervalDraft = points.map((p, j) => p - (j ? points[j - 1] : 0));
+  renderIntervalChart();
 }
 
 /** محور زمان: روز صفر (خواندن) سمت راست است و زمان به چپ جلو می‌رود.
@@ -918,7 +948,9 @@ function renderIntervalChart() {
   const { width, x } = chartGeometry();
   const axisY = 70;
   const points = cumulative(intervalDraft);
-  const ticks = [1, 3, 7, 14, 30, 60, 90, 180, 365, 730, 1825, 3650].filter((d) => d <= chartMax);
+  // برچسب‌های محور؛ انتهای نمودار همیشه برچسب دارد و برچسب خیلی نزدیک به آن حذف می‌شود
+  const ticks = [1, 3, 7, 14, 30, 60, 90, 180, 365, 730, 1825]
+    .filter((d) => d < chartMax * 0.85).concat(chartMax);
   const chart = svg("svg", { viewBox: `0 0 ${width} 130` },
     svg("line", { class: "axis", x1: x(0), y1: axisY, x2: x(chartMax), y2: axisY }),
     ...ticks.map((d) => svg("g", { class: "tick" },
@@ -933,9 +965,16 @@ function renderIntervalChart() {
       svg("circle", { cx: x(day), cy: axisY, r: 10 }))),
   );
   box.replaceChildren(chart);
+  const single = intervalDraft.length <= 1;
   $("#interval-explain").replaceChildren(...intervalDraft.map((d, i) =>
     el("li", {}, `${fa(d)} روز بعد از ${i ? `مرور ${fa(i)}` : "خواندن"}`
-      + ` (یعنی روز ${fa(points[i])} بعد از خواندن)`)));
+      + ` (یعنی روز ${fa(points[i])} بعد از خواندن) `,
+      !single && el("button", {
+        type: "button", class: "link danger", title: `حذف مرور ${fa(i + 1)}`,
+        onclick: () => removeInterval(i),
+      }, "×"))));
+  $("#interval-remove").disabled = single;
+  renderChartLength();
   updateRatioExplain();
   renderIntervalPresets();
 }
@@ -969,30 +1008,25 @@ function renderIntervalChart() {
   const stop = () => {
     if (dragIndex === null) return;
     dragIndex = null;
-    const before = chartMax;
-    chartMax = niceChartMax(intervalDraft);
-    if (chartMax !== before) renderIntervalChart();
-    else box.querySelectorAll(".point.active").forEach((n) => n.classList.remove("active"));
+    box.querySelectorAll(".point.active").forEach((n) => n.classList.remove("active"));
   };
   box.addEventListener("pointerup", stop);
   box.addEventListener("pointercancel", stop);
   box.addEventListener("dblclick", (e) => {
     const point = e.target.closest(".point");
-    if (!point || intervalDraft.length <= 1) return;
-    const i = Number(point.dataset.index);
-    // با حذف یک مرور، مرورهای بعدی سر روز خودشان می‌مانند
-    const points = cumulative(intervalDraft).filter((_, j) => j !== i);
-    intervalDraft = points.map((p, j) => p - (j ? points[j - 1] : 0));
-    renderIntervalChart();
+    if (point) removeInterval(Number(point.dataset.index));
   });
 })();
 
 $("#interval-add").addEventListener("click", () => {
   const last = intervalDraft.at(-1) || 1;
   intervalDraft.push(Math.min(last * 2, 365));
-  chartMax = niceChartMax(intervalDraft);
+  fitChart();
   renderIntervalChart();
 });
+$("#interval-remove").addEventListener("click", () => removeInterval(intervalDraft.length - 1));
+$("#chart-longer").addEventListener("click", () => { chartMax += CHART_STEP; renderIntervalChart(); });
+$("#chart-shorter").addEventListener("click", () => { chartMax -= CHART_STEP; renderIntervalChart(); });
 // فاصله‌های آماده. بعد از انتخاب، باز هم می‌شود نقطه‌ها را روی نمودار جابه‌جا کرد.
 const INTERVAL_PRESETS = [
   ["استاندارد", [1, 3, 7, 30]],
@@ -1051,13 +1085,34 @@ function renderTypeSettings() {
   }
 }
 
-function renderFontSettings() {
+let macFonts = [];   // فونت‌های نصب‌شده روی Mac؛ یک بار خوانده می‌شوند
+
+/** کادر باز شوی فونت: همراه برنامه، اضافه‌شده، و نصب‌شده روی Mac */
+function fillFontSelect(selected) {
   const custom = state.settings.custom_fonts || [];
-  $("#bundled-fonts").replaceChildren(...[{ family: "Vazirmatn", label: "وزیرمتن" }, ...state.bundled_fonts].map((f) =>
-    el("button", {
-      type: "button", style: `font-family:"${f.family}"`, title: f.family,
-      onclick: () => { sf.font_family.value = f.family; },
-    }, f.label)));
+  const bundled = [{ family: "Vazirmatn", label: "وزیرمتن" }, ...state.bundled_fonts];
+  const known = new Set([...bundled, ...custom].map((f) => f.family));
+  const option = (value, label) => el("option", { value, selected: value === selected }, label);
+  const groups = [
+    el("optgroup", { label: "فارسی، همراه برنامه" }, bundled.map((f) => option(f.family, `${f.label} (${f.family})`))),
+  ];
+  if (custom.length) groups.push(el("optgroup", { label: "اضافه‌شده" }, custom.map((f) => option(f.family, f.family))));
+  const installed = macFonts.filter((f) => !known.has(f));
+  if (installed.length) groups.push(el("optgroup", { label: "نصب‌شده روی Mac" }, installed.map((f) => option(f, f))));
+  // فونت فعلی حتی اگر هنوز در فهرست نیست، از دست نرود
+  if (selected && !known.has(selected) && !installed.includes(selected)) groups.unshift(option(selected, selected));
+  sf.font_family.replaceChildren(...groups);
+  updateFontSample();
+}
+
+function updateFontSample() {
+  $("#font-sample").style.fontFamily = `"${sf.font_family.value}", "Vazirmatn", sans-serif`;
+}
+
+sf.font_family.addEventListener("change", updateFontSample);
+
+function renderFontSettings(selected = sf.font_family.value || state.settings.font_family) {
+  const custom = state.settings.custom_fonts || [];
   $("#custom-font-list").replaceChildren(...custom.map((f) =>
     el("li", {},
       el("span", { style: `font-family:"${f.family}"` }, `${f.family} — نمونهٔ متن فارسی`),
@@ -1065,15 +1120,15 @@ function renderFontSettings() {
         type: "button", class: "danger",
         onclick: async () => {
           await api("POST", "/api/fonts/remove", { family: f.family });
-          fontsLoaded = false;
-          renderFontSettings();
+          renderFontSettings(state.settings.font_family);
         },
       }, "حذف"))));
+  fillFontSelect(selected);
   if (!fontsLoaded) {
     fetch("/api/fonts").then((r) => r.json()).then((fonts) => {
-      const names = ["Vazirmatn", ...state.bundled_fonts.map((f) => f.family), ...custom.map((f) => f.family), ...fonts];
-      $("#font-list").replaceChildren(...[...new Set(names)].map((f) => el("option", { value: f })));
+      macFonts = fonts;
       fontsLoaded = true;
+      fillFontSelect(sf.font_family.value);
     });
   }
 }
@@ -1081,9 +1136,7 @@ function renderFontSettings() {
 $("#font-add").addEventListener("click", async () => {
   const result = await api("POST", "/api/fonts/add", {});
   if (result.cancelled) return;
-  sf.font_family.value = result.added_font;
-  fontsLoaded = false;
-  renderFontSettings();
+  renderFontSettings(result.added_font);
   showMessage(`فونت «${result.added_font}» اضافه شد. برای استفاده، «ذخیره» را بزنید.`, false);
 });
 

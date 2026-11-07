@@ -485,3 +485,12 @@ button.link { border: none; background: none; padding: 0 4px; color: var(--accen
 input.swatch { width: 26px; height: 26px; padding: 1px; border-radius: 6px; cursor: pointer; }
 .presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
 .presets button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
+
+/* نمودار لایتنر با دکمه‌های طول نمودار در انتهای خط */
+.interval-wrap { display: flex; align-items: flex-start; gap: 8px; }
+.interval-wrap .interval-chart { flex: 1; min-width: 0; }
+.chart-length { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 18px; font-size: 0.85em; white-space: nowrap; }
+.chart-length button:disabled { opacity: 0.35; cursor: not-allowed; }
+button:disabled { cursor: not-allowed; }
+#settings-form select[name="font_family"] { min-width: 14em; }
+ol.explain button.link { color: var(--danger); text-decoration: none; font-weight: 700; }
