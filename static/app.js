@@ -14,6 +14,7 @@ const fa = Jalali.faNumber;
 let state = null;
 let filterStatus = "all";
 let filterCategory = "";
+let searchText = "";
 let selectedItemId = null;
 let editing = null;        // { id: شمارهٔ درس یا null برای درس جدید, type: "study" | "routine" }
 let pickedSource = null;   // نتیجهٔ Browse که هنوز ذخیره نشده
@@ -25,6 +26,7 @@ const STATUS_LISTS = [
   ["reading", "در حال خواندن"],
   ["read", "خوانده‌شده"],
   ["finished", "تمام‌شده"],
+  ["archived", "بایگانی"],
 ];
 const SESSION_STATUS = {
   unread: "خوانده‌نشده",
@@ -182,8 +184,12 @@ function targetText(label, info) {
 }
 
 function renderTabs() {
-  const counts = { all: state.items.length };
-  for (const item of state.items) counts[item.status_list] = (counts[item.status_list] || 0) + 1;
+  const counts = { all: 0, archived: 0 };
+  for (const item of state.items) {
+    if (item.archived) { counts.archived += 1; continue; }
+    counts.all += 1;
+    counts[item.status_list] = (counts[item.status_list] || 0) + 1;
+  }
   $("#status-tabs").replaceChildren(...STATUS_LISTS.map(([key, label]) =>
     el("button", {
       role: "tab",
@@ -297,14 +303,31 @@ function typeOf(item) {
 function renderItems() {
   const list = $("#item-list");
   const visible = state.items.filter((item) =>
-    (filterStatus === "all" || item.status_list === filterStatus) &&
-    (!filterCategory || String(item.category_id) === filterCategory));
+    (filterStatus === "archived" ? item.archived : !item.archived) &&
+    (filterStatus === "all" || filterStatus === "archived" || item.status_list === filterStatus) &&
+    (!filterCategory || String(item.category_id) === filterCategory) &&
+    (!searchText || searchHits(item).matched));
   if (!visible.length) {
     list.replaceChildren(el("li", { class: "muted" }, state.items.length
       ? "درسی با این فیلتر نیست." : "هنوز درسی اضافه نشده. با دکمهٔ «+ درس» شروع کنید."));
     return;
   }
   list.replaceChildren(...visible.map(itemCard));
+}
+
+/** حرف‌های عربی و فارسی یکی می‌شوند تا «ي» و «ی» در جست‌وجو فرق نکنند */
+function normalize(text) {
+  return String(text || "").toLowerCase().replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/\u200c/g, " ");
+}
+
+/** جست‌وجو در نام درس، منبع، بخش جلسه‌ها و یادداشت‌ها */
+function searchHits(item) {
+  const q = normalize(searchText.trim());
+  if (!q) return { matched: true, sessions: [] };
+  const direct = normalize(item.title).includes(q) || normalize(item.source_path_or_url).includes(q);
+  const sessions = item.sessions.filter((s) =>
+    normalize(s.section_text).includes(q) || normalize(s.note).includes(q));
+  return { matched: direct || sessions.length > 0, sessions };
 }
 
 function itemCard(item) {
@@ -323,6 +346,13 @@ function itemCard(item) {
   } else {
     if (item.finish.read_end) meta.push(el("span", {}, `پایان خواندن: ${Jalali.formatShort(item.finish.read_end)}`));
     if (item.finish.review_end) meta.push(el("span", {}, `پایان مرور: ${Jalali.format(item.finish.review_end)}`));
+  }
+  for (const req of item.requires) {
+    const other = itemById(req.id);
+    if (!other) continue;
+    const waiting = item.waiting_for.includes(other.title);
+    const when = req.until === "finished" ? "پایان مرورهای" : "پایان خواندن";
+    meta.push(el("span", { class: waiting ? "waiting" : "" }, `${waiting ? "🔒 منتظر" : "✓ بعد از"} ${when} «${other.title}»`));
   }
   if (item.pinned) {
     meta.push(el("span", { class: "pinned", title: "این جلسه‌ها روی روز خاصی مانده‌اند و اولویت صف رویشان اثر ندارد" },
@@ -363,10 +393,16 @@ function itemCard(item) {
         onclick: () => api("POST", `/api/items/${item.id}/open`, {}),
       }, "↗"),
       el("button", { class: "icon", title: "ویرایش", onclick: () => openItemDialog(item) }, "✎"),
+      (item.status_list === "finished" || item.archived) && el("button", {
+        class: "icon", title: item.archived ? "برگرداندن از بایگانی" : "بایگانی",
+        onclick: () => api("POST", `/api/items/${item.id}/archive`, { archived: !item.archived }),
+      }, item.archived ? "⤴" : "🗄"),
     ),
     el("div", { class: "progress" }, el("span", { style: `width:${p.read_percent}%` })),
     el("div", { class: "meta" }, meta),
     item.source_problem && el("div", { class: "problem" }, `⚠ ${item.source_problem}`),
+    searchText && el("div", { class: "hits" }, searchHits(item).sessions.slice(0, 4).map((s) =>
+      el("div", {}, `جلسهٔ ${fa(s.sequence)}: ${[s.section_text, s.note].filter(Boolean).join(" · ")}`))),
   );
   return card;
 }
@@ -486,7 +522,18 @@ function openItemDialog(item, type = "study", firstDate = null, customType = nul
   $("#routine-weekdays").replaceChildren(...WEEKDAYS.map(([num, name]) =>
     el("label", {}, el("input", { type: "checkbox", value: num, checked: weekdays.includes(num) }), name)));
 
+  editing.requires = item ? item.requires.map((r) => ({ ...r })) : [];
+  editing.sections = null;
+  renderRequires();
+  renderTemplateSelect();
+  $("#outline-box").hidden = true;
+  fields.session_count.disabled = false;
   updateDialogVisibility();
+  if (item && ["vault", "file"].includes(item.source_type)) {
+    fetch(`/api/items/${item.id}/outline`).then((r) => r.json()).then((r) => {
+      if (editing && editing.id === item.id) showOutline(r.outline);
+    });
+  }
   if (item) {
     if (item.section_unit === "heading") loadHeadings(item.id);
     renderSessions();
@@ -517,6 +564,116 @@ $("#browse-button").addEventListener("click", async () => {
   $("#source-path").textContent = result.source_type === "vault"
     ? `${result.source_path_or_url}  (داخل والت)` : result.source_path_or_url;
   $("#source-problem").hidden = true;
+  showOutline(result.outline);
+});
+
+// ---------- ساختن جلسه‌ها از ساختار فایل
+
+/** عنوان‌های نوت یا فصل‌های PDF در یک سطح، به شکل فهرست بخش‌ها */
+function outlineSections(outline, level) {
+  const entries = outline.entries.filter((e) => e.level === level);
+  if (outline.unit === "heading") return entries.map((e) => ({ title: e.title, start: e.title, end: e.title }));
+  return entries.map((e, i) => {
+    const next = entries[i + 1];
+    const end = next ? Math.max(e.page, next.page - 1) : outline.pages;
+    return { title: e.title, start: String(e.page), end: String(end) };
+  });
+}
+
+function showOutline(outline) {
+  const box = $("#outline-box");
+  box.hidden = !outline;
+  if (!outline) return;
+  const levels = [...new Set(outline.entries.map((e) => e.level))].sort();
+  const count = (level) => outline.entries.filter((e) => e.level === level).length;
+  const select = el("select", {}, levels.map((l) =>
+    el("option", { value: l }, `سطح ${fa(l)}: ${fa(count(l))} ${outline.unit === "heading" ? "عنوان" : "فصل"}`)));
+  const status = el("span", { class: "muted" });
+  const apply = async () => {
+    const sections = outlineSections(outline, Number(select.value));
+    fields.section_unit.value = outline.unit;
+    updateDialogVisibility();
+    if (editing.id) {
+      await api("POST", `/api/items/${editing.id}/split`, { sections, section_unit: outline.unit });
+      status.textContent = `جلسه‌های خوانده‌نشده با ${fa(sections.length)} بخش عوض شدند.`;
+    } else {
+      editing.sections = sections;
+      fields.session_count.value = sections.length;
+      fields.session_count.disabled = true;
+      status.textContent = `${fa(sections.length)} جلسه ساخته می‌شود.`;
+    }
+  };
+  box.replaceChildren(
+    el("div", {}, outline.unit === "heading" ? "این نوت عنوان دارد. می‌شود هر عنوان یک جلسه باشد." : "این PDF فهرست مطالب دارد. می‌شود هر فصل یک جلسه باشد."),
+    el("div", { class: "pop-row" }, select,
+      el("button", { type: "button", onclick: apply }, "ساختن جلسه‌ها از فایل"), status));
+}
+
+// ---------- وابستگی‌ها
+
+function renderRequires() {
+  const list = editing.requires;
+  $("#requires-list").replaceChildren(...list.map((req, i) => {
+    const other = itemById(req.id);
+    return el("li", {},
+      el("span", {}, `بعد از ${req.until === "finished" ? "پایان مرورهای" : "پایان خواندن"} «${other ? other.title : "؟"}»`),
+      el("button", { type: "button", class: "danger", onclick: () => { list.splice(i, 1); renderRequires(); } }, "حذف"));
+  }));
+  const taken = new Set(list.map((r) => r.id));
+  const options = state.items.filter((i) => i.item_type === "study" && i.id !== editing.id && !taken.has(i.id));
+  $("#requires-item").replaceChildren(...options.map((i) => el("option", { value: i.id }, i.title)));
+  $("#requires-add").disabled = !options.length;
+}
+
+$("#requires-add").addEventListener("click", () => {
+  const id = Number($("#requires-item").value);
+  if (!id) return;
+  editing.requires.push({ id, until: $("#requires-until").value });
+  renderRequires();
+});
+
+// ---------- الگوها
+
+function renderTemplateSelect() {
+  const templates = state.settings.item_templates || [];
+  $("#template-select").replaceChildren(el("option", { value: "" }, templates.length ? "از روی الگو…" : "الگویی ذخیره نشده"),
+    ...templates.map((t, i) => el("option", { value: i }, t.name)));
+}
+
+$("#template-select").addEventListener("change", (e) => {
+  const template = (state.settings.item_templates || [])[Number(e.target.value)];
+  if (!template || e.target.value === "") return;
+  const f = template.fields;
+  if (f.session_count) fields.session_count.value = f.session_count;
+  if (f.session_minutes) fields.session_minutes.value = f.session_minutes;
+  if (f.max_new_sessions_per_day) fields.max_new_sessions_per_day.value = f.max_new_sessions_per_day;
+  fields.review_ratio.value = f.review_ratio || "";
+  fields.review_intervals.value = (f.review_intervals || []).join("، ");
+  fields.section_unit.value = f.section_unit || "text";
+  if (f.category_id !== undefined) fields.category_id.value = f.category_id || "";
+  if (f.color) fields.color.value = f.color;
+  updateDialogVisibility();
+});
+
+$("#template-save").addEventListener("click", async () => {
+  const name = prompt("نام الگو:");
+  if (!name || !name.trim()) return;
+  const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
+  const template = {
+    name: name.trim(),
+    fields: {
+      session_count: Number(fields.session_count.value),
+      session_minutes: Number(fields.session_minutes.value),
+      max_new_sessions_per_day: Number(fields.max_new_sessions_per_day.value),
+      review_ratio: fields.review_ratio.value.trim(),
+      review_intervals: intervals,
+      section_unit: fields.section_unit.value,
+      category_id: fields.category_id.value ? Number(fields.category_id.value) : null,
+    },
+  };
+  await api("PATCH", "/api/settings", { item_templates: [...(state.settings.item_templates || []), template] });
+  renderTemplateSelect();
+  showMessage(`الگوی «${template.name}» ذخیره شد.`, false);
 });
 
 /** اطلاعات فرم را به شکلی که سرور می‌خواهد جمع می‌کند. */
@@ -537,6 +694,7 @@ function collectForm() {
     const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
     data.review_intervals = intervals.length ? intervals : null;
     data.target_date = readJalaliInput($('.jalali-input[data-name="target_date"]'));
+    data.requires = editing.requires;
   } else {
     data.start_date = readJalaliInput($('.jalali-input[data-name="start_date"]'));
     data.routine_weekdays = $$("#routine-weekdays input:checked").map((x) => Number(x.value));
@@ -558,6 +716,7 @@ function collectForm() {
     data.session_minutes = Number(fields.session_minutes.value);
     if (editing.firstDate) data.first_date = editing.firstDate;
     if (editing.customType) data.custom_type_id = editing.customType.id;
+    if (editing.sections) data.sections = editing.sections;
   }
   return data;
 }
@@ -654,6 +813,10 @@ function renderSessions() {
         placeholder: "خودکار", title: "زمان مرور همین جلسه. خالی = از نسبت مرور",
         onchange: (e) => saveSession(s.id, { review_minutes_override: e.target.value }),
       })),
+      el("td", {}, el("input", {
+        value: s.note || "", placeholder: "یادداشت…",
+        onchange: (e) => saveSession(s.id, { note: e.target.value }),
+      })),
     );
   }));
 }
@@ -679,6 +842,31 @@ $("#type-form").addEventListener("submit", async (e) => {
 });
 $("#close-type").addEventListener("click", () => $("#type-dialog").close());
 $("#add-type").addEventListener("click", openTypeDialog);
+
+// ---------------------------------------------------------------------------
+// افزودن گروهی و جست‌وجو
+// ---------------------------------------------------------------------------
+
+$("#add-bulk").addEventListener("click", () => {
+  const f = $("#bulk-form").elements;
+  f.text.value = "";
+  f.category_id.replaceChildren(...categoryOptions("", "بدون دسته"));
+  f.custom_type_id.replaceChildren(el("option", { value: "" }, "درس"),
+    ...state.types.map((t) => el("option", { value: t.id }, t.name)));
+  $("#bulk-dialog").showModal();
+});
+$("#bulk-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target.elements;
+  await api("POST", "/api/items/bulk", {
+    text: f.text.value,
+    category_id: f.category_id.value ? Number(f.category_id.value) : null,
+    custom_type_id: f.custom_type_id.value ? Number(f.custom_type_id.value) : null,
+  });
+  $("#bulk-dialog").close();
+});
+$("#close-bulk").addEventListener("click", () => $("#bulk-dialog").close());
+$("#item-search").addEventListener("input", (e) => { searchText = e.target.value; render(); });
 
 // ---------------------------------------------------------------------------
 // شروع
@@ -830,6 +1018,8 @@ function openSettings() {
       el("label", {}, el("input", { type: "checkbox", "data-off": num, checked: off.includes(num) }), " تعطیل"))));
 
   renderTypeSettings();
+  renderTemplateSettings();
+  renderBackups();
   renderFontSettings(s.font_family);
   $("#settings-dialog").showModal();
   updateRatioExplain();
@@ -1064,6 +1254,52 @@ function updateColorMode() {
 }
 
 for (const radio of sf.color_mode) radio.addEventListener("change", updateColorMode);
+
+function renderTemplateSettings() {
+  const templates = state.settings.item_templates || [];
+  $("#template-settings").replaceChildren(...templates.map((t, i) =>
+    el("li", {},
+      el("span", {}, t.name),
+      el("button", {
+        type: "button", class: "danger",
+        onclick: async () => {
+          await api("PATCH", "/api/settings", { item_templates: templates.filter((_, j) => j !== i) });
+          renderTemplateSettings();
+        },
+      }, "حذف"))));
+  if (!templates.length) $("#template-settings").append(el("li", { class: "muted small" }, "هنوز الگویی نیست."));
+}
+
+async function renderBackups() {
+  const backups = await (await fetch("/api/backups")).json();
+  $("#backup-list").replaceChildren(...backups.map((b) =>
+    el("li", {},
+      el("span", {}, `${Jalali.format(b.modified)}${b.safety ? " (کپی قبل از برگرداندن)" : ""}`),
+      el("span", { class: "muted small" }, `${fa(Math.max(1, Math.round(b.size / 1024)))} کیلوبایت`),
+      el("button", {
+        type: "button",
+        onclick: async () => {
+          if (!confirm(`داده‌های برنامه به نسخهٔ ${Jalali.format(b.modified)} برگردد؟ یک کپی از وضعیت فعلی نگه داشته می‌شود.`)) return;
+          await api("POST", "/api/backups/restore", { name: b.name });
+          $("#settings-dialog").close();
+          showMessage("backup برگردانده شد.", false);
+        },
+      }, "برگرداندن"))));
+  if (!backups.length) $("#backup-list").append(el("li", { class: "muted small" }, "هنوز backupی نیست."));
+}
+
+$("#data-export").addEventListener("click", async () => {
+  const result = await api("POST", "/api/data/export", {});
+  await api("POST", "/api/export/reveal", { name: result.name });
+  showMessage(`فایل داده‌ها ساخته شد: ${result.name}`, false);
+});
+$("#data-import").addEventListener("click", async () => {
+  if (!confirm("داده‌های فعلی با داده‌های فایل عوض می‌شوند. یک کپی از وضعیت فعلی نگه داشته می‌شود. ادامه می‌دهید؟")) return;
+  const result = await api("POST", "/api/data/import", {});
+  if (result.cancelled) return;
+  $("#settings-dialog").close();
+  showMessage("داده‌ها وارد شدند.", false);
+});
 
 function renderTypeSettings() {
   $("#type-settings").replaceChildren(...state.types.map((t) =>

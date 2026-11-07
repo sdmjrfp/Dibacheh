@@ -109,6 +109,14 @@ def today():
     return scheduler.effective_today(datetime.now(), settings["day_start_hour"])
 
 
+def backups_dir(settings):
+    """پوشهٔ backup. نسخهٔ آزمایشی با دیتابیس جدا، backup خودش را کنار همان دیتابیس می‌گذارد
+    تا در backupهای اصلی قاطی نشود."""
+    if os.environ.get("DIBACHEH_DB"):
+        return Path(os.environ["DIBACHEH_DB"]).parent / "backups-test"
+    return database.backup_folder(settings)
+
+
 @app.before_request
 def backup_once_a_day():
     """اولین درخواست هر روز، یک backup از دیتابیس می‌گیرد."""
@@ -118,7 +126,7 @@ def backup_once_a_day():
         return
     conn = get_db()
     settings = database.get_settings(conn)
-    database.daily_backup(conn, database.backup_folder(settings), settings["backup_retention"], day)
+    database.daily_backup(conn, backups_dir(settings), settings["backup_retention"], day)
     _last_backup_day = day
 
 
@@ -1268,7 +1276,7 @@ def api_export_report():
 
 @app.route("/api/backups")
 def api_backups():
-    folder = database.backup_folder(database.get_settings(get_db()))
+    folder = backups_dir(database.get_settings(get_db()))
     return jsonify(_json_ready(database.list_backups(folder)))
 
 
@@ -1276,7 +1284,7 @@ def api_backups():
 def api_restore_backup():
     """یک backup را برمی‌گرداند. قبلش یک کپی جدا از وضعیت فعلی گرفته می‌شود."""
     conn = get_db()
-    folder = database.backup_folder(database.get_settings(conn))
+    folder = backups_dir(database.get_settings(conn))
     name = _body().get("name")
     if name not in {b["name"] for b in database.list_backups(folder)}:
         raise UserError("این backup پیدا نشد.")
@@ -1329,7 +1337,7 @@ def api_import_data():
                 database.check_database_file(copy)
             except ValueError as error:
                 raise UserError(str(error))
-            database.safety_copy(conn, database.backup_folder(database.get_settings(conn)), datetime.now())
+            database.safety_copy(conn, backups_dir(database.get_settings(conn)), datetime.now())
             database.replace_database(conn, copy)
             # فقط نام فایل استفاده می‌شود، پس فایل zip نمی‌تواند بیرون از پوشهٔ فونت‌ها چیزی بنویسد
             database.FONTS_DIR.mkdir(parents=True, exist_ok=True)

@@ -12,3 +12,6 @@ data/
 .env.*
 node_modules/
 .claude/launch.json
+
+# با tools/build_app.sh ساخته می‌شود
+Dibacheh.app/

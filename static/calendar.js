@@ -236,6 +236,7 @@ function taskChip(task, iso, context, compact) {
     el("div", { class: "task-title" },
       quickTick,
       task.manual && el("span", { title: "دستی جابه‌جا شده" }, "📌 "),
+      session && session.note && el("span", { title: session.note }, "📝 "),
       item ? item.title : "؟"),
     !compact && el("div", { class: "task-meta" },
       el("span", {}, label),
@@ -434,6 +435,11 @@ function openTaskMenu(task, iso, anchor) {
       }, "ذخیره")));
     content.push(el("p", { class: "muted small" }, "خالی = از نسبت مرور. روی همهٔ مرورهای این جلسه اثر دارد."));
   }
+  // یادداشت جلسه: موقع خواندن نوشته می‌شود و موقع مرور همین‌جا دیده می‌شود
+  const note = el("textarea", { rows: 3, class: "wide-text", placeholder: "یادداشت این جلسه: نکته یا سؤال…" });
+  note.value = session.note || "";
+  note.addEventListener("change", () => api("PATCH", `/api/sessions/${session.id}`, { note: note.value }));
+  content.push(note);
   content.push(el("button", { onclick: () => { closePopover(); openItemDialog(item); } }, "✎ ویرایش درس"));
   openPopover(anchor, ...content);
 }
@@ -450,6 +456,21 @@ function openDayMenu(iso, day, anchor) {
   ];
   if (!day || !day.is_off) content.push(el("button", { onclick: () => setCap(0) }, "تعطیل کردن این روز"));
   if (override !== undefined) content.push(el("button", { onclick: () => setCap(null) }, "برگشت به سقف عادی"));
+
+  // تعطیلی چندروزه: از همین روز تا تاریخ انتخابی
+  const until = el("span", { class: "jalali-input" });
+  buildJalaliInput(until, Jalali.addDays(iso, 6));
+  const setRange = (cap) => {
+    try {
+      const end = readJalaliInput(until);
+      if (end) api("POST", "/api/days/range", { start: iso, end, cap_minutes: cap }).then(closePopover);
+    } catch (error) { showMessage(error.message); }
+  };
+  content.push(el("div", { class: "small" }, "تعطیلی چندروزه، از این روز تا:"));
+  content.push(el("div", { class: "pop-row" }, until));
+  content.push(el("div", { class: "pop-row" },
+    el("button", { onclick: () => setRange(0) }, "تعطیل کردن بازه"),
+    el("button", { onclick: () => setRange(null) }, "برداشتن تعطیلی بازه")));
 
   // کارهای روزهای بعد که می‌شود به این روز جلو آورد
   const index = sessionIndex();

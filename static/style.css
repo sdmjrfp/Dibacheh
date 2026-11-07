@@ -494,3 +494,40 @@ input.swatch { width: 26px; height: 26px; padding: 1px; border-radius: 6px; curs
 button:disabled { cursor: not-allowed; }
 #settings-form select[name="font_family"] { min-width: 14em; }
 ol.explain button.link { color: var(--danger); text-decoration: none; font-weight: 700; }
+
+/* =====================================================================
+   جست‌وجو، وابستگی، گزارش
+   ===================================================================== */
+.search { width: 100%; margin-top: 8px; padding: 5px 10px; }
+.wide-text { width: 100%; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; resize: vertical; }
+.item .hits { grid-column: 3 / 5; font-size: 0.85em; color: var(--muted); }
+.item .waiting { color: var(--text); font-weight: 600; }
+.template-row { margin-bottom: 10px; }
+.backup-list { max-height: 180px; overflow: auto; }
+.backup-list li { justify-content: space-between; }
+
+.stats-section { margin: 16px 0 22px; }
+.stats-section h3 { margin: 0 0 8px; font-size: 1em; }
+.stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 12px; }
+.stat-tile { flex: 1 1 130px; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; }
+.stat-value { font-size: 1.25em; font-weight: 700; }
+.bars-chart, .heat-chart { width: 100%; height: auto; display: block; }
+.bars-chart .grid { stroke: var(--border); stroke-dasharray: 2 4; }
+.bars-chart .baseline { stroke: var(--muted); }
+.axis-text { fill: var(--muted); font-size: 11px; }
+.bars-chart .bar:hover rect:not([fill="transparent"]), .bars-chart .bar:focus rect:not([fill="transparent"]) { opacity: 0.8; }
+.bars-chart .bar:focus, .heat:focus { outline: none; }
+.chart-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 0.85em; color: var(--muted); margin-top: 6px; }
+.chart-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-inline-end: 4px; vertical-align: -1px; }
+.chart-tip { position: fixed; z-index: 60; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.85em; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); pointer-events: none; }
+/* نقشهٔ فعالیت: یک رنگ، از کم‌رنگ تا پررنگ */
+.heat.l0, .heat-key.l0 { fill: var(--border); background: var(--border); }
+.heat.l1, .heat-key.l1 { fill: color-mix(in srgb, var(--accent) 30%, var(--panel)); background: color-mix(in srgb, var(--accent) 30%, var(--panel)); }
+.heat.l2, .heat-key.l2 { fill: color-mix(in srgb, var(--accent) 55%, var(--panel)); background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.heat.l3, .heat-key.l3 { fill: color-mix(in srgb, var(--accent) 78%, var(--panel)); background: color-mix(in srgb, var(--accent) 78%, var(--panel)); }
+.heat.l4, .heat-key.l4 { fill: var(--accent); background: var(--accent); }
+.heat:hover, .heat:focus { stroke: var(--text); stroke-width: 1; }
+.cat-row { display: grid; grid-template-columns: 9em 1fr 7em; gap: 10px; align-items: center; margin-bottom: 6px; }
+.cat-row .progress { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+.cat-row .progress span { display: block; height: 100%; background: var(--accent); }
+.cat-row .progress { grid-column: auto; }

@@ -16,7 +16,7 @@ if [ ! -x .venv/bin/python ]; then
 fi
 
 # اگر دیباچه از قبل باز است، فقط مرورگر را باز کن
-if curl -s --max-time 2 "$URL/" | grep -q 'name="csrf-token"'; then
+if curl -s --noproxy '*' --max-time 2 "$URL/" | grep -q 'name="csrf-token"'; then
   echo "دیباچه از قبل در حال اجراست. مرورگر باز می‌شود."
   open "$URL"
   exit 0
@@ -34,7 +34,7 @@ fi
 # وقتی سرور آماده شد، مرورگر پیش‌فرض Mac باز می‌شود
 (
   for i in {1..50}; do
-    curl -s --max-time 1 -o /dev/null "$URL/" && break
+    curl -s --noproxy '*' --max-time 1 -o /dev/null "$URL/" && break
     sleep 0.2
   done
   open "$URL"
