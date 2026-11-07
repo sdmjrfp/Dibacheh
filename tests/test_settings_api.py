@@ -67,7 +67,3 @@ def test_appearance_settings_are_saved(client):
     assert (state["settings"]["theme"], state["settings"]["font_family"], state["settings"]["font_size"]) == \
         ("dark", "B Nazanin", 18)
 
-
-def test_fonts_list(client):
-    fonts = client.get("/api/fonts").get_json()
-    assert isinstance(fonts, list)

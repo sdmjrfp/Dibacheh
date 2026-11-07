@@ -790,7 +790,6 @@ function currentSourcesWidth() {
 
 const settingsForm = $("#settings-form");
 const sf = settingsForm.elements;
-let fontsLoaded = false;
 let intervalDraft = [];   // فاصله‌های لایتنر در حال ویرایش (به روز)
 let chartMax = 120;       // آخرین روزِ نمودار لایتنر
 
@@ -1085,9 +1084,7 @@ function renderTypeSettings() {
   }
 }
 
-let macFonts = [];   // فونت‌های نصب‌شده روی Mac؛ یک بار خوانده می‌شوند
-
-/** کادر باز شوی فونت: همراه برنامه، اضافه‌شده، و نصب‌شده روی Mac */
+/** کادر باز شوی فونت: فونت‌های همراه برنامه و فونت‌هایی که کاربر اضافه کرده */
 function fillFontSelect(selected) {
   const custom = state.settings.custom_fonts || [];
   const bundled = [{ family: "Vazirmatn", label: "وزیرمتن" }, ...state.bundled_fonts];
@@ -1097,10 +1094,8 @@ function fillFontSelect(selected) {
     el("optgroup", { label: "فارسی، همراه برنامه" }, bundled.map((f) => option(f.family, `${f.label} (${f.family})`))),
   ];
   if (custom.length) groups.push(el("optgroup", { label: "اضافه‌شده" }, custom.map((f) => option(f.family, f.family))));
-  const installed = macFonts.filter((f) => !known.has(f));
-  if (installed.length) groups.push(el("optgroup", { label: "نصب‌شده روی Mac" }, installed.map((f) => option(f, f))));
-  // فونت فعلی حتی اگر هنوز در فهرست نیست، از دست نرود
-  if (selected && !known.has(selected) && !installed.includes(selected)) groups.unshift(option(selected, selected));
+  // فونت فعلی حتی اگر در فهرست نیست (مثلاً قبلاً از فونت‌های Mac انتخاب شده)، از دست نرود
+  if (selected && !known.has(selected)) groups.unshift(option(selected, selected));
   sf.font_family.replaceChildren(...groups);
   updateFontSample();
 }
@@ -1124,13 +1119,6 @@ function renderFontSettings(selected = sf.font_family.value || state.settings.fo
         },
       }, "حذف"))));
   fillFontSelect(selected);
-  if (!fontsLoaded) {
-    fetch("/api/fonts").then((r) => r.json()).then((fonts) => {
-      macFonts = fonts;
-      fontsLoaded = true;
-      fillFontSelect(sf.font_family.value);
-    });
-  }
 }
 
 $("#font-add").addEventListener("click", async () => {

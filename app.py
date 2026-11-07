@@ -996,12 +996,6 @@ def api_settings():
     return state_response()
 
 
-@app.route("/api/fonts")
-def api_fonts():
-    """فونت‌های نصب‌شده روی Mac، برای انتخاب در تنظیمات."""
-    return jsonify(sources.installed_fonts())
-
-
 FONT_SUFFIXES = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2"}
 
 
