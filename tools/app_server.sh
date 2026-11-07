@@ -4,11 +4,24 @@
 #   open:  صفحهٔ برنامه را در مرورگر پیش‌فرض باز می‌کند.
 #   stop:  سروری را که خود app اجرا کرده می‌بندد.
 # خروجی 2 = برنامه نصب نشده، 3 = برنامهٔ دیگری پورت را گرفته، 4 = سرور بالا نیامد.
+#
+# این فایل در دو جا اجرا می‌شود: داخل پروژه (با پایتون .venv)، و داخل نسخهٔ نصبی
+# Dibacheh.app کنار سرور آماده (dibacheh-server).
 
-cd "$(dirname "$0")/.."
-PORT="${DIBACHEH_PORT:-5000}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+if [ -x "$HERE/dibacheh-server/dibacheh-server" ]; then
+  SERVER=("$HERE/dibacheh-server/dibacheh-server")
+  STATE="${DIBACHEH_HOME:-$HOME/Library/Application Support/Dibacheh}/data"
+  PORT="${DIBACHEH_PORT:-5847}"
+else
+  cd "$HERE/.."
+  SERVER=(.venv/bin/python app.py)
+  STATE="data"
+  PORT="${DIBACHEH_PORT:-5000}"
+fi
+export DIBACHEH_PORT="$PORT"
 URL="http://127.0.0.1:$PORT"
-PID_FILE="data/app-$PORT.pid"
+PID_FILE="$STATE/app-$PORT.pid"
 
 is_dibacheh() {
   curl -s --noproxy '*' --max-time 2 "$URL/" | grep -q 'name="csrf-token"'
@@ -16,11 +29,11 @@ is_dibacheh() {
 
 case "$1" in
   start)
-    [ -x .venv/bin/python ] || exit 2
+    [ -x "${SERVER[1]}" ] || exit 2
     is_dibacheh && exit 0
     lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1 && exit 3
-    mkdir -p data
-    nohup .venv/bin/python app.py >"data/app-$PORT.log" 2>&1 &
+    mkdir -p "$STATE"
+    nohup "${SERVER[@]}" >"$STATE/app-$PORT.log" 2>&1 &
     echo $! >"$PID_FILE"
     for i in {1..50}; do
       is_dibacheh && exit 0

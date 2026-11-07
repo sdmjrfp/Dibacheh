@@ -23,6 +23,7 @@ import re
 import secrets
 import sqlite3
 import subprocess
+import sys
 import tempfile
 import zipfile
 from collections import deque
@@ -43,7 +44,9 @@ import sources
 # نه گوشی یا کامپیوتر دیگری در شبکه.
 HOST = "127.0.0.1"
 # پورت را می‌شود برای امتحان عوض کرد: DIBACHEH_PORT=5001 .venv/bin/python app.py
-PORT = int(os.environ.get("DIBACHEH_PORT") or 5000)
+# نسخهٔ نصبی پورت دیگری دارد، چون AirPlay Receiver روی خیلی از Macها پورت 5000 را گرفته است.
+FROZEN = getattr(sys, "frozen", False)
+PORT = int(os.environ.get("DIBACHEH_PORT") or (5847 if FROZEN else 5000))
 ALLOWED_HOSTS = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
 
 # توکن CSRF: هر بار که برنامه اجرا می‌شود یک رمز تصادفی تازه ساخته می‌شود.
@@ -51,7 +54,9 @@ ALLOWED_HOSTS = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
 # سایت‌های دیگری که در مرورگر باز هستند این رمز را ندارند، پس نمی‌توانند چیزی را تغییر دهند.
 CSRF_TOKEN = secrets.token_urlsafe(32)
 
-app = Flask(__name__)
+# فایل‌های صفحه: کنار همین فایل، یا در نسخهٔ نصبی داخل بستهٔ برنامه
+RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+app = Flask(__name__, template_folder=str(RESOURCE_DIR / "templates"), static_folder=str(RESOURCE_DIR / "static"))
 # برای امتحان برنامه با یک دیتابیس جدا، بدون دست زدن به داده‌های اصلی:
 #     DIBACHEH_DB=/tmp/demo.sqlite3 .venv/bin/python app.py
 app.config["DB_PATH"] = os.environ.get("DIBACHEH_DB") or database.DB_PATH

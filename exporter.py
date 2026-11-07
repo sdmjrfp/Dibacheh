@@ -14,6 +14,7 @@ import base64
 import html
 import io
 import re
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -22,7 +23,7 @@ import markdown
 import jalali
 import sources
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 FONT_FILE = PROJECT_DIR / "static" / "vendor" / "vazirmatn" / "Vazirmatn-Variable.woff2"
 
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",

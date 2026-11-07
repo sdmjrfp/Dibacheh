@@ -15,3 +15,8 @@ node_modules/
 
 # با tools/build_app.sh ساخته می‌شود
 Dibacheh.app/
+
+# خروجی ساخت نسخهٔ نصبی
+build/
+dist/
+*.spec

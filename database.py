@@ -8,13 +8,28 @@
 """
 
 import json
+import os
 import re
 import sqlite3
+import sys
 import threading
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).resolve().parent
+def _app_home():
+    """پوشه‌ای که داده‌ها در آن است.
+
+    اجرا از سورس: پوشهٔ پروژه. نسخهٔ نصبی: Application Support کاربر، تا با به‌روزرسانی
+    یا حذف برنامه داده‌ها از بین نرود. DIBACHEH_HOME برای تست نسخهٔ نصبی است.
+    """
+    if os.environ.get("DIBACHEH_HOME"):
+        return Path(os.environ["DIBACHEH_HOME"])
+    if getattr(sys, "frozen", False):
+        return Path.home() / "Library" / "Application Support" / "Dibacheh"
+    return Path(__file__).resolve().parent
+
+
+PROJECT_DIR = _app_home()
 DATA_DIR = PROJECT_DIR / "data"
 DB_PATH = DATA_DIR / "dibacheh.sqlite3"
 
