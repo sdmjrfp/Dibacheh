@@ -26,6 +26,7 @@ VERSION = (ROOT / "VERSION").read_text().strip()
 WINDOWS = sys.platform.startswith("win")
 SEP = ";" if WINDOWS else ":"
 APPIMAGETOOL = "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+APPIMAGE_RUNTIME = "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64"
 
 
 def run(*args, **kwargs):
@@ -88,7 +89,9 @@ def package_linux(bundle):
     tool = OUT / "appimagetool"
     download(APPIMAGETOOL, tool)
     tool.chmod(0o755)
-    run(tool, "--appimage-extract-and-run", appdir, OUT / f"Dibacheh-{VERSION}-Linux-x86_64.AppImage",
+    runtime = OUT / "appimage-runtime"
+    download(APPIMAGE_RUNTIME, runtime)   # وگرنه خود appimagetool آن را بدون تلاش دوباره می‌گیرد
+    run(tool, "--appimage-extract-and-run", "--runtime-file", runtime, appdir, OUT / f"Dibacheh-{VERSION}-Linux-x86_64.AppImage",
         env={**os.environ, "ARCH": platform.machine()})
 
 
