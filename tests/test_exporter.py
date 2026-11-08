@@ -2,15 +2,14 @@
 
 import io
 import re
-from datetime import date, timedelta
 
 import pypdfium2 as pdfium
 import pytest
-
-import app as app_module
-import exporter
 from test_api import add, item_named
 from test_calendar_api import today_of
+
+import exporter
+import platform_tools
 
 
 def make_pdf(path, pages):
@@ -121,7 +120,7 @@ def test_daily_export_with_pdf_and_note(client, export_dir, tmp_path):
 
 
 def test_export_has_no_internet_links(client, export_dir):
-    state = add(client, "ویدیو", count=1, source_type="url", source_path_or_url="https://youtu.be/abc")
+    add(client, "ویدیو", count=1, source_type="url", source_path_or_url="https://youtu.be/abc")
     html = (export_dir / export(client, scope="day")["name"]).read_text(encoding="utf-8")
     assert "https://youtu.be/abc" in html                            # آدرس به شکل متن هست
     assert not re.search(r'(src|href)\s*=\s*"https?:', html)         # ولی هیچ چیزی از اینترنت بار نمی‌شود
@@ -130,7 +129,7 @@ def test_export_has_no_internet_links(client, export_dir):
 def test_weekly_export_is_list_only_by_default(client, export_dir, tmp_path):
     pdf = tmp_path / "book.pdf"
     make_pdf(pdf, 10)
-    state = add(client, "کتاب", count=5, section_unit="page", range_start="1", range_end="10",
+    add(client, "کتاب", count=5, section_unit="page", range_start="1", range_end="10",
                 source_type="file", source_path_or_url=str(pdf))
     html = (export_dir / export(client, scope="week")["name"]).read_text(encoding="utf-8")
     assert "<img" not in html
@@ -166,9 +165,9 @@ def test_export_file_endpoint_only_serves_export_files(client, export_dir):
 
 def test_reveal_in_finder(client, export_dir, monkeypatch):
     calls = []
-    monkeypatch.setattr(app_module.platform_tools.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
+    monkeypatch.setattr(platform_tools.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
     add(client, "A", count=1)
     name = export(client, scope="day")["name"]
     client.post("/api/export/reveal", json={"name": name})
-    assert calls == [app_module.platform_tools.reveal_args(export_dir / name)]
+    assert calls == [platform_tools.reveal_args(export_dir / name)]
     assert client.post("/api/export/reveal", json={"name": "../x.html"}).status_code == 400

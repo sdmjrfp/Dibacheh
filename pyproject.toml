@@ -1,0 +1,18 @@
+[tool.ruff]
+line-length = 130
+extend-exclude = ["build", "data", "static", "templates"]
+
+[tool.ruff.lint]
+# E/W: قالب کد، F: خطاهای واقعی مثل نام تعریف‌نشده، I: ترتیب import، B: الگوهای خطاخیز
+select = ["E", "W", "F", "I", "B"]
+ignore = ["E501", "B904"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*", "tools/*", ".venv/*", "build/*"]
+
+[tool.coverage.report]
+skip_empty = true

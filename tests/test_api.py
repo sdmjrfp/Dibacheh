@@ -1,6 +1,12 @@
 """تست‌های بخش منابع درسی از راه API، مثل کاری که صفحه انجام می‌دهد."""
 
+from datetime import date
+
 import app as app_module
+import config
+import database
+import platform_tools
+import sources
 
 
 def add(client, title="A", count=3, minutes=60, **extra):
@@ -27,17 +33,17 @@ def test_wrong_host_is_rejected(client):
 
 
 def test_page_contains_csrf_token(client):
-    assert app_module.CSRF_TOKEN in client.get("/").get_data(as_text=True)
+    assert config.CSRF_TOKEN in client.get("/").get_data(as_text=True)
 
 
 def test_open_uses_only_registered_source(client, monkeypatch):
     calls = []
-    monkeypatch.setattr(app_module.platform_tools.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
+    monkeypatch.setattr(platform_tools.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
     state = add(client, "L", source_type="url", source_path_or_url="https://youtu.be/abc")
     item_id = item_named(state, "L")["id"]
     # حتی اگر مرورگر آدرس دیگری بفرستد، فقط آدرس ثبت‌شده باز می‌شود
     client.post(f"/api/items/{item_id}/open", json={"path": "/etc/passwd"})
-    assert calls == [app_module.platform_tools.open_args("https://youtu.be/abc")]
+    assert calls == [platform_tools.open_args("https://youtu.be/abc")]
 
 
 # ---------------------------------------------------------------------------
@@ -96,9 +102,9 @@ def test_resplit_keeps_read_sessions(client):
     state = add(client, "کتاب", count=4, section_unit="page", range_start="1", range_end="40")
     item = item_named(state, "کتاب")
     s1 = item["sessions"][0]
-    conn = app_module.database.connect(app_module.app.config["DB_PATH"])
-    app_module.database.update_session(conn, s1["id"], status="reviewing", leitner_box=2,
-                                       minutes_done=60, read_at=app_module.date(2026, 1, 1))
+    conn = database.connect(app_module.app.config["DB_PATH"])
+    database.update_session(conn, s1["id"], status="reviewing", leitner_box=2,
+                                       minutes_done=60, read_at=date(2026, 1, 1))
     conn.close()
     state = client.post(f"/api/items/{item['id']}/split", json={"session_count": 2}).get_json()
     sessions = item_named(state, "کتاب")["sessions"]
@@ -120,7 +126,7 @@ def test_routine_with_weekdays(client):
     state = add(client, "ورزش", count=3, minutes=10, item_type="routine", routine_weekdays=[5])
     days = [d for d in state["plan"]["days"] if d["tasks"]]
     assert len(days) == 3
-    assert all(app_module.date.fromisoformat(d["date"]).weekday() == 5 for d in days)
+    assert all(date.fromisoformat(d["date"]).weekday() == 5 for d in days)
 
 
 def test_delete_item(client):
@@ -134,8 +140,8 @@ def test_reset_item_goes_to_end_of_queue(client):
     add(client, "A", count=1)
     state = add(client, "B", count=1)
     a = item_named(state, "A")
-    conn = app_module.database.connect(app_module.app.config["DB_PATH"])
-    app_module.database.update_session(conn, a["sessions"][0]["id"], status="finished", leitner_box=4)
+    conn = database.connect(app_module.app.config["DB_PATH"])
+    database.update_session(conn, a["sessions"][0]["id"], status="finished", leitner_box=4)
     conn.close()
     state = client.get("/api/state").get_json()
     assert item_named(state, "A")["status_list"] == "finished"
@@ -160,7 +166,7 @@ def test_url_source_must_be_web_link(client):
 
 
 def test_browse_cancel(client, monkeypatch):
-    monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: None)
+    monkeypatch.setattr(sources, "browse", lambda *a, **k: None)
     assert client.post("/api/browse", json={"kind": "file"}).get_json() == {"cancelled": True}
 
 
@@ -169,6 +175,6 @@ def test_browse_inside_vault(client, monkeypatch, tmp_path):
     vault.mkdir()
     (vault / "n.md").write_text("x")
     client.patch("/api/settings", json={"vault_path": str(vault)})
-    monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(vault / "n.md"))
+    monkeypatch.setattr(sources, "browse", lambda *a, **k: str(vault / "n.md"))
     result = client.post("/api/browse", json={"kind": "file"}).get_json()
     assert result == {"source_type": "vault", "source_path_or_url": "n.md", "outline": None}

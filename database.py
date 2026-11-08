@@ -262,7 +262,7 @@ def migrate(conn):
                 raise
 
 
-def _to_python(row):
+def row_to_dict(row):
     """یک سطر دیتابیس را به dict با تاریخ و فهرست واقعی تبدیل می‌کند."""
     data = dict(row)
     for key, value in data.items():
@@ -390,7 +390,7 @@ def clean_setting(key, value):
         result = dict(DEFAULT_SETTINGS["colors"])
         for kind in result:
             if kind in value:
-                result[kind] = _color(value[kind])
+                result[kind] = clean_color(value[kind])
         return result
     if key == "color_mode":
         if value not in ("kind", "source"):
@@ -418,7 +418,7 @@ def clean_setting(key, value):
     return str(value or "").strip()
 
 
-def _color(value):
+def clean_color(value):
     """رنگ به شکل #rrggbb"""
     text = str(value or "").strip().lower()
     if not re.fullmatch(r"#[0-9a-f]{6}", text):
@@ -579,12 +579,12 @@ def set_day_range(conn, start, end, cap_minutes):
 
 def get_item(conn, item_id):
     row = conn.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
-    return _to_python(row) if row else None
+    return row_to_dict(row) if row else None
 
 
 def list_items(conn):
     rows = conn.execute("SELECT * FROM items ORDER BY queue_position, id")
-    return [_to_python(r) for r in rows]
+    return [row_to_dict(r) for r in rows]
 
 
 def update_item(conn, item_id, **fields):
@@ -611,12 +611,12 @@ def list_sessions(conn, item_id=None):
         rows = conn.execute("SELECT * FROM sessions ORDER BY item_id, sequence")
     else:
         rows = conn.execute("SELECT * FROM sessions WHERE item_id = ? ORDER BY sequence", (item_id,))
-    return [_to_python(r) for r in rows]
+    return [row_to_dict(r) for r in rows]
 
 
 def get_session(conn, session_id):
     row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
-    return _to_python(row) if row else None
+    return row_to_dict(row) if row else None
 
 
 def update_session(conn, session_id, **fields):
@@ -708,7 +708,7 @@ def add_log(conn, session_id, day, task_type, minutes, result, before=None):
 
 def get_log(conn, log_id):
     row = conn.execute("SELECT * FROM task_log WHERE id = ?", (log_id,)).fetchone()
-    return _to_python(row) if row else None
+    return row_to_dict(row) if row else None
 
 
 def delete_log(conn, log_id):
@@ -721,7 +721,7 @@ def list_log(conn, session_id=None):
         rows = conn.execute("SELECT * FROM task_log ORDER BY date, id")
     else:
         rows = conn.execute("SELECT * FROM task_log WHERE session_id = ? ORDER BY date, id", (session_id,))
-    return [_to_python(r) for r in rows]
+    return [row_to_dict(r) for r in rows]
 
 
 # ---------------------------------------------------------------------------

@@ -7,7 +7,6 @@
 import socket
 
 import pytest
-
 from test_api import add, item_named
 from test_exporter import make_pdf
 

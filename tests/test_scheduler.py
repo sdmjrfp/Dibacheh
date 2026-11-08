@@ -4,11 +4,12 @@
 """
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
+
+from helpers import DAY1, all_tasks, d, day_of, item, sessions, settings, table, totals
 
 import leitner
 import scheduler
-from helpers import DAY1, all_tasks, d, day_of, item, sessions, settings, table, totals
 
 
 def build(items, sess, today=DAY1, overrides=None, **setting_changes):

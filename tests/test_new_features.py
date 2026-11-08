@@ -2,23 +2,19 @@
 آمار، برگرداندن backup و انتقال داده‌ها."""
 
 import io
-import shutil
 import sqlite3
 import zipfile
 from datetime import date, timedelta
 
 import pypdfium2 as pdfium
-import pytest
-
-import app as app_module
-import database
-import scheduler
-import sources
 from helpers import DAY1, d, day_of, item, sessions, settings
 from test_api import add, item_named
 from test_calendar_api import days_of, today_of
 from test_progress_api import done, session_of
 
+import database
+import scheduler
+import sources
 
 # ---------------------------------------------------------------------------
 # موتور: وابستگی
@@ -257,7 +253,7 @@ def test_export_and_import_data(client, tmp_path, monkeypatch):
     assert set(zipfile.ZipFile(zip_path).namelist()) == {"dibacheh.sqlite3", "fonts/Test.ttf"}
     add(client, "B", count=1)
     (tmp_path / "fonts" / "Test.ttf").unlink()
-    monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(zip_path))
+    monkeypatch.setattr(sources, "browse", lambda *a, **k: str(zip_path))
     state = client.post("/api/data/import", json={}).get_json()
     assert [i["title"] for i in state["items"]] == ["A"]
     assert (tmp_path / "fonts" / "Test.ttf").exists()
@@ -266,7 +262,7 @@ def test_export_and_import_data(client, tmp_path, monkeypatch):
 def test_import_rejects_bad_files(client, tmp_path, monkeypatch):
     bad = tmp_path / "bad.zip"
     bad.write_text("not a zip")
-    monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(bad))
+    monkeypatch.setattr(sources, "browse", lambda *a, **k: str(bad))
     assert client.post("/api/data/import", json={}).status_code == 400
     with zipfile.ZipFile(bad, "w") as z:
         z.writestr("dibacheh.sqlite3", "not a database at all")

@@ -2,8 +2,10 @@
 
 from datetime import date, timedelta
 
-import app as app_module
 from test_api import add, item_named
+
+import app as app_module
+import database
 
 
 def days_of(state, session_id, kind):
@@ -22,8 +24,8 @@ def move(client, session_id, kind, day):
 
 
 def mark_reviewing(session_id, read_at):
-    conn = app_module.database.connect(app_module.app.config["DB_PATH"])
-    app_module.database.update_session(conn, session_id, status="reviewing", leitner_box=1,
+    conn = database.connect(app_module.app.config["DB_PATH"])
+    database.update_session(conn, session_id, status="reviewing", leitner_box=1,
                                        minutes_done=60, read_at=read_at)
     conn.close()
 

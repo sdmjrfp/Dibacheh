@@ -4,10 +4,11 @@ import shutil
 from pathlib import Path
 
 import pytest
+from test_api import add, item_named
 
 import app as app_module
 import database
-from test_api import add, item_named
+import sources
 
 
 def test_custom_type_behaves_like_study(client):
@@ -67,7 +68,7 @@ def test_add_and_remove_font(client, tmp_path, monkeypatch):
     font = tmp_path / SYSTEM_FONT.name
     shutil.copy(SYSTEM_FONT, font)
     monkeypatch.setattr(database, "FONTS_DIR", tmp_path / "fonts")
-    monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(font))
+    monkeypatch.setattr(sources, "browse", lambda *a, **k: str(font))
     state = client.post("/api/fonts/add", json={}).get_json()
     family = state["added_font"]
     assert state["settings"]["custom_fonts"] == [{"family": family, "file": font.name}]
@@ -82,7 +83,7 @@ def test_add_and_remove_font(client, tmp_path, monkeypatch):
 def test_add_font_rejects_other_files(client, tmp_path, monkeypatch):
     other = tmp_path / "notes.txt"
     other.write_text("x")
-    monkeypatch.setattr(app_module.sources, "browse", lambda *a, **k: str(other))
+    monkeypatch.setattr(sources, "browse", lambda *a, **k: str(other))
     assert client.post("/api/fonts/add", json={}).status_code == 400
 
 
@@ -105,7 +106,7 @@ def test_color_mode_setting(client):
 def test_export_uses_source_colors_and_bundled_font(client, tmp_path):
     client.patch("/api/settings", json={"color_mode": "source", "font_family": "Samim",
                                         "export_folder": str(tmp_path / "out")})
-    state = add(client, "A", count=1, color="#123456")
+    add(client, "A", count=1, color="#123456")
     name = client.post("/api/export", json={"scope": "day"}).get_json()["name"]
     html = (tmp_path / "out" / name).read_text(encoding="utf-8")
     assert "#123456" in html

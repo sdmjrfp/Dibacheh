@@ -1,6 +1,6 @@
 """تست‌های بخش تنظیمات."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from test_api import add, item_named
 from test_calendar_api import days_of, today_of

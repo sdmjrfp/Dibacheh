@@ -207,10 +207,10 @@ def test_failed_request_leaves_no_half_saved_data(client):
 
 
 def test_undo_snapshot_is_small_for_a_large_plan(client):
-    import app as app_module
+    import undo
     for n in range(20):
         client.post("/api/items", json={"title": f"درس {n}", "session_count": 30, "session_minutes": 30})
-    size = len(app_module._undo_stack[-1][1])
+    size = len(undo.stack[-1][1])
     assert size < 40_000
 
 

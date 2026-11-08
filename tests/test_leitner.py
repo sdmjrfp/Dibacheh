@@ -2,8 +2,9 @@
 
 from fractions import Fraction
 
-import leitner
 from helpers import d, item, sessions, settings
+
+import leitner
 
 INTERVALS = [1, 3, 7, 30]
 

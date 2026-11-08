@@ -14,14 +14,17 @@ from flask.testing import FlaskClient
 sys.path.insert(0, str(Path(__file__).parent))
 
 import app as app_module  # noqa: E402
+import config  # noqa: E402
 import database  # noqa: E402
+import undo  # noqa: E402
+import webutil  # noqa: E402
 
 
 class LocalClient(FlaskClient):
     """مثل مرورگر روی همین Mac، درخواست‌ها را به آدرس 127.0.0.1:5000 می‌فرستد."""
 
     def open(self, *args, **kwargs):
-        kwargs.setdefault("base_url", f"http://127.0.0.1:{app_module.PORT}")
+        kwargs.setdefault("base_url", f"http://127.0.0.1:{config.PORT}")
         return super().open(*args, **kwargs)
 
 
@@ -39,12 +42,12 @@ def client(tmp_path):
     database.set_setting(setup, "backup_folder", str(tmp_path / "backups"))
     setup.close()
     app_module.app.config["DB_PATH"] = db_path
-    app_module._last_backup_day = None
-    app_module._undo_stack.clear()
-    app_module._redo_stack.clear()
+    webutil.backup_status.update(day=None, problem=None)
+    undo.stack.clear()
+    undo.redo_stack.clear()
     app_module.app.test_client_class = LocalClient
     test_client = app_module.app.test_client()
     # مثل صفحهٔ خود برنامه: رمز CSRF همراه هر درخواست
-    test_client.environ_base["HTTP_X_CSRF_TOKEN"] = app_module.CSRF_TOKEN
+    test_client.environ_base["HTTP_X_CSRF_TOKEN"] = config.CSRF_TOKEN
     yield test_client
     app_module.app.config["DB_PATH"] = database.DB_PATH

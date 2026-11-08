@@ -185,11 +185,12 @@ def test_undone_partial_and_routine(client):
 def test_undone_old_tick_without_saved_state(client):
     """تیک‌هایی که قبل از این قابلیت ثبت شده‌اند هم برمی‌گردند."""
     import app as app_module
+    import database
     state = add(client, "A", count=1)
     s1 = session_of(state, "A")["id"]
     done(client, s1, "read")
     state = done(client, s1, "review").get_json()
-    conn = app_module.database.connect(app_module.app.config["DB_PATH"])
+    conn = database.connect(app_module.app.config["DB_PATH"])
     conn.execute("UPDATE task_log SET before_state = NULL")
     conn.commit()
     conn.close()

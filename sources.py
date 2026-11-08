@@ -198,7 +198,7 @@ def check_ranges(item, sessions):
     for seq, a, b in ranges:
         if b < a:
             problems.append(f"جلسهٔ {seq}: پایان قبل از شروع است.")
-    for (seq1, _, end1), (seq2, start2, _) in zip(ranges, ranges[1:]):
+    for (seq1, _, end1), (seq2, start2, _) in zip(ranges, ranges[1:], strict=False):
         if start2 > end1 + gap:
             problems.append(f"بین جلسهٔ {seq1} و {seq2} فاصله افتاده است.")
         elif start2 < end1 + gap:

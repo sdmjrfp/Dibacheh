@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 
 import app as app_module
+import config
+import scheduler
 
 
 def test_index_page_loads(client):
@@ -16,7 +18,7 @@ def test_index_page_loads(client):
 
 
 def test_server_only_listens_on_this_mac():
-    assert app_module.HOST == "127.0.0.1"
+    assert config.HOST == "127.0.0.1"
 
 
 def test_page_has_no_external_links(client):
@@ -24,7 +26,7 @@ def test_page_has_no_external_links(client):
     html = client.get("/").get_data(as_text=True)
     assert not re.search(r'(src|href)\s*=\s*"(https?:)?//', html)
     static = Path(app_module.app.static_folder)
-    for path in [*static.glob("*.css"), *static.glob("*.js")]:
+    for path in [*static.rglob("*.css"), *static.rglob("*.js")]:
         text = path.read_text(encoding="utf-8")
         assert not re.search(r'url\(\s*["\']?(https?:)?//', text), path.name
         assert not re.search(r'(import|fetch)\s*\(\s*["\']https?://', text), path.name
@@ -46,7 +48,7 @@ def test_api_plan_returns_json(client):
 def test_unexpected_error_is_logged_and_gives_clean_message(client, monkeypatch, caplog):
     def broken(*args, **kwargs):
         raise RuntimeError("خرابی آزمایشی")
-    monkeypatch.setattr(app_module.scheduler, "build_plan", broken)
+    monkeypatch.setattr(scheduler, "build_plan", broken)
     response = client.get("/api/state")
     assert response.status_code == 500
     assert "گزارش خطا" in response.get_json()["error"]
@@ -59,7 +61,7 @@ def test_failed_page_load_keeps_http_errors(client):
 
 
 def test_log_endpoints(client, tmp_path, monkeypatch):
-    monkeypatch.setattr(app_module, "_log_file", lambda: tmp_path / "logs" / "x.log")
+    monkeypatch.setattr(config, "log_file", lambda: tmp_path / "logs" / "x.log")
     assert client.get("/api/logs").get_json()["lines"] == []
     (tmp_path / "logs").mkdir()
     (tmp_path / "logs" / "x.log").write_text("\n".join(str(n) for n in range(300)), encoding="utf-8")
@@ -70,10 +72,10 @@ def test_log_endpoints(client, tmp_path, monkeypatch):
 
 def test_setup_logging_writes_to_file(tmp_path, monkeypatch):
     import logging
-    monkeypatch.setattr(app_module, "_log_file", lambda: tmp_path / "logs" / "x.log")
+    monkeypatch.setattr(config, "log_file", lambda: tmp_path / "logs" / "x.log")
     root = logging.getLogger()
     before = list(root.handlers)
-    app_module.setup_logging()
+    config.setup_logging()
     try:
         root.error("پیام آزمایشی")
         assert "پیام آزمایشی" in (tmp_path / "logs" / "x.log").read_text(encoding="utf-8")
