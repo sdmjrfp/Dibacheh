@@ -83,6 +83,7 @@ function sortable(list, options) {
   list.addEventListener("pointerdown", (e) => {
     const handle = options.handle ? e.target.closest(options.handle) : e.target.closest(options.items);
     if (!handle || !list.contains(handle) || e.button !== 0) return;
+    if (e.target.closest("button, input, select, a")) return;  // کلیک روی دکمه‌ها کار خودش را بکند
     const card = handle.closest(options.items);
     if (!card || card.dataset.fixed !== undefined) return;
     e.preventDefault();

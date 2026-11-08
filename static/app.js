@@ -223,7 +223,12 @@ function renderCategoryTabs() {
     const node = el("div", {
       class: `cat-tab${selected ? " selected" : ""}`, role: "tab", "aria-selected": String(selected),
       "data-id": id, "data-flip": `cat-${id || "all"}`,
-      onclick: (e) => { if (!e.target.closest(".x")) { filterCategory = String(id); render(); } },
+      onclick: (e) => {
+        // تب انتخاب‌شده دوباره کشیده نمی‌شود، وگرنه دوبار کلیک (تغییر نام) به تب حذف‌شده می‌رسد
+        if (e.target.closest(".x") || selected) return;
+        filterCategory = String(id);
+        render();
+      },
     }, el("span", { class: "name" }, label), el("span", { class: "count" }, fa(count)));
     return node;
   };
