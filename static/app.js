@@ -213,10 +213,11 @@ function categoryOptions(selected, emptyLabel) {
 // ---------------------------------------------------------------------------
 
 let addingCategory = false;
+let typingCategoryName = false;
 
 function renderCategoryTabs() {
   const box = $("#category-tabs");
-  if (box.querySelector("input:focus")) return;  // وسط تایپ نام، دوباره کشیده نشود
+  if (typingCategoryName) return;  // وسط تایپ نام، دوباره کشیده نشود
   const tab = (id, label, count) => {
     const selected = String(filterCategory) === String(id);
     const node = el("div", {
@@ -233,7 +234,6 @@ function renderCategoryTabs() {
   const tabs = state.categories.map((c) => {
     const node = tab(c.id, c.name, counts.get(c.id) || 0);
     node.title = "دوبار کلیک: تغییر نام · کشیدن: جابه‌جایی";
-    node.addEventListener("dblclick", () => renameCategoryInline(node, c));
     node.append(el("button", {
       class: "x", title: "حذف دسته",
       onclick: () => {
@@ -260,7 +260,13 @@ function renderCategoryTabs() {
 function categoryNameInput(value, done) {
   let finished = false;
   const input = el("input", { value, placeholder: "نام دسته", size: 10 });
-  const end = (name) => { if (!finished) { finished = true; done(name); } };
+  typingCategoryName = true;
+  const end = (name) => {
+    if (finished) return;
+    finished = true;
+    typingCategoryName = false;
+    done(name);
+  };
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") end(input.value.trim());
     if (e.key === "Escape") end("");
@@ -278,6 +284,13 @@ function renameCategoryInline(node, category) {
   input.focus();
   input.select();
 }
+
+// روی خود نوار تب‌ها گوش می‌دهیم: کلیک اول تب‌ها را دوباره می‌کشد و تب قبلی دیگر وجود ندارد
+$("#category-tabs").addEventListener("dblclick", (e) => {
+  const node = e.target.closest(".cat-tab[data-id]");
+  const category = node && state.categories.find((c) => String(c.id) === node.dataset.id);
+  if (category) renameCategoryInline(node, category);
+});
 
 sortable($("#category-tabs"), {
   items: ".cat-tab", axis: "x",

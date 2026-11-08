@@ -1,0 +1,7 @@
+# ابزارهای توسعه؛ برای اجرای خود برنامه لازم نیستند.
+#   .venv/bin/pip install -r requirements-dev.txt
+#   .venv/bin/python -m playwright install chromium
+coverage==7.17.2
+playwright==1.64.1
+pytest-cov==7.1.0
+ruff==0.17.4
