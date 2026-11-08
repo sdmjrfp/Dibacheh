@@ -1,7 +1,7 @@
 # دیباچه
 
 سیستم آفلاین مدیریت یادگیری: برنامهٔ روزانه، پیگیری پیشرفت و مرور به روش لایتنر.
-مشخصات کامل در [PROJECT_SPEC.md](PROJECT_SPEC.md) است. راهنمای ادامهٔ توسعه (برای برنامه‌نویس یا مدل هوش مصنوعی بعدی) در [AGENTS.md](AGENTS.md) است.
+کد روی [GitHub](https://github.com/sdmjrfp/Dibacheh) و [GitLab](https://gitlab.com/sdmjrfp/Dibacheh) است. مشخصات کامل در [PROJECT_SPEC.md](PROJECT_SPEC.md) است. راهنمای ادامهٔ توسعه (برای برنامه‌نویس یا مدل هوش مصنوعی بعدی) در [AGENTS.md](AGENTS.md) است.
 
 ## دانلود و نصب
 

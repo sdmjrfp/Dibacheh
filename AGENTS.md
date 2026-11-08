@@ -18,7 +18,8 @@
 دیباچه یک برنامهٔ آفلاین برنامه‌ریزی مطالعه است: هر درس به جلسه تقسیم می‌شود، مرورها به روش لایتنر زمان‌بندی می‌شوند، و بعد از هر تغییر کل برنامه تا آخر از نو چیده می‌شود. رابط فارسی و راست‌به‌چپ است و تقویم شمسی دارد.
 
 - **ساختار:** سرور محلی Flask روی `127.0.0.1` و رابط وب در مرورگر. داده در SQLite.
-- **ریپو:** `https://github.com/sdmjrfp/Dibacheh`، **عمومی**. هر چیزی که commit شود برای همه دیده می‌شود.
+- **ریپو:** `https://github.com/sdmjrfp/Dibacheh`، **عمومی**. هر چیزی که commit شود برای همه دیده می‌شود. GitHub محل اصلی است: تست خودکار، ساخت نسخه و Release فقط آنجاست.
+- **کپی روی GitLab:** `https://gitlab.com/sdmjrfp/Dibacheh`، **عمومی**. فقط کد و تگ‌ها را دارد و تست خودکار و فایل نصبی ندارد. `git push` روی `origin` به هر دو جا می‌فرستد؛ اگر به یکی نرسید، خروجی را نگاه کنید و دوباره push کنید.
 - **مجوز:** فقط استفادهٔ رایگان شخصی (`LICENSE`). فونت‌ها و کتابخانه‌ها مجوز خودشان را دارند (`THIRD_PARTY_NOTICES.md`).
 - **آخرین نسخهٔ منتشرشده:** `v1.2.0` برای Mac با تراشهٔ Apple، Mac اینتل، ویندوز و لینوکس.
 - **وضعیت:** همهٔ ۸ مرحلهٔ سند و همهٔ درخواست‌های بعدی کاربر انجام شده است. کار نیمه‌تمامی نیست.
@@ -264,3 +265,13 @@ gh release edit v1.2.0 --notes-file notes.md --draft=false --latest
 | `.venv/` | با دستورهای بخش ۲ دوباره بسازید |
 | `Dibacheh.app` | `zsh tools/build_app.sh` |
 | دسترسی به GitHub | `gh auth login` با حساب صاحب ریپو، وگرنه push و Release ممکن نیست |
+| دسترسی به GitLab | توکن با دسترسی `write_repository`؛ در اولین push به‌جای رمز وارد می‌شود |
+| push به هر دو جا | تنظیم محلی است و با clone نمی‌آید. دو دستور زیر را اجرا کنید |
+
+```bash
+git remote set-url --add --push origin https://github.com/sdmjrfp/Dibacheh.git
+```
+
+```bash
+git remote set-url --add --push origin https://gitlab.com/sdmjrfp/Dibacheh.git
+```
