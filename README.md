@@ -35,6 +35,8 @@
 
 در Terminal داخل پوشهٔ پروژه:
 
+به Python 3.11 یا تازه‌تر نیاز دارید.
+
 ```bash
 python3 -m venv .venv
 ```
@@ -155,6 +157,34 @@ DIBACHEH_DB=/tmp/dibacheh-demo.sqlite3 DIBACHEH_PORT=5001 .venv/bin/python app.p
 
 تست‌ها هیچ‌وقت به دیتابیس واقعی شما دست نمی‌زنند. شمارهٔ تست‌های `tests/test_scheduler.py` با شمارهٔ سناریوهای بخش ۱۳ سند یکی است.
 
+تست‌های `tests/e2e/` برنامه را واقعاً در مرورگر باز می‌کنند و با ماوس با آن کار می‌کنند. این تست‌ها و ابزارهای بررسی کد جدا نصب می‌شوند و برای اجرای برنامه لازم نیستند:
+
+```bash
+.venv/bin/pip install -r requirements-dev.txt
+```
+
+```bash
+.venv/bin/python -m playwright install chromium
+```
+
+```bash
+npm ci
+```
+
+بعد این‌ها کد را بررسی می‌کنند. GitHub هم با هر push همین‌ها را اجرا می‌کند:
+
+```bash
+.venv/bin/python -m ruff check .
+```
+
+```bash
+npm run lint
+```
+
+```bash
+.venv/bin/python -m pytest --cov --cov-report=term
+```
+
 ## تغییر دادن کد
 
 هر فایل یک کار مشخص دارد و بالای هر فایل توضیح داده شده که چه می‌کند. چند راهنمای سریع:
@@ -166,8 +196,10 @@ DIBACHEH_DB=/tmp/dibacheh-demo.sqlite3 DIBACHEH_PORT=5001 .venv/bin/python app.p
 | مقدار پیش‌فرض یک تنظیم را عوض کنید | `DEFAULT_SETTINGS` در `database.py` |
 | یک ستون به دیتابیس اضافه کنید | یک مورد تازه به انتهای `MIGRATIONS` در `database.py` |
 | رنگ‌ها را عوض کنید | بالای `static/style.css` (بخش `:root`، و `[data-theme="dark"]` برای حالت تیره) |
-| صفحهٔ منابع درسی را عوض کنید | `static/app.js` و `templates/index.html` |
-| تقویم را عوض کنید | `static/calendar.js` |
+| صفحهٔ منابع درسی را عوض کنید | `static/js/sources.js` و `templates/index.html` |
+| پنجرهٔ درس یا تنظیمات را عوض کنید | `static/js/item-dialog.js` یا `static/js/settings.js` |
+| تقویم را عوض کنید | `static/js/calendar.js` |
+| مسیر تازهٔ سرور اضافه کنید | `routes/` برای مسیر و `services/` برای منطق |
 | شکل خروجی HTML را عوض کنید | `exporter.py` (قالب صفحه، `PAGE`، انتهای فایل است) |
 
 **روش امن تغییر:**
@@ -176,12 +208,14 @@ DIBACHEH_DB=/tmp/dibacheh-demo.sqlite3 DIBACHEH_PORT=5001 .venv/bin/python app.p
 2. بعد از تغییر، تست‌ها را اجرا کنید تا مطمئن شوید چیزی خراب نشده.
 3. اگر چیزی خراب شد، Git همهٔ نسخه‌های قبلی را دارد. `git status` می‌گوید چه فایل‌هایی عوض شده‌اند و `git diff` دقیقاً چه چیزی.
 
-**به‌روز کردن کتابخانه‌ها** (اینترنت لازم دارد): نسخه‌ها در `requirements.txt` ثابت شده‌اند. بعد از تغییر آن فایل، دستور نصب را دوباره اجرا کنید.
+**به‌روز کردن کتابخانه‌ها** (اینترنت لازم دارد): نسخه‌ها در `requirements.txt` ثابت شده‌اند. بعد از تغییر آن فایل، دستور نصب را دوباره اجرا کنید. Dependabot هر هفته نسخه‌های تازه را در GitHub به شکل pull request پیشنهاد می‌دهد. تست‌ها روی آن اجرا می‌شوند و تا خودتان تأیید نکنید چیزی عوض نمی‌شود.
+
+**گزارش خطا:** اگر برنامه درست کار نکرد، در تنظیمات دکمهٔ «نمایش گزارش خطا» را بزنید. گزارش روی همین کامپیوتر می‌ماند و جایی فرستاده نمی‌شود.
 
 ## داده‌ها و backup
 
 - همهٔ داده‌های برنامه در فایل `data/dibacheh.sqlite3` است. خود منابع (نوت، PDF) سر جای خودشان می‌مانند.
-- هر روز، اولین باری که برنامه باز می‌شود، یک کپی در `data/backups/` ساخته می‌شود، با نامی مثل `dibacheh-2026-11-05.sqlite3`.
+- هر روز، اولین باری که برنامه باز می‌شود، یک کپی در `data/backups/` ساخته می‌شود، با نامی مثل `dibacheh-2026-11-05.sqlite3`. سالم بودن هر کپی بررسی می‌شود و اگر مشکلی داشت، بالای صفحه هشدار می‌آید.
 - ۳۰ نسخهٔ آخر نگه داشته می‌شود و نسخه‌های قدیمی‌تر خودکار پاک می‌شوند. فایل‌های دیگرِ آن پوشه دست نمی‌خورند.
 - پوشهٔ `data/` وارد Git و GitHub نمی‌شود.
 
@@ -214,7 +248,10 @@ git tag v1.2.0 && git push origin v1.2.0
 
 | فایل یا پوشه | کار |
 |---|---|
-| `app.py` | سرور و مسیرها |
+| `app.py` | نقطهٔ شروع سرور، امنیت و تراکنش هر درخواست |
+| `routes/` | مسیرهای سرور |
+| `services/` | منطق پشت مسیرها |
+| `webutil.py`، `config.py`، `errors.py`، `undo.py` | کمک‌کارهای مسیرها، مسیر فایل‌ها و گزارش خطا، خطاهای کاربر، برگرداندن تغییرها |
 | `scheduler.py` | موتور چینش برنامه، بدون وابستگی به Flask یا SQLite |
 | `leitner.py` | قانون‌های جعبه و مرور |
 | `database.py` | کار با SQLite |
@@ -222,15 +259,15 @@ git tag v1.2.0 && git push origin v1.2.0
 | `platform_tools.py` | هر چیزی که بین Mac، ویندوز و لینوکس فرق دارد |
 | `exporter.py` | ساخت خروجی HTML |
 | `reports.py` | آمار و گزارش هفتگی |
-| `static/stats.js` | پنجرهٔ گزارش و نمودارها |
 | `tools/` | ساخت `Dibacheh.app` و آیکونش |
 | `jalali.py` | تاریخ شمسی برای خروجی (صفحه از `static/jalali.js` استفاده می‌کند) |
 | `start.command` | اجرا با دوبار کلیک |
 | `templates/` | صفحه‌ها |
-| `static/` | CSS و JavaScript |
-| `static/motion.js` | انیمیشن جابه‌جایی‌ها و کشیدن نرم کارت‌ها |
+| `static/style.css` | ظاهر برنامه |
+| `static/js/` | JavaScript صفحه، هر بخش در یک فایل (فهرست در `AGENTS.md`) |
 | `static/vendor/` | کتابخانه‌های محلی (بدون CDN) |
-| `tests/` | تست‌ها |
+| `tests/` | تست‌ها؛ `tests/e2e/` تست در مرورگر واقعی |
+| `.github/` | تست خودکار با هر push، ساخت نسخهٔ نصبی و Dependabot |
 | `data/` | دیتابیس و backup؛ وارد Git نمی‌شود |
 
 ## وضعیت ساخت

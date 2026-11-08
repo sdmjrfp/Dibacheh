@@ -1,0 +1,51 @@
+# با هر push و pull request کد را بررسی می‌کند: ruff، eslint، همهٔ تست‌ها و پوشش تست.
+# ساخت نسخهٔ نصبی جداست: release.yml
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11 پایین‌ترین نسخهٔ پشتیبانی‌شده است؛ 3.13 همان نسخهٔ فایل‌های نصبی.
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: |
+          python -m pip install -q -r requirements.txt -r requirements-dev.txt
+          npm ci
+          python -m playwright install --with-deps chromium
+
+      - name: Ruff
+        run: python -m ruff check .
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Tests with coverage
+        run: python -m pytest -q --cov --cov-report=term --cov-fail-under=85

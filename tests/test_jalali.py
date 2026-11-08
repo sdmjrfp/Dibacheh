@@ -53,34 +53,37 @@ def test_invalid_date_gives_null():
     assert run_js("Jalali.fromJalali(1404, 12, 30)") is None   # 1404 کبیسه نیست
 
 
-def test_every_day_for_ten_years_round_trips():
-    expr = """(() => {
-      let iso = "2020-01-01", bad = [];
-      for (let i = 0; i < 3653; i++) {
+def walk_days(start, count):
+    """همهٔ روزها از start را در مرورگر (Node) تبدیل می‌کند."""
+    return run_js(f"""(() => {{
+      let iso = {json.dumps(start)}, days = [], bad = [];
+      for (let i = 0; i < {count}; i++) {{
         const j = Jalali.toJalali(iso);
+        days.push([j.y, j.m, j.d]);
         if (Jalali.fromJalali(j.y, j.m, j.d) !== iso) bad.push(iso);
         iso = Jalali.addDays(iso, 1);
-      }
-      return bad;
-    })()"""
-    assert run_js(expr) == []
+      }}
+      return {{days, bad}};
+    }})()""")
 
 
-def test_python_jalali_matches_browser_for_ten_years():
-    """jalali.py (برای خروجی) و jalali.js (برای صفحه) باید برای همهٔ روزها یکی باشند."""
+def test_python_and_browser_agree_on_every_day_the_app_accepts():
+    """jalali.py (برای خروجی) و jalali.js (برای صفحه) باید برای همهٔ روزها یکی باشند.
+
+    بازه همان بازه‌ای است که کادر تاریخ می‌پذیرد: سال ۱۳۰۰ تا ۱۵۰۰ (js/core.js).
+    بیرون از آن، در سال ۱۵۰۳، دو الگوریتم یک سال با هم فرق دارند.
+    """
     from datetime import date, timedelta
 
     import jalali
-    js = run_js("""(() => {
-      let iso = "2020-01-01", out = [];
-      for (let i = 0; i < 3653; i++) {
-        const j = Jalali.toJalali(iso); out.push([j.y, j.m, j.d]);
-        iso = Jalali.addDays(iso, 1);
-      }
-      return out;
-    })()""")
-    py = [list(jalali.to_jalali(date(2020, 1, 1) + timedelta(days=i))) for i in range(3653)]
-    assert py == js
+    start = date(1921, 3, 21)   # ۱ فروردین ۱۳۰۰
+    count = (date(2122, 3, 21) - start).days   # تا پایان ۱۵۰۰
+    assert jalali.to_jalali(start) == (1300, 1, 1)
+    assert jalali.to_jalali(start + timedelta(days=count - 1))[0] == 1500
+    browser = walk_days(start.isoformat(), count)
+    assert browser["bad"] == []   # هر روز، رفت و برگشت به همان روز می‌رسد
+    python = [list(jalali.to_jalali(start + timedelta(days=i))) for i in range(count)]
+    assert python == browser["days"]
 
 
 def test_python_jalali_helpers():

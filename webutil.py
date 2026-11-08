@@ -54,7 +54,7 @@ def state_data():
 
 
 def build_state():
-    """وضعیت برای صفحه: برنامه فقط تا چند ماه آینده فرستاده می‌شود (بخش ۱۲ بهبودها)."""
+    """وضعیت برای صفحه: برنامه فقط تا چند ماه آینده فرستاده می‌شود (services/state.py)."""
     return json_ready(state_service.trim_for_page(state_data()))
 
 

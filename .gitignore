@@ -20,3 +20,8 @@ Dibacheh.app/
 build/
 dist/
 *.spec
+
+# خروجی ابزارها
+.coverage
+htmlcov/
+.ruff_cache/

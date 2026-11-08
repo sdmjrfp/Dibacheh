@@ -1,10 +1,13 @@
-"""نسخهٔ نصبی ویندوز و لینوکس را می‌سازد. (برای Mac: tools/build_release.sh)
+"""نسخهٔ نصبی ویندوز و لینوکس را می‌سازد.
 
     python tools/build_release.py
 
 خروجی در build/release:
     ویندوز: برنامهٔ نصب (با Inno Setup) و یک zip قابل حمل
     لینوکس: AppImage (با appimagetool) و یک tar.gz
+
+در Mac این فایل فقط پوشهٔ سرور را می‌سازد و بقیهٔ کار با tools/build_release.sh است،
+تا فهرست فایل‌ها و کتابخانه‌های لازم فقط یک جا نوشته شده باشد.
 """
 
 import os
@@ -29,12 +32,9 @@ def run(*args, **kwargs):
     subprocess.run([str(a) for a in args], check=True, **kwargs)
 
 
-def build_bundle():
-    """برنامه با پایتون و همهٔ کتابخانه‌ها در یک پوشه."""
-    icon = OUT / ("icon.ico" if WINDOWS else "icon.png")
-    run(sys.executable, ROOT / "tools" / "make_icon.py", icon)
-    run(sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--windowed",
-        "--name", "Dibacheh", "--icon", icon,
+def pyinstaller(*options):
+    """برنامه با پایتون و همهٔ کتابخانه‌ها در یک پوشه. کتابخانهٔ تازه را اینجا اضافه کنید."""
+    run(sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", *options,
         "--distpath", OUT / "dist", "--workpath", OUT / "work", "--specpath", OUT / "work",
         "--add-data", f"{ROOT / 'templates'}{SEP}templates", "--add-data", f"{ROOT / 'static'}{SEP}static",
         "--collect-all", "pypdfium2", "--collect-all", "pypdfium2_raw",
@@ -42,6 +42,13 @@ def build_bundle():
         "--hidden-import", "markdown.extensions.fenced_code", "--hidden-import", "markdown.extensions.sane_lists",
         "--hidden-import", "markdown.extensions.nl2br",
         ROOT / "app.py", cwd=ROOT)
+
+
+def build_bundle():
+    """نسخهٔ پنجره‌دار ویندوز و لینوکس، با آیکون و مجوزها."""
+    icon = OUT / ("icon.ico" if WINDOWS else "icon.png")
+    run(sys.executable, ROOT / "tools" / "make_icon.py", icon)
+    pyinstaller("--windowed", "--name", "Dibacheh", "--icon", icon)
     bundle = OUT / "dist" / "Dibacheh"
     for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
         shutil.copy(ROOT / name, bundle / name)
@@ -74,6 +81,9 @@ def package_linux(bundle):
 def main():
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True)
+    if sys.platform == "darwin":   # پوستهٔ Mac و dmg را tools/build_release.sh می‌سازد
+        pyinstaller("--console", "--name", "dibacheh-server")
+        return
     bundle = build_bundle()
     (package_windows if WINDOWS else package_linux)(bundle)
     print("ساخته شد:", *[p.name for p in OUT.iterdir() if p.is_file()])

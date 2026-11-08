@@ -1,0 +1,27 @@
+# هر هفته نسخهٔ تازهٔ کتابخانه‌ها را بررسی می‌کند و برایش pull request می‌سازد.
+# هیچ‌چیز خودکار وارد main نمی‌شود؛ ci.yml تست می‌گیرد و صاحب پروژه تصمیم می‌گیرد.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      python-small-updates:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      eslint-tools:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

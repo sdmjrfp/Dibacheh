@@ -5,7 +5,6 @@
 
 set -e
 cd "$(dirname "$0")/.."
-ROOT="$PWD"
 VERSION="$(cat VERSION)"
 OUT="build/release"
 ARCH="$(uname -m)"
@@ -15,15 +14,8 @@ rm -rf "$OUT"
 mkdir -p "$OUT"
 .venv/bin/pip install -q -r requirements.txt -r requirements-build.txt
 
-# ۱. سرور با پایتون و همهٔ کتابخانه‌ها در یک پوشه
-.venv/bin/pyinstaller --noconfirm --clean --onedir --console --name dibacheh-server \
-  --distpath "$OUT/dist" --workpath "$OUT/work" --specpath "$OUT/work" \
-  --add-data "$ROOT/templates:templates" --add-data "$ROOT/static:static" \
-  --collect-all pypdfium2 --collect-all pypdfium2_raw \
-  --hidden-import PIL.Image --hidden-import markdown.extensions.tables \
-  --hidden-import markdown.extensions.fenced_code --hidden-import markdown.extensions.sane_lists \
-  --hidden-import markdown.extensions.nl2br \
-  app.py
+# ۱. سرور با پایتون و همهٔ کتابخانه‌ها در یک پوشه (تنظیماتش در build_release.py است)
+.venv/bin/python tools/build_release.py
 
 # ۲. پوستهٔ Mac: آیکون Dock و Quit
 APP="$OUT/Dibacheh.app"
