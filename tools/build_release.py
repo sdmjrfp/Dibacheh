@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import time
 import urllib.request
 from pathlib import Path
 
@@ -30,6 +31,19 @@ APPIMAGETOOL = "https://github.com/AppImage/appimagetool/releases/download/conti
 def run(*args, **kwargs):
     print("+", *args, flush=True)
     subprocess.run([str(a) for a in args], check=True, **kwargs)
+
+
+def download(url, target, attempts=4):
+    """سرور گاهی موقتاً جواب نمی‌دهد؛ قبل از خطا دادن چند بار امتحان می‌کند."""
+    for attempt in range(1, attempts + 1):
+        try:
+            urllib.request.urlretrieve(url, target)
+            return
+        except OSError as error:   # خطاهای شبکه و HTTP همه از این نوع‌اند
+            if attempt == attempts:
+                raise
+            print(f"دانلود نشد ({error}). تلاش دوباره...", flush=True)
+            time.sleep(20 * attempt)
 
 
 def pyinstaller(*options):
@@ -72,7 +86,7 @@ def package_linux(bundle):
         "[Desktop Entry]\nType=Application\nName=Dibacheh\nExec=AppRun\nIcon=dibacheh\nCategories=Education;\n")
     shutil.copy(ROOT / "tools" / "icon.png", appdir / "dibacheh.png")
     tool = OUT / "appimagetool"
-    urllib.request.urlretrieve(APPIMAGETOOL, tool)
+    download(APPIMAGETOOL, tool)
     tool.chmod(0o755)
     run(tool, "--appimage-extract-and-run", appdir, OUT / f"Dibacheh-{VERSION}-Linux-x86_64.AppImage",
         env={**os.environ, "ARCH": platform.machine()})

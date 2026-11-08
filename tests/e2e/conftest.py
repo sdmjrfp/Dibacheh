@@ -99,7 +99,8 @@ class App:
 
     def settle(self):
         """صبر تا تمام شدن درخواست‌ها و انیمیشن‌ها."""
-        self.page.wait_for_load_state("networkidle")
+        # networkidle اینجا به درد نمی‌خورد: یک بار که برقرار شد، دیگر منتظر درخواست تازه نمی‌ماند.
+        self.page.wait_for_function("window.pendingRequests === 0")
         self.page.wait_for_timeout(450)
 
     def drag(self, source, target_x, target_y):
@@ -114,6 +115,15 @@ class App:
 @pytest.fixture
 def app(browser, server):
     context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="fa-IR")
+    # شمارش درخواست‌های در جریان، برای App.settle
+    context.add_init_script("""
+      window.pendingRequests = 0;
+      const realFetch = window.fetch;
+      window.fetch = async (...args) => {
+        window.pendingRequests++;
+        try { return await realFetch(...args); } finally { window.pendingRequests--; }
+      };
+    """)
     page = context.new_page()
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
