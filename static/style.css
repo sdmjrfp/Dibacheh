@@ -1,3 +1,8 @@
+/* ظاهر برنامه.
+
+   ترتیب فایل: رنگ‌ها، پایه، چیدمان، منابع درسی، پنجره‌ها، تقویم، تنظیمات، گزارش.
+   برای تغییر رنگ‌ها فقط بخش :root را عوض کنید. */
+
 /* فونت Vazirmatn از داخل خود پروژه بار می‌شود، نه از اینترنت.
    یک فایل «variable» همهٔ وزن‌ها (نازک تا ضخیم) را دارد. */
 @font-face {
@@ -7,8 +12,11 @@
   font-display: swap;
 }
 
-/* رنگ‌ها و اندازه‌ها یک‌جا تعریف می‌شوند تا تغییرشان راحت باشد.
-   حالت تیره با data-theme="dark" روی <html> فعال می‌شود (در مرحلهٔ تنظیمات). */
+/* =====================================================================
+   رنگ‌ها و اندازه‌ها. حالت تیره با data-theme="dark" روی <html> فعال می‌شود.
+   --c-read و --c-review و --c-routine از تنظیمات برنامه هم مقدار می‌گیرند
+   (پیش‌فرض: خواندن قرمز، مرور آبی، روتین زرد).
+   ===================================================================== */
 :root {
   --bg: #f6f6f3;
   --panel: #ffffff;
@@ -19,9 +27,11 @@
   --accent-soft: #e3efe9;
   --danger: #b42318;
   --warn-bg: #fff4e5;
-  --read: #2f6f5e;
-  --review: #3b5ba9;
-  --routine: #8a5a14;
+  --routine-text: #8a5a14;
+  --c-read: #e5484d;
+  --c-review: #3b82f6;
+  --c-routine: #f5b400;
+  --tint: 18%;
   --radius: 8px;
   --font: "Vazirmatn", system-ui, -apple-system, Tahoma, sans-serif;
   --font-size: 16px;
@@ -37,11 +47,13 @@
   --accent-soft: #23362f;
   --danger: #f0786c;
   --warn-bg: #3a2c17;
-  --read: #6fbfa5;
-  --review: #8ea8ec;
-  --routine: #d6a65c;
+  --routine-text: #d6a65c;
+  --tint: 30%;
 }
 
+/* =====================================================================
+   پایه
+   ===================================================================== */
 * { box-sizing: border-box; }
 
 /* عنصر پنهان همیشه پنهان بماند، حتی اگر CSS دیگری display داده باشد */
@@ -64,12 +76,23 @@ button {
   border-radius: var(--radius);
   padding: 4px 12px;
   cursor: pointer;
+  white-space: nowrap;   /* در ستون باریک به خط بعد برود، نه اینکه خودش بشکند */
 }
 button:hover { border-color: var(--accent); }
+button:disabled { cursor: not-allowed; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.ghost { border-color: transparent; background: transparent; }
 button.danger { color: var(--danger); }
 button.icon { padding: 2px 8px; }
+button.link {
+  border: none;
+  background: none;
+  padding: 0 4px;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
 
 input, select {
   background: var(--panel);
@@ -77,13 +100,70 @@ input, select {
   border-radius: 6px;
   padding: 3px 8px;
 }
+input.num { width: 5.5em; text-align: center; }
+input.swatch { width: 26px; height: 26px; padding: 1px; border-radius: 6px; cursor: pointer; }
+
+.wide-text {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+label.stack { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+label.check { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
 
 .muted { color: var(--muted); }
 .small { font-size: 0.85em; }
 .error { color: var(--danger); }
 .spacer { flex: 1; }
+.hint { font-size: 0.85em; margin: 4px 0; }
+.quit-note { text-align: center; margin-top: 30vh; }
 
-/* ---------- نوار بالا ---------- */
+.explain {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-size: 0.9em;
+  line-height: 1.9;
+}
+ol.explain { padding-inline-start: 28px; }
+ol.explain button.link { color: var(--danger); text-decoration: none; font-weight: 700; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.tabs button { border-radius: 999px; padding: 2px 12px; }
+.tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
+
+.progress {
+  grid-column: 3 / 5;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.progress span { display: block; height: 100%; background: var(--accent); }
+
+.chip {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 0.8em;
+}
+.chip.routine { background: var(--warn-bg); color: var(--routine-text); }
+.chip.typed, .type-button {
+  background: color-mix(in srgb, var(--c) 20%, var(--panel));
+  border-color: color-mix(in srgb, var(--c) 60%, var(--border));
+}
+
+/* =====================================================================
+   نوار بالا و چیدمان اصلی: منابع کنار تقویم، برای مانیتور 2K
+   ===================================================================== */
 .topbar {
   display: flex;
   align-items: center;
@@ -94,6 +174,16 @@ input, select {
 }
 .topbar h1 { font-size: 1.3em; margin: 0; }
 #vault-path { direction: ltr; unicode-bidi: isolate; }
+#undo-button .count, #redo-button .count {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 0.8em;
+  text-align: center;
+}
+#undo-button .count:empty, #redo-button .count:empty { display: none; }
 
 .message {
   margin: 8px 24px 0;
@@ -102,8 +192,7 @@ input, select {
   background: var(--warn-bg);
 }
 
-/* ---------- چیدمان اصلی: منابع کنار تقویم، برای مانیتور 2K ---------- */
-/* پهنای ستون منابع در --sources-width است و با کشیدن جداکننده عوض می‌شود (static/app.js) */
+/* پهنای ستون منابع در --sources-width است و با کشیدن جداکننده عوض می‌شود (js/splitter.js) */
 .layout {
   --sources-width: 620px;
   display: grid;
@@ -119,8 +208,7 @@ input, select {
   border-radius: 6px;
   position: relative;
 }
-/* خط کوچک وسط جداکننده */
-.splitter::after {
+.splitter::after {   /* خط کوچک وسط جداکننده */
   content: "";
   position: absolute;
   inset: 45% 4px;
@@ -133,6 +221,7 @@ input, select {
 }
 .splitter:focus-visible { outline: none; }
 body.resizing { cursor: col-resize; user-select: none; }
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -140,255 +229,16 @@ body.resizing { cursor: col-resize; user-select: none; }
   padding: 12px 16px;
   overflow: auto;
 }
-.panel-head { display: flex; align-items: center; gap: 8px; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; row-gap: 6px; }
 .panel-head h2 { margin: 0; font-size: 1.1em; }
-.calendar-placeholder { display: grid; place-items: center; height: 80%; }
-
-/* پنجرهٔ باریک (مثلاً لپ‌تاپ یا نیمهٔ صفحه): ستون‌ها زیر هم */
-@media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; height: auto; gap: 16px; }
-  .splitter { display: none; }
-  .topbar { flex-wrap: wrap; }
-}
-
-/* ---------- فیلترها ---------- */
-.filters { margin: 12px 0 4px; }
-.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
-.tabs button { border-radius: 999px; padding: 2px 12px; }
-.tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.filter-row { display: flex; gap: 8px; margin-top: 8px; }
-.hint { font-size: 0.85em; margin: 4px 0; }
-
-/* ---------- فهرست درس‌ها ---------- */
-.item-list { list-style: none; margin: 0; padding: 0; }
-.item {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  gap: 4px 10px;
-  align-items: center;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 6px;
-  background: var(--panel);
-}
-.item.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-.item.inactive { opacity: 0.55; }
-.item.dragging { opacity: 0.4; }
-.item.drop-before { border-top: 3px solid var(--accent); }
-.item .handle { cursor: grab; touch-action: none; color: var(--muted); user-select: none; padding: 0 2px; }
-.item .title { font-weight: 600; cursor: pointer; }
-.item .meta { grid-column: 3 / 5; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85em; color: var(--muted); }
-.item .actions { display: flex; gap: 4px; }
-.chip {
-  display: inline-block;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  font-size: 0.8em;
-}
-.chip.routine { background: var(--warn-bg); color: var(--routine); }
-.progress {
-  grid-column: 3 / 5;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  overflow: hidden;
-}
-.progress span { display: block; height: 100%; background: var(--accent); }
-.item .problem { grid-column: 3 / 5; color: var(--danger); font-size: 0.85em; }
-
-/* ---------- پنجره‌ها ---------- */
-.dialog {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--text);
-  padding: 20px 24px;
-  min-width: 420px;
-}
-.dialog.wide { width: min(980px, 92vw); }
-.dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
-.dialog h2 { margin-top: 0; font-size: 1.2em; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
-.form-grid label { display: flex; flex-direction: column; gap: 2px; }
-.form-grid label.check { flex-direction: row; align-items: center; gap: 6px; }
-.span-2 { grid-column: span 2; }
-fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; }
-fieldset.split { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: end; }
-fieldset.split p { width: 100%; margin: 0; }
-.source-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-bottom: 6px; }
-.source-row label { display: flex; flex-direction: column; }
-.path { font-size: 0.85em; color: var(--muted); word-break: break-all; }
-.weekdays { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
-.weekdays label { flex-direction: row; gap: 4px; }
-.jalali-input { display: inline-flex; gap: 4px; }
-.jalali-input select, .jalali-input input { padding: 2px 4px; }
-.jalali-input input { width: 5em; }
-.dialog-actions { display: flex; gap: 8px; margin-top: 16px; }
-
-table.sessions { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-table.sessions th, table.sessions td { border-bottom: 1px solid var(--border); padding: 4px 6px; text-align: start; }
-table.sessions input { width: 100%; }
-table.sessions input.num { width: 5em; }
-table.sessions .range { display: flex; gap: 4px; }
-table.sessions tr.done { color: var(--muted); }
-
-.category-list { list-style: none; padding: 0; }
-.category-list li { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
-.category-list input { flex: 1; }
-
-/* ---------- تقویم ---------- */
-.calendar .panel-head { flex-wrap: wrap; }
-.legend { display: flex; gap: 10px; align-items: center; font-size: 0.85em; }
-.legend > span[class^="kind-"] { padding: 0 8px; border-radius: 4px; }
-
-.kind-read { border-inline-start: 4px solid var(--read); }
-.kind-review { border-inline-start: 4px solid var(--review); }
-.kind-routine { border-inline-start: 4px solid var(--routine); }
-
-.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
-.cal-day { border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; min-height: 120px; }
-.week-day { min-height: 70vh; }
-.cal-day.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.cal-day.past { background: var(--bg); opacity: 0.7; }
-.cal-day.off { background: repeating-linear-gradient(-45deg, transparent 0 8px, var(--border) 8px 9px); }
-.cal-day.has-selected { box-shadow: inset 0 0 0 3px var(--accent); }
-.cal-day.drop-target { background: var(--accent-soft); }
-
-.day-head {
-  display: flex; flex-direction: column; align-items: stretch; gap: 0;
-  width: 100%; border: none; background: transparent; padding: 2px 4px 6px; text-align: start;
-  border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 6px;
-}
-.day-head:hover { background: var(--accent-soft); }
-.day-head .weekday { font-weight: 700; }
-.load { display: block; height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; margin-top: 2px; }
-.load span { display: block; height: 100%; background: var(--accent); }
-.load.over span { background: var(--routine); }
-
-.tasks { display: flex; flex-direction: column; gap: 6px; }
-.task {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-  touch-action: none;
-  user-select: none;
-  font-size: 0.9em;
-}
-.task:hover { border-color: var(--accent); }
-.task.selected { background: var(--accent-soft); }
-.task.dim { opacity: 0.45; }
-.task.dragging { opacity: 0.5; cursor: grabbing; }
-.task.overdue .task-title { color: var(--danger); }
-.task-title { font-weight: 600; }
-.task-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--muted); font-size: 0.85em; }
-
-.month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-.month-head { text-align: center; font-weight: 700; color: var(--muted); }
-.month-day { cursor: pointer; display: flex; flex-direction: column; gap: 3px; min-height: 140px; }
-.month-day .task { padding: 1px 6px; font-size: 0.8em; }
-.month-day .task-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.month-day-head { display: flex; justify-content: space-between; }
-
-.popover {
-  position: absolute;
-  z-index: 10;
-  width: 380px;
-  max-height: 70vh;
-  overflow: auto;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.popover > button { text-align: start; }
-.pop-title { font-weight: 700; }
-.pop-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.pop-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; }
-.task-pick { text-align: start; font-size: 0.85em; }
-input.num { width: 5em; }
-
-@media (max-width: 1100px) {
-  .week { grid-template-columns: 1fr; }
-  .week-day { min-height: auto; }
-}
-
-/* ---------- تیک و سابقه ---------- */
-.task .tick { margin-inline-end: 6px; vertical-align: middle; cursor: pointer; }
-.task.done { background: var(--bg); color: var(--muted); cursor: default; border-style: dashed; }
-.task.done .task-title { font-weight: 500; }
-.done-count { color: var(--accent); font-size: 0.8em; }
-
-/* ---------- نشانگر حجم کار و هدف ---------- */
-.workload { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; font-size: 0.9em; }
-.workload .bars { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--border); margin: 4px 0; }
-.workload .bars .r { background: var(--c-read); }
-.workload .bars .v { background: var(--c-review); }
-.target.ahead { color: var(--accent); }
-.target.behind { color: var(--danger); }
-
-/* ---------- تنظیمات ---------- */
-#settings-dialog fieldset { margin-bottom: 12px; }
-.weekday-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.weekday-grid .wd { display: flex; flex-direction: column; gap: 2px; font-size: 0.9em; }
-.weekday-grid input[type="number"] { width: 100%; }
-.path-setting { display: grid; grid-template-columns: 9em 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
-
-/* =====================================================================
-   رنگ کارها (از تنظیمات قابل تغییر است). پیش‌فرض: روتین زرد، مرور آبی، خواندن قرمز.
-   کل کارت با همان رنگ، کم‌رنگ پر می‌شود.
-   ===================================================================== */
-:root { --c-read: #e5484d; --c-review: #3b82f6; --c-routine: #f5b400; --tint: 18%; }
-:root[data-theme="dark"] { --tint: 30%; }
-
-.kind-read { --c: var(--c-read); }
-.kind-review { --c: var(--c-review); }
-.kind-routine { --c: var(--c-routine); }
-.task, .legend > span[class^="kind-"], .task-pick {
-  background: color-mix(in srgb, var(--c) var(--tint), var(--panel));
-  border-color: color-mix(in srgb, var(--c) 45%, var(--border));
-  border-inline-start: 5px solid var(--c);
-}
-.task.done { background: var(--bg); border-inline-start-style: dashed; }
-.legend > span[class^="kind-"] { padding: 1px 10px; border-radius: 6px; border-width: 1px; border-style: solid; }
-.chip.typed, .type-button {
-  background: color-mix(in srgb, var(--c) 20%, var(--panel));
-  border-color: color-mix(in srgb, var(--c) 60%, var(--border));
-}
 .add-buttons { display: contents; }
 
 /* =====================================================================
-   کشیدن با انیمیشن
+   منابع درسی
    ===================================================================== */
-.item.lifted, .cat-tab.lifted {
-  position: relative;
-  z-index: 20;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
-  cursor: grabbing;
-  transition: box-shadow 0.15s;
-}
-.item.lifted { background: var(--panel); }
-body.dragging-something, body.dragging-something * { cursor: grabbing !important; user-select: none; }
-.task.ghost {
-  position: fixed;
-  z-index: 50;
-  margin: 0;
-  pointer-events: none;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
-}
-.task.drag-source { opacity: 0.3; }
-.cal-day.drop-target { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); outline: 2px dashed var(--accent); outline-offset: -3px; }
+.filters { margin: 12px 0 4px; }
+.search { width: 100%; margin-top: 8px; padding: 5px 10px; }
 
-/* =====================================================================
-   تب دسته‌ها
-   ===================================================================== */
 .cat-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -421,7 +271,10 @@ body.dragging-something, body.dragging-something * { cursor: grabbing !important
 .cat-tab .count { font-size: 0.75em; color: var(--muted); }
 .cat-tab .x {
   display: none;
-  border: none; background: transparent; padding: 0 2px; line-height: 1;
+  border: none;
+  background: transparent;
+  padding: 0 2px;
+  line-height: 1;
   color: var(--muted);
 }
 .cat-tab:hover .x { display: inline; }
@@ -429,27 +282,242 @@ body.dragging-something, body.dragging-something * { cursor: grabbing !important
 .cat-tab.plus { font-size: 1.15em; font-weight: 700; padding: 3px 12px; }
 .cat-tab input { width: 9em; padding: 1px 6px; }
 .cat-tab.adding { background: var(--panel); border-color: var(--border); }
-#undo-button .count, #redo-button .count {
-  display: inline-block; min-width: 1.4em; padding: 0 5px; border-radius: 999px;
-  background: var(--accent-soft); font-size: 0.8em; text-align: center;
+
+.item-list { list-style: none; margin: 0; padding: 0; }
+.item {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  background: var(--panel);
 }
-#undo-button .count:empty, #redo-button .count:empty { display: none; }
-label.stack { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
-label.check { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+.item.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.item.inactive { opacity: 0.55; }
+.item .handle { cursor: grab; touch-action: none; color: var(--muted); user-select: none; padding: 0 2px; }
+.item .title { font-weight: 600; cursor: pointer; }
+.item .actions { display: flex; gap: 4px; }
+.item .meta { grid-column: 3 / 5; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85em; color: var(--muted); }
+.item .problem { grid-column: 3 / 5; color: var(--danger); font-size: 0.85em; }
+.item .hits { grid-column: 3 / 5; font-size: 0.85em; color: var(--muted); }
+.item .pinned { color: var(--text); }
+.item .waiting { color: var(--text); font-weight: 600; }
+.target.ahead { color: var(--accent); }
+.target.behind { color: var(--danger); }
+
+.workload { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; font-size: 0.9em; }
+.workload .bars { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--border); margin: 4px 0; }
+.workload .bars .r { background: var(--c-read); }
+.workload .bars .v { background: var(--c-review); }
+
+/* کشیدن با انیمیشن (js/motion.js) */
+.item.lifted, .cat-tab.lifted {
+  position: relative;
+  z-index: 20;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+  cursor: grabbing;
+  transition: box-shadow 0.15s;
+}
+.item.lifted { background: var(--panel); }
+body.dragging-something, body.dragging-something * { cursor: grabbing !important; user-select: none; }
 
 /* =====================================================================
-   تنظیمات: عدد کوتاه با واحد کنارش، اسلایدر و نمودار لایتنر
+   پنجره‌ها
    ===================================================================== */
+.dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 20px 24px;
+  min-width: 420px;
+}
+.dialog.wide { width: min(980px, 92vw); }
+.dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+.dialog h2 { margin-top: 0; font-size: 1.2em; }
+.dialog-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.form-grid label { display: flex; flex-direction: column; gap: 2px; }
+.form-grid label.check { flex-direction: row; align-items: center; gap: 6px; }
+.span-2 { grid-column: span 2; }
+fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; }
+fieldset.split { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: end; }
+fieldset.split p { width: 100%; margin: 0; }
+.template-row { margin-bottom: 10px; }
+.source-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-bottom: 6px; }
+.source-row label { display: flex; flex-direction: column; }
+.path { font-size: 0.85em; color: var(--muted); word-break: break-all; }
+.weekdays { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.weekdays label { flex-direction: row; gap: 4px; }
+.jalali-input { display: inline-flex; gap: 4px; }
+.jalali-input select, .jalali-input input { padding: 2px 4px; }
+.jalali-input input { width: 5em; }
+
+table.sessions { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+table.sessions th, table.sessions td { border-bottom: 1px solid var(--border); padding: 4px 6px; text-align: start; }
+table.sessions input { width: 100%; }
+table.sessions input.num { width: 5em; }
+table.sessions .range { display: flex; gap: 4px; }
+table.sessions tr.done { color: var(--muted); }
+
+/* =====================================================================
+   تقویم
+   ===================================================================== */
+.legend { display: flex; gap: 10px; align-items: center; font-size: 0.85em; }
+.legend-group { display: inline-flex; gap: 10px; align-items: center; }
+.legend-group > span {
+  padding: 1px 10px;
+  border-radius: 6px;
+  border-width: 1px;
+  border-style: solid;
+  background: color-mix(in srgb, var(--c) var(--tint), var(--panel));
+  border-color: var(--c);
+}
+
+/* رنگ هر نوع کار. کل کارت با همان رنگ، کم‌رنگ پر می‌شود. */
+.kind-read { --c: var(--c-read); }
+.kind-review { --c: var(--c-review); }
+.kind-routine { --c: var(--c-routine); }
+
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.cal-day { border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; min-height: 120px; }
+.week-day { min-height: 70vh; }
+.cal-day.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cal-day.past { background: var(--bg); opacity: 0.7; }
+.cal-day.off { background: repeating-linear-gradient(-45deg, transparent 0 8px, var(--border) 8px 9px); }
+.cal-day.has-selected { box-shadow: inset 0 0 0 3px var(--accent); }
+.cal-day.drop-target {
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+  outline: 2px dashed var(--accent);
+  outline-offset: -3px;
+}
+
+.day-view { max-width: 760px; margin: 8px auto 0; }
+.day-column { min-height: 60vh; padding: 12px; }
+
+.day-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 2px 4px 6px;
+  text-align: start;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  margin-bottom: 6px;
+}
+.day-head:hover { background: var(--accent-soft); }
+.day-head .weekday { font-weight: 700; }
+.load { display: block; height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; margin-top: 2px; }
+.load span { display: block; height: 100%; background: var(--accent); }
+.load.over span { background: var(--routine-text); }
+.done-count { color: var(--accent); font-size: 0.8em; }
+
+.tasks { display: flex; flex-direction: column; gap: 6px; }
+.task, .task-pick {
+  background: color-mix(in srgb, var(--c) var(--tint), var(--panel));
+  border: 1px solid color-mix(in srgb, var(--c) 45%, var(--border));
+  border-inline-start: 5px solid var(--c);
+}
+.task {
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  font-size: 0.9em;
+}
+.task:hover { border-color: var(--accent); }
+.task.selected { background: var(--accent-soft); }
+.task.dim { opacity: 0.45; }
+.task.overdue .task-title { color: var(--danger); }
+.task-title { font-weight: 600; }
+.task-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--muted); font-size: 0.85em; }
+.task .tick { margin-inline-end: 6px; vertical-align: middle; cursor: pointer; }
+.task.done {
+  background: var(--bg);
+  color: var(--muted);
+  cursor: pointer;
+  border-style: dashed;
+  border-inline-start-style: dashed;
+}
+.task.done .task-title { font-weight: 500; }
+.day-column .task { font-size: 1.05em; padding: 8px 12px; }
+/* رنگ‌بندی بر اساس منبع: مرور با خط‌چین از خواندن جدا می‌شود */
+:root[data-color-mode="source"] .task.kind-review { border-inline-start-style: dashed; }
+
+/* کشیدن کار به روز دیگر */
+.task.ghost {
+  position: fixed;
+  z-index: 50;
+  margin: 0;
+  pointer-events: none;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+}
+.task.drag-source { opacity: 0.3; }
+
+.month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.month-head { text-align: center; font-weight: 700; color: var(--muted); }
+.month-day { cursor: pointer; display: flex; flex-direction: column; gap: 3px; min-height: 140px; }
+.month-day .task { padding: 1px 6px; font-size: 0.8em; }
+.month-day .task-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.month-day-head { display: flex; justify-content: space-between; }
+
+.popover {
+  position: absolute;
+  z-index: 10;
+  width: 380px;
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.popover > button { text-align: start; }
+.pop-title { font-weight: 700; }
+.pop-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pop-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; }
+.task-pick { text-align: start; font-size: 0.85em; }
+
+/* =====================================================================
+   تنظیمات
+   ===================================================================== */
+#settings-dialog fieldset { margin-bottom: 12px; }
+#settings-form select[name="font_family"] { min-width: 14em; }
 .settings-rows { display: flex; flex-wrap: wrap; gap: 10px 28px; }
 .settings-rows > label { display: flex; flex-direction: column; gap: 2px; }
 .with-unit { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.with-unit input.num, input.num { width: 5.5em; text-align: center; }
+.weekday-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.weekday-grid .wd { display: flex; flex-direction: column; gap: 2px; font-size: 0.9em; }
+.weekday-grid input[type="number"] { width: 100%; }
+.path-setting { display: grid; grid-template-columns: 9em 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
 .slider-row { display: flex; align-items: center; gap: 16px; }
 .slider-row input[type="range"] { flex: 1; accent-color: var(--c-review); }
 .big-number { font-size: 1.6em; font-weight: 700; min-width: 3.5em; text-align: center; }
-.explain { background: var(--bg); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 0.9em; line-height: 1.9; }
-ol.explain { padding-inline-start: 28px; }
-.interval-chart { user-select: none; touch-action: none; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.presets button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.type-settings { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.type-settings li { display: flex; align-items: center; gap: 8px; }
+.type-settings li input[type="text"] { width: 12em; }
+.backup-list { max-height: 180px; overflow: auto; }
+.backup-list li { justify-content: space-between; }
+.log-box { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8em; margin-top: 8px; }
+
+/* نمودار فاصله‌های لایتنر */
+.interval-wrap { display: flex; align-items: flex-start; gap: 8px; }
+.interval-chart { flex: 1; min-width: 0; user-select: none; touch-action: none; }
 .interval-chart svg { width: 100%; height: 130px; display: block; overflow: visible; }
 .interval-chart .axis { stroke: var(--border); stroke-width: 3; stroke-linecap: round; }
 .interval-chart .tick line { stroke: var(--border); }
@@ -459,53 +527,12 @@ ol.explain { padding-inline-start: 28px; }
 .interval-chart .point.active circle { r: 12; cursor: grabbing; }
 .interval-chart .point text { fill: var(--text); font-size: 12px; font-weight: 700; text-anchor: middle; }
 .interval-chart .start circle { fill: var(--c-read); stroke: var(--panel); stroke-width: 3; }
-.type-settings { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
-.type-settings li { display: flex; align-items: center; gap: 8px; }
-.type-settings li input[type="text"] { width: 12em; }
-
-/* دکمه‌های بالای ستون منابع در ستون باریک به خط بعد بروند، نه اینکه خودشان بشکنند */
-.panel-head { flex-wrap: wrap; row-gap: 6px; }
-button { white-space: nowrap; }
-
-.item .pinned { color: var(--text); }
-button.link { border: none; background: none; padding: 0 4px; color: var(--accent); text-decoration: underline; cursor: pointer; font-size: inherit; }
-
-/* =====================================================================
-   نمای روزانه، رنگ منبع، پیش‌فرض‌های لایتنر و فونت‌ها
-   ===================================================================== */
-.day-view { max-width: 760px; margin: 8px auto 0; }
-.day-column { min-height: 60vh; padding: 12px; }
-.day-column .task { font-size: 1.05em; padding: 8px 12px; }
-.legend-group { display: inline-flex; gap: 10px; align-items: center; }
-.legend-group > span { padding: 1px 10px; border-radius: 6px; border-width: 1px; border-style: solid;
-  background: color-mix(in srgb, var(--c) var(--tint), var(--panel)); border-color: var(--c); }
-.task.done { cursor: pointer; }
-/* رنگ‌بندی بر اساس منبع: مرور با خط‌چین از خواندن جدا می‌شود */
-:root[data-color-mode="source"] .task.kind-review { border-inline-start-style: dashed; }
-input.swatch { width: 26px; height: 26px; padding: 1px; border-radius: 6px; cursor: pointer; }
-.presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-.presets button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
-
-/* نمودار لایتنر با دکمه‌های طول نمودار در انتهای خط */
-.interval-wrap { display: flex; align-items: flex-start; gap: 8px; }
-.interval-wrap .interval-chart { flex: 1; min-width: 0; }
 .chart-length { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 18px; font-size: 0.85em; white-space: nowrap; }
-.chart-length button:disabled { opacity: 0.35; cursor: not-allowed; }
-button:disabled { cursor: not-allowed; }
-#settings-form select[name="font_family"] { min-width: 14em; }
-ol.explain button.link { color: var(--danger); text-decoration: none; font-weight: 700; }
+.chart-length button:disabled { opacity: 0.35; }
 
 /* =====================================================================
-   جست‌وجو، وابستگی، گزارش
+   گزارش
    ===================================================================== */
-.search { width: 100%; margin-top: 8px; padding: 5px 10px; }
-.wide-text { width: 100%; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; resize: vertical; }
-.item .hits { grid-column: 3 / 5; font-size: 0.85em; color: var(--muted); }
-.item .waiting { color: var(--text); font-weight: 600; }
-.template-row { margin-bottom: 10px; }
-.backup-list { max-height: 180px; overflow: auto; }
-.backup-list li { justify-content: space-between; }
-
 .stats-section { margin: 16px 0 22px; }
 .stats-section h3 { margin: 0 0 8px; font-size: 1em; }
 .stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 12px; }
@@ -514,24 +541,43 @@ ol.explain button.link { color: var(--danger); text-decoration: none; font-weigh
 .bars-chart, .heat-chart { width: 100%; height: auto; display: block; }
 .bars-chart .grid { stroke: var(--border); stroke-dasharray: 2 4; }
 .bars-chart .baseline { stroke: var(--muted); }
-.axis-text { fill: var(--muted); font-size: 11px; }
 .bars-chart .bar:hover rect:not([fill="transparent"]), .bars-chart .bar:focus rect:not([fill="transparent"]) { opacity: 0.8; }
 .bars-chart .bar:focus, .heat:focus { outline: none; }
+.axis-text { fill: var(--muted); font-size: 11px; }
 .chart-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 0.85em; color: var(--muted); margin-top: 6px; }
 .chart-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-inline-end: 4px; vertical-align: -1px; }
-.chart-tip { position: fixed; z-index: 60; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.85em; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); pointer-events: none; }
+.chart-tip {
+  position: fixed;
+  z-index: 60;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85em;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
 /* نقشهٔ فعالیت: یک رنگ، از کم‌رنگ تا پررنگ */
-.heat.l0, .heat-key.l0 { fill: var(--border); background: var(--border); }
-.heat.l1, .heat-key.l1 { fill: color-mix(in srgb, var(--accent) 30%, var(--panel)); background: color-mix(in srgb, var(--accent) 30%, var(--panel)); }
-.heat.l2, .heat-key.l2 { fill: color-mix(in srgb, var(--accent) 55%, var(--panel)); background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
-.heat.l3, .heat-key.l3 { fill: color-mix(in srgb, var(--accent) 78%, var(--panel)); background: color-mix(in srgb, var(--accent) 78%, var(--panel)); }
-.heat.l4, .heat-key.l4 { fill: var(--accent); background: var(--accent); }
+.heat.l0, .heat-key.l0 { --heat: var(--border); }
+.heat.l1, .heat-key.l1 { --heat: color-mix(in srgb, var(--accent) 30%, var(--panel)); }
+.heat.l2, .heat-key.l2 { --heat: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.heat.l3, .heat-key.l3 { --heat: color-mix(in srgb, var(--accent) 78%, var(--panel)); }
+.heat.l4, .heat-key.l4 { --heat: var(--accent); }
+.heat { fill: var(--heat); }
+.heat-key { background: var(--heat); }
 .heat:hover, .heat:focus { stroke: var(--text); stroke-width: 1; }
+
 .cat-row { display: grid; grid-template-columns: 9em 1fr 7em; gap: 10px; align-items: center; margin-bottom: 6px; }
-.cat-row .progress { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
-.cat-row .progress span { display: block; height: 100%; background: var(--accent); }
-.cat-row .progress { grid-column: auto; }
+.cat-row .progress { grid-column: auto; height: 8px; border-radius: 4px; }
 
-.quit-note { text-align: center; margin-top: 30vh; }
-
-.log-box { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8em; margin-top: 8px; }
+/* =====================================================================
+   پنجرهٔ باریک (مثلاً لپ‌تاپ یا نیمهٔ صفحه): ستون‌ها زیر هم
+   ===================================================================== */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; height: auto; gap: 16px; }
+  .splitter { display: none; }
+  .topbar { flex-wrap: wrap; }
+  .week { grid-template-columns: 1fr; }
+  .week-day { min-height: auto; }
+}
