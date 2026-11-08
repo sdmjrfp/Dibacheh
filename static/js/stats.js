@@ -1,3 +1,7 @@
+import { weekStart } from "./calendar.js";
+import { $, api, el, fa, minutesText, showMessage, state } from "./core.js";
+import { svg } from "./settings.js";
+
 /* پنجرهٔ گزارش: خلاصهٔ هفته، نمودار ۱۲ هفتهٔ اخیر، نقشهٔ فعالیت سالانه و پیشرفت دسته‌ها.
 
    نمودارها با SVG ساده کشیده می‌شوند و به کتابخانه و اینترنت نیاز ندارند.
@@ -5,8 +9,13 @@
 */
 
 const KINDS = [["read", "خواندن"], ["review", "مرور"], ["routine", "روتین"]];
-let reportPeriod = "week";  // week، month یا all
-let reportDate = null;      // یک روز از بازهٔ نمایش‌داده‌شده
+
+let reportPeriod = "week";
+
+  // week، month یا all
+let reportDate = null;
+
+      // یک روز از بازهٔ نمایش‌داده‌شده
 
 /** یک راهنمای کوچک برای مقدار هر مستطیل نمودار */
 function chartTip() {
@@ -230,4 +239,5 @@ async function openStats(period = reportPeriod, date = null) {
 }
 
 $("#stats-button").addEventListener("click", () => openStats("week"));
+
 $("#close-stats").addEventListener("click", () => $("#stats-dialog").close());

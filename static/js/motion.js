@@ -11,7 +11,7 @@
    هر دو از Web Animations API خود مرورگر استفاده می‌کنند؛ کتابخانهٔ جدا لازم نیست.
 */
 
-const Motion = (() => {
+export const Motion = (() => {
   const DURATION = 380;
   const EASE = "cubic-bezier(.2, .8, .2, 1)";
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -76,7 +76,7 @@ const Motion = (() => {
  *   options.axis       "y" برای فهرست عمودی، "x" برای تب‌های افقی (راست‌به‌چپ)
  *   options.onDrop(ids, movedId)  ترتیب تازهٔ data-id ها بعد از رها کردن، و شمارهٔ کارتی که کشیده شد
  */
-function sortable(list, options) {
+export function sortable(list, options) {
   const axis = options.axis || "y";
   let drag = null;
 
@@ -160,7 +160,7 @@ function sortable(list, options) {
  * کشیدن یک عنصر با «سایه»ای که همراه ماوس حرکت می‌کند (برای کارهای تقویم).
  * onDrop(targetElement, ghostRect) وقتی رها شد. اگر false برگرداند، سایه به جای اول برمی‌گردد.
  */
-function dragGhost(source, e, { targetSelector, canDrop, onDrop, onClick }) {
+export function dragGhost(source, e, { targetSelector, canDrop, onDrop, onClick }) {
   const start = { x: e.clientX, y: e.clientY };
   const rect = source.getBoundingClientRect();
   let ghost = null;

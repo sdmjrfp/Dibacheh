@@ -1,0 +1,11 @@
+{
+  "name": "dibacheh-dev-tools",
+  "private": true,
+  "description": "فقط ابزار بررسی کد؛ برنامه به Node نیاز ندارد.",
+  "scripts": { "lint": "eslint static/js" },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "globals": "16.5.0"
+  }
+}

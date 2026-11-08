@@ -1,14 +1,22 @@
+import { $, $$, api, buildJalaliInput, el, fa, minutesText, readJalaliInput, renderPart, showMessage, state, typeOf } from "./core.js";
+import { openItemDialog } from "./item-dialog.js";
+import { Motion, dragGhost } from "./motion.js";
+import { selectedItemId } from "./sources.js";
+
 /* تقویم هفتگی و ماهانهٔ شمسی.
 
-   این فایل بعد از app.js بار می‌شود و از ابزارهای آن (state، el، api، ...) استفاده می‌کند.
    تقویم فقط برنامه‌ای را که سرور ساخته نشان می‌دهد. هر تغییری (جابه‌جایی، تعویق،
    سقف روز) به سرور فرستاده می‌شود و برنامهٔ تازه برمی‌گردد.
 
    تقویم عمداً هیچ گزینهٔ حذفی ندارد.
 */
 
-let calView = "week";     // "day"، "week" یا "month"
-let calAnchor = null;     // یک روز از هفته یا ماهی که نشان داده می‌شود
+let calView = "week";
+
+     // "day"، "week" یا "month"
+let calAnchor = null;
+
+     // یک روز از هفته یا ماهی که نشان داده می‌شود
 
 const KIND_LABEL = { read: "خواندن", review: "مرور", routine: "روتین" };
 
@@ -18,7 +26,30 @@ const KIND_LABEL = { read: "خواندن", review: "مرور", routine: "روت�
 
 /** نقشهٔ تاریخ → روز برنامه */
 function planDays() {
-  return new Map(state.plan.days.map((day) => [day.date, day]));
+  return new Map([...farDays.entries(), ...state.plan.days.map((day) => [day.date, day])]);
+}
+
+// سرور فقط روزهای نزدیک را همراه هر جواب می‌فرستد. روزهای دورتر وقتی کاربر به آنها می‌رود
+// جدا گرفته می‌شوند و با هر تغییر برنامه دور ریخته می‌شوند.
+const farDays = new Map();
+let farDaysFor = null;      // این روزها مال کدام نسخهٔ state هستند
+let farRequest = "";        // آخرین بازهٔ درخواست‌شده
+
+async function loadFarDays(start, end) {
+  if (farDaysFor !== state) {
+    farDays.clear();
+    farDaysFor = state;
+    farRequest = "";
+  }
+  const near = state.plan.days.at(-1).date;
+  if (end <= near || state.plan.total_days <= state.plan.days.length) return;
+  if (farDays.has(end) || farRequest === `${start}|${end}`) return;
+  farRequest = `${start}|${end}`;
+  const forState = state;
+  const days = await (await fetch(`/api/plan/range?start=${start}&end=${end}`)).json();
+  if (forState !== state) return;   // برنامه در این فاصله عوض شده است
+  for (const day of days) farDays.set(day.date, day);
+  renderCalendar();
 }
 
 /** نقشهٔ شمارهٔ جلسه → {item, session} */
@@ -28,17 +59,6 @@ function sessionIndex() {
     for (const session of item.sessions) index.set(session.id, { item, session });
   }
   return index;
-}
-
-/** اولین روزی که هر جلسه مرور دارد. فقط همین مرور قابل جابه‌جایی است. */
-function firstReviewDates() {
-  const first = new Map();
-  for (const day of state.plan.days) {
-    for (const t of day.tasks) {
-      if (t.kind === "review" && !first.has(t.session_id)) first.set(t.session_id, day.date);
-    }
-  }
-  return first;
 }
 
 /** نقشهٔ تاریخ → کارهای انجام‌شدهٔ آن روز (از سابقه) */
@@ -52,19 +72,19 @@ function historyByDate() {
 }
 
 /** شنبهٔ هفتهٔ یک روز (هفتهٔ ایرانی از شنبه شروع می‌شود) */
-function weekStart(iso) {
+export function weekStart(iso) {
   const weekday = new Date(iso + "T00:00:00Z").getUTCDay();  // 0 = یکشنبه ... 6 = شنبه
   return Jalali.addDays(iso, -((weekday + 1) % 7));
 }
 
 /** آیا این کار را می‌شود جابه‌جا کرد؟ خروجی: null یعنی بله، وگرنه دلیلش */
-function whyNotMovable(task, date, index, firstReviews) {
+function whyNotMovable(task, index) {
   if (task.kind === "routine") return "کار روتین جابه‌جا نمی‌شود؛ اگر یک روز انجام نشود، فقط همان روز از دست می‌رود.";
   const info = index.get(task.session_id);
   if (!info) return "جلسه پیدا نشد.";
   if (task.kind === "review") {
     if (info.session.status !== "reviewing") return "این جلسه هنوز خوانده نشده؛ خواندنش را جابه‌جا کنید تا مرورها هم با آن بروند.";
-    if (firstReviews.get(task.session_id) !== date) return "فقط مرور بعدی این جلسه جابه‌جا می‌شود؛ مرورهای بعدی خودشان با آن جابه‌جا می‌شوند.";
+    if (!task.first_review) return "فقط مرور بعدی این جلسه جابه‌جا می‌شود؛ مرورهای بعدی خودشان با آن جابه‌جا می‌شوند.";
   }
   return null;
 }
@@ -73,7 +93,19 @@ function whyNotMovable(task, date, index, firstReviews) {
 // کشیدن کل تقویم
 // ---------------------------------------------------------------------------
 
-function renderCalendar() {
+/** اولین و آخرین روز نمای فعلی */
+function viewRange() {
+  if (calView === "day") return [calAnchor, calAnchor];
+  if (calView === "week") {
+    const start = weekStart(calAnchor);
+    return [start, Jalali.addDays(start, 6)];
+  }
+  const { y, m } = Jalali.toJalali(calAnchor);
+  const first = Jalali.fromJalali(y, m, 1);
+  return [first, Jalali.addDays(first, Jalali.monthLength(y, m) - 1)];
+}
+
+export function renderCalendar() {
   if (!calAnchor) calAnchor = state.today;
   $("#view-day").setAttribute("aria-selected", String(calView === "day"));
   $("#view-week").setAttribute("aria-selected", String(calView === "week"));
@@ -85,24 +117,32 @@ function renderCalendar() {
   if (selected) note.textContent = `روزهایی که «${selected.title}» کار دارد پررنگ شده‌اند. برای برداشتن، دوباره روی نام درس کلیک کنید.`;
 
   const context = {
-    days: planDays(), index: sessionIndex(), firstReviews: firstReviewDates(), history: historyByDate(),
+    days: planDays(), index: sessionIndex(), history: historyByDate(),
   };
   const box = $("#calendar");
+  const [viewStart, viewEnd] = viewRange();
+  loadFarDays(viewStart, viewEnd);
+  const draw = (fn) => renderPart("calendar", [
+    calView, calAnchor, viewStart, viewEnd, selectedItemId, state.today, state.settings.colors, state.settings.color_mode,
+    state.types, state.history.filter((h) => h.date >= viewStart && h.date <= viewEnd),
+    [...context.days.values()].filter((d) => d.date >= viewStart && d.date <= viewEnd),
+    [...context.index.values()].map(({ item, session }) => [item.id, item.title, item.display_color, session.section_text, session.note, session.status]),
+  ], fn);
   // راهنمای رنگ: در رنگ‌بندی بر اساس منبع، هر درس رنگ خودش را دارد
   $("#legend-kinds").hidden = state.settings.color_mode === "source";
   $("#legend-source").hidden = state.settings.color_mode !== "source";
   if (calView === "day") {
     $("#cal-title").textContent = `${Jalali.weekday(calAnchor)} ${Jalali.format(calAnchor)}`;
-    box.replaceChildren(el("div", { class: "day-view" }, dayColumn(calAnchor, context, "cal-day day-column")));
+    draw(() => box.replaceChildren(el("div", { class: "day-view" }, dayColumn(calAnchor, context, "cal-day day-column"))));
   } else if (calView === "week") {
     const start = weekStart(calAnchor);
     const end = Jalali.addDays(start, 6);
     $("#cal-title").textContent = `${Jalali.formatShort(start)} تا ${Jalali.format(end)}`;
-    box.replaceChildren(weekView(start, context));
+    draw(() => box.replaceChildren(weekView(start, context)));
   } else {
     const { y, m } = Jalali.toJalali(calAnchor);
     $("#cal-title").textContent = `${Jalali.MONTHS[m - 1]} ${fa(y)}`;
-    box.replaceChildren(monthView(y, m, context));
+    draw(() => box.replaceChildren(monthView(y, m, context)));
   }
 }
 
@@ -215,7 +255,7 @@ function taskChip(task, iso, context, compact) {
   if (selectedItemId && task.item_id === selectedItemId) classes.push("selected");
   if (selectedItemId && task.item_id !== selectedItemId) classes.push("dim");
   if (task.overdue) classes.push("overdue");
-  const movable = !whyNotMovable(task, iso, context.index, context.firstReviews);
+  const movable = !whyNotMovable(task, context.index);
 
   let label = KIND_LABEL[task.kind];
   if (task.kind === "review") label += ` ${fa(task.review_round)}`;
@@ -291,7 +331,7 @@ function canTick(task, iso, context) {
   if (task.kind === "routine") return iso === state.today;
   if (task.kind === "read") return true;
   // مرور: فقط مرور بعدیِ جلسه‌ای که واقعاً خوانده شده
-  return !whyNotMovable(task, iso, context.index, context.firstReviews);
+  return !whyNotMovable(task, context.index);
 }
 
 function markDone(task, result, minutes) {
@@ -369,6 +409,7 @@ function closePopover() {
 document.addEventListener("pointerdown", (e) => {
   if (!$("#popover").hidden && !e.target.closest("#popover")) closePopover();
 });
+
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePopover(); });
 
 function openTaskMenu(task, iso, anchor) {
@@ -376,7 +417,7 @@ function openTaskMenu(task, iso, anchor) {
   const info = index.get(task.session_id);
   if (!info) return;
   const { item, session } = info;
-  const blocked = whyNotMovable(task, iso, index, firstReviewDates());
+  const blocked = whyNotMovable(task, index);
   const content = [
     el("div", { class: "pop-title" }, item.title),
     el("div", { class: "muted small" },
@@ -385,7 +426,7 @@ function openTaskMenu(task, iso, anchor) {
   ];
 
   // ثبت انجام کار (همیشه با تاریخ امروز)
-  if (canTick(task, iso, { index, firstReviews: firstReviewDates() })) {
+  if (canTick(task, iso, { index })) {
     const early = iso > state.today ? " (امروز، زودتر از برنامه)" : "";
     if (task.kind === "review") {
       content.push(el("div", { class: "pop-row" },
@@ -474,12 +515,11 @@ function openDayMenu(iso, day, anchor) {
 
   // کارهای روزهای بعد که می‌شود به این روز جلو آورد
   const index = sessionIndex();
-  const firstReviews = firstReviewDates();
   const candidates = [];
   for (const d of state.plan.days) {
     if (d.date <= iso) continue;
     for (const t of d.tasks) {
-      if (!whyNotMovable(t, d.date, index, firstReviews)) candidates.push([t, d.date]);
+      if (!whyNotMovable(t, index)) candidates.push([t, d.date]);
       if (candidates.length >= 30) break;
     }
     if (candidates.length >= 30) break;
@@ -607,12 +647,16 @@ function shiftCalendar(direction) {
 }
 
 $("#view-day").addEventListener("click", () => { calView = "day"; renderCalendar(); });
+
 $("#view-week").addEventListener("click", () => { calView = "week"; renderCalendar(); });
+
 $("#view-month").addEventListener("click", () => { calView = "month"; renderCalendar(); });
+
 $("#cal-prev").addEventListener("click", () => shiftCalendar(-1));
+
 $("#cal-next").addEventListener("click", () => shiftCalendar(1));
+
 $("#export-button").addEventListener("click", (e) => openExportMenu(e.currentTarget, "day"));
+
 $("#cal-today").addEventListener("click", () => { calAnchor = state.today; renderCalendar(); });
 
-// اگر state قبل از بار شدن این فایل رسیده باشد
-if (state) renderCalendar();
