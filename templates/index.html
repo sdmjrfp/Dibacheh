@@ -374,6 +374,16 @@
       </fieldset>
 
       <fieldset>
+        <legend>گزارش خطا</legend>
+        <p class="muted small">اگر برنامه درست کار نکرد، این گزارش علت را نشان می‌دهد. روی همین کامپیوتر می‌ماند و جایی فرستاده نمی‌شود.</p>
+        <div class="pop-row">
+          <button type="button" id="show-logs">نمایش گزارش خطا</button>
+          <button type="button" id="reveal-logs">نمایش فایل</button>
+        </div>
+        <textarea id="log-box" class="wide-text log-box" rows="8" dir="ltr" readonly hidden></textarea>
+      </fieldset>
+
+      <fieldset>
         <legend>انتقال به کامپیوتر دیگر</legend>
         <p class="muted small">همهٔ داده‌ها و فونت‌های اضافه‌شده در یک فایل zip. خود فایل‌های منبع (نوت و PDF) داخل آن نیستند و باید جدا منتقل شوند.</p>
         <div class="pop-row">

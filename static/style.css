@@ -533,3 +533,5 @@ ol.explain button.link { color: var(--danger); text-decoration: none; font-weigh
 .cat-row .progress { grid-column: auto; }
 
 .quit-note { text-align: center; margin-top: 30vh; }
+
+.log-box { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8em; margin-top: 8px; }

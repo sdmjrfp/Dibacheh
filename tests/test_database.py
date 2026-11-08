@@ -183,3 +183,50 @@ def test_simultaneous_first_requests_do_not_break_new_database(tmp_path):
     for t in threads:
         t.join()
     assert errors == []
+
+
+def test_transaction_saves_all_or_nothing(conn):
+    with pytest.raises(RuntimeError):
+        with database.transaction(conn):
+            database.add_item(conn, "A", 1, 60, now=NOW)
+            raise RuntimeError("وسط کار")
+    assert database.list_items(conn) == []
+    with database.transaction(conn):
+        with database.transaction(conn):       # تودرتو
+            database.add_item(conn, "B", 1, 60, now=NOW)
+    conn.rollback()
+    assert [i["title"] for i in database.list_items(conn)] == ["B"]
+
+
+def test_failed_request_leaves_no_half_saved_data(client):
+    # درس ساخته می‌شود، ولی وابستگی‌اش نامعتبر است: نباید هیچ چیزی ذخیره شود
+    response = client.post("/api/items", json={"title": "نیمه‌کاره", "session_count": 1, "session_minutes": 30,
+                                                 "requires": [{"id": 999}]})
+    assert response.status_code == 400
+    assert client.get("/api/state").get_json()["items"] == []
+
+
+def test_undo_snapshot_is_small_for_a_large_plan(client):
+    import app as app_module
+    for n in range(20):
+        client.post("/api/items", json={"title": f"درس {n}", "session_count": 30, "session_minutes": 30})
+    size = len(app_module._undo_stack[-1][1])
+    assert size < 40_000
+
+
+def test_corrupt_backup_is_not_kept(conn, tmp_path, monkeypatch):
+    folder = tmp_path / "backups"
+    good = database.daily_backup(conn, folder, 30, date(2026, 1, 1))
+    assert database.integrity_problem(good) is None
+    monkeypatch.setattr(database, "integrity_problem", lambda path: "خراب")
+    with pytest.raises(database.BackupError):
+        database.daily_backup(conn, folder, 1, date(2026, 1, 2))
+    assert [f.name for f in folder.iterdir()] == [good.name]    # نسخهٔ سالم پاک نشد
+
+
+def test_broken_file_is_detected(tmp_path):
+    broken = tmp_path / "x.sqlite3"
+    broken.write_bytes(b"SQLite format 3\0" + b"\xff" * 4096)
+    assert database.integrity_problem(broken)
+    with pytest.raises(ValueError):
+        database.check_database_file(broken)

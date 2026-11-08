@@ -83,7 +83,9 @@ async function api(method, url, body) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     showMessage(data.error || "خطایی پیش آمد.");
-    throw new Error(data.error || response.status);
+    const error = new Error(data.error || response.status);
+    error.expected = true;   // به کاربر نشان داده شد و در گزارش خطا ثبت نمی‌شود
+    throw error;
   }
   if (data.items && data.plan) {
     state = data;
@@ -134,6 +136,7 @@ function renderNow() {
   renderItems();
   renderWorkload();
   for (const warning of state.plan.warnings) showMessage(warning);
+  if (state.backup_problem) showMessage(state.backup_problem);
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
   $("#quit-button").hidden = !state.can_quit;
   // دکمه‌های برگرداندن و بازگرداندن، با تعداد مرحله‌ها
@@ -1311,6 +1314,29 @@ async function renderBackups() {
       }, "برگرداندن"))));
   if (!backups.length) $("#backup-list").append(el("li", { class: "muted small" }, "هنوز backupی نیست."));
 }
+
+// گزارش خطا
+$("#show-logs").addEventListener("click", async () => {
+  const { lines, path } = await (await fetch("/api/logs")).json();
+  const box = $("#log-box");
+  box.hidden = false;
+  box.value = lines.length ? lines.join("\n") : "خطایی ثبت نشده است.";
+  box.title = path;
+  box.scrollTop = box.scrollHeight;
+});
+$("#reveal-logs").addEventListener("click", () => api("POST", "/api/logs/reveal", {}));
+
+function reportPageError(message, source, line) {
+  fetch("/api/logs/client", {
+    method: "POST",
+    headers: { "X-CSRF-Token": CSRF, "Content-Type": "application/json" },
+    body: JSON.stringify({ message, source, line }),
+  }).catch(() => {});
+}
+window.addEventListener("error", (e) => reportPageError(e.message, e.filename, e.lineno));
+window.addEventListener("unhandledrejection", (e) => {
+  if (!e.reason || !e.reason.expected) reportPageError(String(e.reason), "promise", "");
+});
 
 $("#data-export").addEventListener("click", async () => {
   const result = await api("POST", "/api/data/export", {});

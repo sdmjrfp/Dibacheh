@@ -18,6 +18,7 @@
 
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -26,12 +27,16 @@ import sys
 import tempfile
 import threading
 import urllib.request
+import zlib
 import zipfile
 from collections import deque
 from datetime import date, datetime, timedelta
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from flask import Flask, abort, g, jsonify, render_template, request, send_file
+from waitress import serve
+from werkzeug.exceptions import HTTPException
 
 import database
 import leitner
@@ -67,6 +72,7 @@ app.config["DB_PATH"] = os.environ.get("DIBACHEH_DB") or database.DB_PATH
 
 # تاریخ آخرین backup در همین اجرای برنامه، تا هر درخواست دوباره چک نکند
 _last_backup_day = None
+_backup_problem = None
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +98,15 @@ class UserError(Exception):
 @app.errorhandler(platform_tools.BrowseUnavailable)
 def handle_browse_unavailable(error):
     return jsonify({"error": str(error)}), 400
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(error):
+    """خطای پیش‌بینی‌نشده در گزارش خطا ثبت می‌شود و صفحه یک پیام قابل فهم می‌گیرد."""
+    if isinstance(error, HTTPException):
+        return error
+    app.logger.exception("خطا در %s %s", request.method, request.path)
+    return jsonify({"error": "خطای پیش‌بینی‌نشده‌ای پیش آمد. جزئیات در «گزارش خطا» در تنظیمات هست."}), 500
 
 
 @app.errorhandler(UserError)
@@ -134,20 +149,26 @@ def backups_dir(settings):
 @app.before_request
 def backup_once_a_day():
     """اولین درخواست هر روز، یک backup از دیتابیس می‌گیرد."""
-    global _last_backup_day
+    global _last_backup_day, _backup_problem
     day = today()
     if _last_backup_day == day:
         return
     conn = get_db()
     settings = database.get_settings(conn)
-    database.daily_backup(conn, backups_dir(settings), settings["backup_retention"], day)
+    try:
+        database.daily_backup(conn, backups_dir(settings), settings["backup_retention"], day)
+    except database.BackupError as error:
+        app.logger.error("backup سالم نبود: %s", error)
+        _backup_problem = f"backup امروز سالم نبود و ذخیره نشد: {error}"
+    else:
+        _backup_problem = None
     _last_backup_day = day
 
 
 # ---------------------------------------------------------------------------
 # برگرداندن تغییرها (Undo)
 #
-# قبل از هر تغییر، یک کپی کامل از دیتابیس در حافظه نگه داشته می‌شود.
+# قبل از هر تغییر، یک کپی فشرده از دیتابیس در حافظه نگه داشته می‌شود.
 # «برگرداندن» آخرین کپی را سر جایش می‌گذارد. تا 20 مرحله نگه داشته می‌شود،
 # و فقط تا وقتی برنامه باز است (با بستن برنامه پاک می‌شود).
 # ---------------------------------------------------------------------------
@@ -188,16 +209,31 @@ UNDO_LABELS = {
 }
 
 
+def _snapshot_now():
+    """کپی فشردهٔ دیتابیس در حافظه. فشرده‌سازی حجم هر مرحله را چند برابر کم می‌کند."""
+    return zlib.compress(get_db().serialize(), 1)
+
+
+def _restore_snapshot(snapshot):
+    """دیتابیس را به یک کپی برمی‌گرداند."""
+    source = sqlite3.connect(":memory:")
+    try:
+        source.deserialize(zlib.decompress(snapshot))
+        source.backup(get_db())
+    finally:
+        source.close()
+
+
 @app.before_request
 def remember_for_undo():
     if request.method == "GET" or request.endpoint not in UNDO_LABELS:
         return
-    snapshot = sqlite3.connect(":memory:")
-    get_db().backup(snapshot)
-    if len(_undo_stack) == UNDO_LIMIT:
-        _undo_stack.popleft()[1].close()  # قدیمی‌ترین کپی کنار می‌رود
-    _undo_stack.append((UNDO_LABELS[request.endpoint], snapshot))
+    # _undo_stack طول محدود دارد و قدیمی‌ترین مرحله خودش کنار می‌رود
+    _undo_stack.append((UNDO_LABELS[request.endpoint], _snapshot_now()))
     g.undo_pushed = True
+    # همهٔ تغییرهای این درخواست با هم ذخیره می‌شوند یا هیچ‌کدام
+    database.begin_transaction(get_db())
+    g.in_transaction = True
     # تغییر تازه یعنی تاریخچهٔ «بازگرداندن» دیگر معنی ندارد
     g.cleared_redo = list(_redo_stack)
     _redo_stack.clear()
@@ -206,19 +242,13 @@ def remember_for_undo():
 @app.after_request
 def forget_failed_change(response):
     # اگر تغییر به خطا خورد، چیزی عوض نشده و کپی‌اش لازم نیست
-    if g.get("undo_pushed") and response.status_code >= 400 and _undo_stack:
-        _undo_stack.pop()[1].close()
+    failed = response.status_code >= 400
+    if g.pop("in_transaction", False):
+        database.end_transaction(get_db(), success=not failed)
+    if g.get("undo_pushed") and failed and _undo_stack:
+        _undo_stack.pop()
         _redo_stack.extend(g.get("cleared_redo", []))  # تغییر انجام نشد؛ «بازگرداندن» سر جایش برمی‌گردد
-    else:
-        for _, old in g.get("cleared_redo", []):
-            old.close()
     return response
-
-
-def _snapshot_now():
-    snapshot = sqlite3.connect(":memory:")
-    get_db().backup(snapshot)
-    return snapshot
 
 
 @app.route("/api/undo", methods=["POST"])
@@ -228,8 +258,7 @@ def api_undo():
         raise UserError("تغییری برای برگرداندن نیست.")
     label, snapshot = _undo_stack.pop()
     _redo_stack.append((label, _snapshot_now()))
-    snapshot.backup(get_db())
-    snapshot.close()
+    _restore_snapshot(snapshot)
     state = build_state()
     state["undone"] = label
     return jsonify(state)
@@ -242,8 +271,7 @@ def api_redo():
         raise UserError("تغییری برای بازگرداندن نیست.")
     label, snapshot = _redo_stack.pop()
     _undo_stack.append((label, _snapshot_now()))
-    snapshot.backup(get_db())
-    snapshot.close()
+    _restore_snapshot(snapshot)
     state = build_state()
     state["redone"] = label
     return jsonify(state)
@@ -376,6 +404,7 @@ def state_data():
         "bundled_fonts": sources.BUNDLED_FONTS,
         "settings": settings,
         "plan": plan,
+        "backup_problem": _backup_problem,
         "workload": workload(plan, now),
         "history": history(conn, now),
         "day_overrides": inputs["day_overrides"],
@@ -1398,6 +1427,47 @@ def api_quit():
 # اجرا
 # ---------------------------------------------------------------------------
 
+def _log_file():
+    """فایل گزارش خطا. نسخهٔ آزمایشی با دیتابیس جدا، گزارش خودش را کنار همان فایل می‌گذارد."""
+    if os.environ.get("DIBACHEH_DB"):
+        return Path(os.environ["DIBACHEH_DB"]).parent / "logs" / "dibacheh.log"
+    return database.DATA_DIR / "logs" / "dibacheh.log"
+
+
+def setup_logging():
+    """گزارش خطا در یک فایل با حجم محدود: 3 فایل، هر کدام حداکثر نیم مگابایت."""
+    path = _log_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handler = RotatingFileHandler(path, maxBytes=500_000, backupCount=2, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(logging.WARNING)
+
+
+@app.route("/api/logs")
+def api_logs():
+    """200 خط آخر گزارش خطا، برای نمایش در تنظیمات."""
+    path = _log_file()
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[-200:] if path.exists() else []
+    return jsonify({"lines": lines, "path": str(path)})
+
+
+@app.route("/api/logs/reveal", methods=["POST"])
+def api_logs_reveal():
+    path = _log_file()
+    platform_tools.launch(platform_tools.reveal_args(path if path.exists() else path.parent.parent))
+    return jsonify({"ok": True})
+
+
+@app.route("/api/logs/client", methods=["POST"])
+def api_log_client_error():
+    """خطای JavaScript صفحه هم در همان گزارش ثبت می‌شود."""
+    data = _body()
+    app.logger.error("خطای صفحه: %s (%s:%s)", str(data.get("message"))[:500],
+                     str(data.get("source"))[:200], str(data.get("line"))[:10])
+    return jsonify({"ok": True})
+
+
 def _already_running():
     """آیا دیباچه همین حالا روی این پورت باز است؟"""
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -1424,10 +1494,20 @@ def _start_desktop():
     return False
 
 
-if __name__ == "__main__":
+def main():
     if sys.stdout is None or sys.stderr is None:   # برنامهٔ ویندوزی بدون پنجرهٔ کنسول
-        database.DATA_DIR.mkdir(parents=True, exist_ok=True)
-        sys.stdout = sys.stderr = open(database.DATA_DIR / "app.log", "a", encoding="utf-8")
-    if not (CAN_QUIT and not os.environ.get("DIBACHEH_NO_LAUNCH") and _start_desktop()):
-        # debug خاموش است، چون حالت debug اجازهٔ اجرای کد از راه مرورگر را می‌دهد.
-        app.run(host=HOST, port=PORT, debug=False)
+        sys.stdout = sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    setup_logging()
+    if CAN_QUIT and not os.environ.get("DIBACHEH_NO_LAUNCH") and _start_desktop():
+        return
+    try:
+        # waitress سرور کوچک و پایدار است؛ debug خود Flask هم خاموش می‌ماند.
+        serve(app, host=HOST, port=PORT, threads=8)
+    except OSError as error:
+        logging.getLogger().error("سرور اجرا نشد (پورت %s): %s", PORT, error)
+        print(f"Port {PORT} is in use: {error}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

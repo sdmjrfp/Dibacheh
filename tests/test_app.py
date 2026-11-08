@@ -41,3 +41,43 @@ def test_api_plan_returns_json(client):
     assert len(data["days"]) == 1
     assert data["days"][0]["tasks"] == []
     assert data["warnings"] == []
+
+
+def test_unexpected_error_is_logged_and_gives_clean_message(client, monkeypatch, caplog):
+    def broken(*args, **kwargs):
+        raise RuntimeError("خرابی آزمایشی")
+    monkeypatch.setattr(app_module.scheduler, "build_plan", broken)
+    response = client.get("/api/state")
+    assert response.status_code == 500
+    assert "گزارش خطا" in response.get_json()["error"]
+    assert "خرابی آزمایشی" not in response.get_json()["error"]   # جزئیات فقط در گزارش
+    assert "خرابی آزمایشی" in caplog.text
+
+
+def test_failed_page_load_keeps_http_errors(client):
+    assert client.get("/no-such-page").status_code == 404
+
+
+def test_log_endpoints(client, tmp_path, monkeypatch):
+    monkeypatch.setattr(app_module, "_log_file", lambda: tmp_path / "logs" / "x.log")
+    assert client.get("/api/logs").get_json()["lines"] == []
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "x.log").write_text("\n".join(str(n) for n in range(300)), encoding="utf-8")
+    lines = client.get("/api/logs").get_json()["lines"]
+    assert len(lines) == 200 and lines[-1] == "299"
+    assert client.post("/api/logs/client", json={"message": "m", "source": "s", "line": 1}).status_code == 200
+
+
+def test_setup_logging_writes_to_file(tmp_path, monkeypatch):
+    import logging
+    monkeypatch.setattr(app_module, "_log_file", lambda: tmp_path / "logs" / "x.log")
+    root = logging.getLogger()
+    before = list(root.handlers)
+    app_module.setup_logging()
+    try:
+        root.error("پیام آزمایشی")
+        assert "پیام آزمایشی" in (tmp_path / "logs" / "x.log").read_text(encoding="utf-8")
+    finally:
+        for handler in [h for h in root.handlers if h not in before]:
+            root.removeHandler(handler)
+            handler.close()

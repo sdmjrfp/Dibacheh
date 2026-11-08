@@ -11,6 +11,7 @@ import json
 import re
 import sqlite3
 import threading
+from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -134,6 +135,11 @@ MIGRATIONS = [
     ALTER TABLE sessions ADD COLUMN note TEXT NOT NULL DEFAULT '';
     ALTER TABLE items ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;
     """,
+    # نسخهٔ 6: گزارش‌ها با زیاد شدن سابقه کند نشوند
+    """
+    CREATE INDEX task_log_by_date ON task_log(date);
+    CREATE INDEX task_log_by_session ON task_log(session_id, id);
+    """,
 ]
 
 # رنگ‌های پیش‌فرض منبع‌ها؛ هر منبع تازه رنگ بعدی را می‌گیرد و بعداً قابل تغییر است
@@ -182,11 +188,53 @@ JSON_COLUMNS = {"review_intervals", "routine_weekdays"}
 # اتصال و تبدیل
 # ---------------------------------------------------------------------------
 
+class Connection(sqlite3.Connection):
+    """اتصال دیتابیس که می‌تواند چند تغییر را یک کار حساب کند.
+
+    داخل database.transaction()، دستور commit تابع‌های این فایل کاری نمی‌کند،
+    تا همهٔ تغییرها با هم ذخیره شوند یا هیچ‌کدام.
+    """
+
+    transaction_depth = 0
+
+    def commit(self):
+        if self.transaction_depth == 0:
+            super().commit()
+
+    def commit_now(self):
+        super().commit()
+
+
+@contextmanager
+def transaction(conn):
+    """همهٔ تغییرهای داخل این بلوک با هم ذخیره می‌شوند؛ اگر خطا پیش بیاید، هیچ‌کدام."""
+    begin_transaction(conn)
+    try:
+        yield
+    except BaseException:
+        end_transaction(conn, success=False)
+        raise
+    end_transaction(conn, success=True)
+
+
+def begin_transaction(conn):
+    conn.transaction_depth += 1
+
+
+def end_transaction(conn, success):
+    conn.transaction_depth -= 1
+    if conn.transaction_depth == 0:
+        if success:
+            conn.commit_now()
+        else:
+            conn.rollback()
+
+
 def connect(path=DB_PATH):
     """به دیتابیس وصل می‌شود و اگر لازم باشد جدول‌ها را می‌سازد یا به‌روز می‌کند."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, factory=Connection)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     migrate(conn)
@@ -704,6 +752,23 @@ def backup_folder(settings):
     return folder if folder.is_absolute() else PROJECT_DIR / folder
 
 
+class BackupError(Exception):
+    """کپی دیتابیس سالم نبود."""
+
+
+def integrity_problem(path):
+    """سلامت یک فایل دیتابیس را بررسی می‌کند. خروجی: None یعنی سالم، وگرنه متن مشکل."""
+    try:
+        other = sqlite3.connect(_read_only_uri(path), uri=True)
+        try:
+            result = other.execute("PRAGMA integrity_check").fetchone()[0]
+        finally:
+            other.close()
+    except sqlite3.Error as error:
+        return str(error)
+    return None if result == "ok" else result
+
+
 def daily_backup(conn, folder, retention, today):
     """اگر امروز هنوز backup گرفته نشده، یک نسخه می‌گیرد و نسخه‌های قدیمی را پاک می‌کند.
 
@@ -722,7 +787,12 @@ def daily_backup(conn, folder, retention, today):
         conn.backup(dest)
     finally:
         dest.close()
-    tmp.rename(target)  # فقط وقتی کپی کامل شد، با نام اصلی ذخیره می‌شود
+    # backup خراب نباید جای نسخه‌های سالم را بگیرد و باعث پاک شدن قدیمی‌ترها شود
+    problem = integrity_problem(tmp)
+    if problem:
+        tmp.unlink()
+        raise BackupError(problem)
+    tmp.rename(target)  # فقط وقتی کپی کامل و سالم شد، با نام اصلی ذخیره می‌شود
 
     # فقط backupهای خود برنامه شمرده و پاک می‌شوند
     backups = sorted(folder.glob("dibacheh-????-??-??.sqlite3"))
@@ -758,6 +828,8 @@ def check_database_file(path):
             other.close()
     except sqlite3.Error:
         raise ValueError("این فایل دیتابیس معتبری نیست.")
+    if integrity_problem(path):
+        raise ValueError("این فایل دیتابیس خراب است.")
     if not {"items", "sessions", "settings"} <= tables:
         raise ValueError("این فایل دیتابیس دیباچه نیست.")
     if version > len(MIGRATIONS):
