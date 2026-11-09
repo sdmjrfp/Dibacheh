@@ -393,7 +393,7 @@ backup برگردانده شد.
 مثل درس، با مرور
 مثل روتین، بدون مرور
 نوع «{0}» حذف شود؟ کارهای این نوع می‌مانند و درس یا روتین معمولی می‌شوند.
-نوع کار ساخت شما هنوز نیست. با دکمهٔ «+» کنار «+ کار روتین» بسازید.
+نوع کار ساخت شما هنوز نیست. با منوی «+» بسازید.
 وزیرمتن
 فارسی، همراه برنامه
 اضافه‌شده
@@ -421,8 +421,6 @@ backup برگردانده شد.
 نام دسته
 درسی با این فیلتر نیست.
 هنوز چیزی اضافه نشده. با دکمهٔ «+» شروع کنید.
-ی
-ک
 {0} {1}٪
 پیشرفت
 مرور {0} از {1}
@@ -515,7 +513,6 @@ backup امروز در پوشهٔ ابری کپی نشد: {0}
 روز تعطیل
 نام الگو باید بین 1 تا 60 حرف باشد.
 نوع الگو نامعتبر است.
-\n    CREATE TABLE categories (\n        id          INTEGER PRIMARY KEY,\n        name        TEXT NOT NULL,\n        sort_order  INTEGER NOT NULL DEFAULT 0\n    );\n\n    CREATE TABLE items (\n        id                        INTEGER PRIMARY KEY,\n        title                     TEXT NOT NULL,\n        category_id               INTEGER REFERENCES categories(id) ON DELETE SET NULL,\n        item_type                 TEXT NOT NULL DEFAULT 'study',   -- study یا routine\n        source_type               TEXT NOT NULL DEFAULT 'none',    -- vault، file، url، none\n        source_path_or_url        TEXT,\n        queue_position            INTEGER NOT NULL,\n        is_active                 INTEGER NOT NULL DEFAULT 1,\n        max_new_sessions_per_day  INTEGER NOT NULL DEFAULT 1,\n        review_ratio              TEXT,       -- خالی = از تنظیمات\n        review_intervals          TEXT,       -- JSON، خالی = از تنظیمات\n        start_date                TEXT,       -- فقط برای کار روتین\n        routine_weekdays          TEXT,       -- JSON، خالی = همهٔ روزها\n        target_date               TEXT,       -- تاریخ هدف اختیاری\n        created_at                TEXT NOT NULL\n    );\n\n    CREATE TABLE sessions (\n        id                       INTEGER PRIMARY KEY,\n        item_id                  INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,\n        sequence                 INTEGER NOT NULL,\n        section_label            TEXT NOT NULL DEFAULT '',\n        minutes                  INTEGER NOT NULL,\n        minutes_done             INTEGER NOT NULL DEFAULT 0,\n        status                   TEXT NOT NULL DEFAULT 'unread',\n        leitner_box              INTEGER NOT NULL DEFAULT 0,\n        read_at                  TEXT,\n        last_reviewed_on         TEXT,\n        next_review_on           TEXT,\n        review_minutes_override  INTEGER,\n        read_manual_date         TEXT,\n        review_manual_date       TEXT\n    );\n    CREATE INDEX sessions_by_item ON sessions(item_id, sequence);\n\n    CREATE TABLE day_overrides (\n        date         TEXT PRIMARY KEY,\n        cap_minutes  INTEGER NOT NULL      -- صفر = تعطیل\n    );\n\n    CREATE TABLE task_log (\n        id          INTEGER PRIMARY KEY,\n        session_id  INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,\n        date        TEXT NOT NULL,\n        task_type   TEXT NOT NULL,         -- read یا review\n        minutes     INTEGER NOT NULL,\n        result      TEXT NOT NULL          -- done، partial، needs_more\n    );\n\n    CREATE TABLE settings (\n        key    TEXT PRIMARY KEY,\n        value  TEXT NOT NULL               -- JSON\n    );\n    
 درس فشردهٔ ۱۰ روزه
 درس یک‌ماهه
 درس سه‌ماهه
@@ -587,7 +584,6 @@ backup امروز در پوشهٔ ابری کپی نشد: {0}
 اکتبر
 نوامبر
 دسامبر
-۰۱۲۳۴۵۶۷۸۹
 برای انتخاب فایل، بستهٔ zenity یا kdialog را نصب کنید.
 عالی
 خیلی خوب
@@ -629,7 +625,6 @@ backup امروز در پوشهٔ ابری کپی نشد: {0}
 این کار مرور ندارد.
 فقط درس تمام‌شده بایگانی می‌شود.
 هیچ درسی نوشته نشده است.
-۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩
 ترتیب صف نامعتبر است.
 نوع کار نامعتبر است.
 گونهٔ کار نامعتبر است.
@@ -642,7 +637,6 @@ backup امروز در پوشهٔ ابری کپی نشد: {0}
 این وابستگی یک دور می‌سازد: دو درس منتظر هم می‌مانند.
 نوع کار پیدا نشد.
 خط {0}: بعد از عنوان فقط تعداد جلسه و زمان جلسه بیاید.
-[،,|\t]
 {0} باید حداقل 1 باشد.
 کار را نمی‌شود به روزهای گذشته برد.
 این کار در سابقه پیدا نشد.
@@ -704,3 +698,4 @@ backup امروز در پوشهٔ ابری کپی نشد: {0}
 حذف فونت
 تغییر تنظیمات
 درخواست نامعتبر است.
+پایان خواندنِ

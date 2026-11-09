@@ -1,0 +1,701 @@
+Dibacheh
+Disposición
+Tareas y plan lado a lado
+◫ Lado a lado
+Tareas y plan apilados
+☰ Apilados
+Solo tareas y fuentes, en grande
+Solo tareas
+Solo el plan, en grande
+Solo plan
+Deshacer el último cambio
+↶ Deshacer
+Rehacer
+↷ Rehacer
+Estadísticas e informe semanal
+📊 Informe
+Ajustes
+⚙ Ajustes
+Cerrar la aplicación
+⏻ Cerrar aplicación
+Ruta de la bóveda de Obsidian
+Bóveda:
+Sin definir
+Tareas y fuentes
+Añadir lección, rutina, tarea única, proyecto…
+Añadir
+Buscar en lecciones, sesiones y notas
+Orden de la cola = prioridad. Para mover una lección, arrastra su asa ⋮⋮.
+Cambiar el ancho de tareas y plan
+Arrastra para cambiar el ancho · Doble clic: tamaño predeterminado
+Plan
+Diario
+Semanal
+Mensual
+Desde hoy hasta la última tarea y el último repaso
+Todo
+Dirección del plan
+Cada día es una columna
+⇅ Vertical
+Cada día es una fila
+⇄ Horizontal
+Anterior
+Hoy
+Siguiente
+Exportar a HTML para leer en el móvil y compartir
+⇪ Exportar
+Cada lección con su color · Discontinua = repaso
+📌 = movido a mano
+Dibacheh
+Idioma
+Calendario
+Solar hégira
+Gregoriano
+Empezar
+Esta aplicación se ejecuta desde el código fuente. Para actualizar esta copia, ejecuta git pull. El archivo de abajo es la versión instalada.
+Descargado. Cierra la aplicación e instala el archivo. Tus datos se quedan donde están.
+Abrir instalador
+Mostrar archivo
+Descargar
+Cerrar
+Entendido
+¿Qué quieres añadir?
+Plantilla lista
+Las plantillas se pueden eliminar en Ajustes. Los valores se pueden cambiar después de elegir una.
+Nueva lección
+Plantilla
+Guardar como plantilla
+Título
+Categoría
+Color de esta fuente
+Activa (en el calendario)
+Día para hacerla (vacío = primer hueco libre del plan)
+División
+Número de sesiones
+Tiempo por sesión (minutos)
+Cambiar la división de las sesiones sin leer
+Sesiones restantes
+Tiempo por sesión (vacío = repartir el tiempo actual)
+Aplicar división
+Las sesiones empezadas y leídas no se tocan.
+Velocidad: máximo de sesiones nuevas al día
+Proporción de repaso (vacío = ajuste general)
+Intervalos de Leitner propios, en días (vacío = ajuste general)
+1, 3, 7, 30
+Horario de la rutina
+Fecha de inicio
+Ningún día marcado = todos los días. Un día perdido no se pasa a otro.
+Dependencia: ¿después de qué lección debe empezar esta?
+Requisito previo
+Cuándo empezar
+Después de leerla
+Después de terminar sus repasos
+Fecha objetivo (opcional)
+Fuente
+Sin fuente
+Archivo (Obsidian o cualquier carpeta)
+Enlace (YouTube o web)
+Tipo de sección de cada sesión
+Texto libre
+Rango de páginas (PDF)
+Rango de tiempo (vídeo)
+Encabezados de Markdown
+Rango completo desde
+hasta
+El rango completo se reparte automáticamente entre las sesiones y se puede editar en la tabla de abajo. El tiempo se escribe como 1:05:00.
+Sesiones
+Estado
+Sección
+Tiempo (minutos)
+Tiempo de repaso
+Nota
+Guardar
+Eliminar todos los repasos
+Recuperar repasos
+Volver a sin leer
+Eliminar lección
+Añadir varias lecciones a la vez
+Una lección por línea: título, número de sesiones, minutos por sesión. Los dos últimos números son opcionales.
+Inglés, 10, 45\nEstadística, 5\nHistoria de la ciencia
+Tipo
+Informe
+Nuevo tipo de tarea
+Por ejemplo «Práctica» o «Audiolibro». Una vez creado, también aparece en el menú «+».
+Nombre
+Comportamiento en el plan
+Como una lección: sesiones en orden de cola, con repasos de Leitner
+Como una rutina: cada día (o días elegidos), sin repasos
+Color en el calendario
+El nombre y el color se pueden cambiar luego en Ajustes.
+Crear
+Al pulsar «Guardar», todo el plan se reorganiza al momento.
+Idioma y calendario
+Idioma
+Calendario
+Primer día de la semana
+Las traducciones las escribió una IA y pueden contener errores.
+Planificación
+Límite de estudio predeterminado por día
+minutos
+Exceso permitido sobre el límite
+Hora de inicio del día
+de la madrugada
+Límite diario de repaso (vacío = desactivado)
+Desactivado
+% del límite diario
+Lo registrado antes de la hora de inicio cuenta para el día anterior.
+Límite por día de la semana (vacío = predeterminado) y días libres fijos:
+Intervalos de Leitner
+Cada punto es un repaso. Arrastra los puntos a izquierda y derecha. Para quitar un repaso concreto, pulsa × junto a él en la lista de abajo.
+Un mes más
+Un mes menos
++ Otro repaso
+− Quitar un repaso
+Al cambiar los intervalos se recalculan todas las fechas de repaso (salvo las lecciones con intervalos propios).
+Valores de una lección nueva
+Tiempo por sesión
+Velocidad
+sesiones nuevas al día
+Plantillas
+Recuperar plantillas listas
+Crea una plantilla nueva en la ventana de añadir con «Guardar como plantilla».
+Colores del plan
+Por tipo de tarea: lectura, repaso, rutina
+Por fuente: cada lección con su color (repasos discontinuos)
+Lectura
+Repaso
+Rutina
+Proyecto
+Tarea única
+Apariencia
+Modo
+Claro
+Oscuro
+Tamaño de letra
+píxeles
+Fuente
+Texto en negrita
+Tamaño de la interfaz
+Automático
+En modo automático, la aplicación ajusta el tamaño según el ancho de la ventana para que quepa también en Full HD y HD.
+Texto de muestra con esta fuente: aprender un poco más cada día. 12345
++ Añadir archivo de fuente…
+ttf, otf, woff o woff2. Se guarda una copia dentro de la aplicación.
+Archivos
+Bóveda de Obsidian
+Carpeta de exportación
+Carpeta de copias
+Copias de seguridad que conservar
+copias
+Copia de seguridad en línea
+Una copia de cada copia diaria se coloca en tu carpeta de OneDrive, Google Drive, Dropbox o iCloud, y la aplicación de ese servicio la sube a tu cuenta. Dibacheh no se conecta a internet ni pide contraseña. Este archivo contiene todos los datos de la aplicación y se guarda en tu cuenta en la nube.
+Carpeta sincronizada
+Vacío = desactivado
+Copiar ahora
+Restaurar una copia
+Antes de restaurar se hace una copia del estado actual.
+Versión nueva
+Al abrir la aplicación, comprobar en segundo plano si hay una versión nueva en GitHub
+Solo se lee el número de versión y no se envía ningún dato tuyo. Sin internet, no pasa nada.
+Registro de errores
+Si la aplicación falla, este registro muestra la causa. Se queda en este ordenador y no se envía a ningún sitio.
+Mostrar registro de errores
+Pasar a otro ordenador
+Todos los datos y las fuentes añadidas en un archivo zip. Los archivos de origen (notas y PDF) no van dentro y deben moverse aparte.
+Crear archivo de datos
+Importar desde archivo…
+Lección
+Sesiones en orden de cola, con repasos de Leitner
+Rutina
+Cada día o días elegidos, sin repasos
+Se hace una sola vez, un día fijo o en el primer hueco
+Varias sesiones seguidas, sin repasos
+Como una lección, con repasos de Leitner
+Como una rutina, sin repasos
+Varias lecciones
+Una lección por línea
+Tipo nuevo
+Crea tu propio tipo de tarea con el nombre y color que quieras
+Sin plantilla
+Decídelo todo tú
+Sesiones: {0}
+{0} min
+Repasos: {0}
+Una rutina no se mueve; si se pierde un día, solo se pierde ese día.
+Sesión no encontrada.
+Esta sesión aún no se ha leído; mueve su lectura y los repasos irán con ella.
+Solo se puede mover el próximo repaso de esta sesión; los siguientes se mueven con él.
+Se resaltan los días con trabajo de «{0}». Haz clic otra vez en el nombre para quitarlo.
+{0} a {1}
+De hoy a {0} · Días: {1}
+Día libre
+Nada registrado
+No queda nada
+Haz clic para ver toda esta semana
+Tareas hechas
++{0} más
+Cambiar el límite, tomar el día libre o añadir trabajo a este día
+{0} de {1}
+✓ {0} hecho
+Previsión
+ (continuación)
+Hecho
+Movido a mano
+?
+Atrasado
+{0} · {1} min
+Lección eliminada
+ (parcial)
+ · necesita más repaso
+Haz clic para marcar como no hecho
+Sesión {0}
+{0} · {1} min · {2}
+Después se registró otra cosa de esta sesión. Márcala primero como no hecha.
+↩ No hecho
+{0}{1} · Sesión {2}
+ (hoy, antes de lo previsto)
+✓ Repaso hecho{0}
+↺ Necesita más repaso
+✓ Hecho{0}
+Leí solo una parte:
+Registrar
+↗ Abrir fuente
+Aplazar a mañana
+Mover a
+Mover
+Volver al orden automático
+Tiempo de repaso de esta sesión:
+Vacío = según la proporción. Afecta a todos los repasos de esta sesión.
+Nota de esta sesión: una idea o pregunta…
+✎ Editar lección
+Límite de este día:
+Aplicar
+Tomar este día libre
+Volver al límite normal
+Varios días libres, desde este día hasta:
+Tomar estos días libres
+Quitar estos días libres
+Adelantar a este día:
+ Sesión {0}
+ · {0} min · ahora {1}
+Vista diaria de este día
+⇪ Exportar este día
++ Añadir desde este día
+carpeta
+Día
+Semana
+Mes
+Mañana
+Pasado mañana
+Exportar para leer en el móvil
+Día:
+Para semana y mes: la semana o el mes que contiene este día.
+Con contenido (notas, páginas PDF)
+Las exportaciones semanales y mensuales con contenido pueden ser grandes.
+Creando…
+Crear exportación
+✓ Exportación guardada
+Tamaño: {0} KB
+No se abrió la ventana de compartir; el archivo se muestra en {0}.
+Compartir… (Telegram y otras aplicaciones)
+Mostrar en {0} (para arrastrar a Telegram)
+Abrir archivo
+Este navegador no puede compartir archivos. Arrastra el archivo desde {0} a Telegram.
+Días: {0}
+Algo salió mal.
+{0} h {1} min
+{0} h
+Año
+Borrar
+Fecha no válida.
+Sin leer
+Leída en parte
+En repaso
+Terminada
+Editar {0}
+{0} nuevo
+ desde {0}
+Sin categoría
+,
+{0}  (dentro de la bóveda)
+Nivel {0}: {1} {2}
+capítulo
+Las sesiones sin leer se sustituyeron por {0} secciones.
+Se crearán {0} sesiones.
+Esta nota tiene encabezados. Cada encabezado puede ser una sesión.
+Este PDF tiene índice. Cada capítulo puede ser una sesión.
+Crear sesiones desde el archivo
+Después de {0} «{1}»
+los repasos de
+Fin de lectura
+Eliminar
+Desde una plantilla…
+No hay plantillas guardadas
+Nombre de la plantilla:
+Plantilla «{0}» guardada.
+Para una fuente de archivo, pulsa primero Browse y elige el archivo.
+Todas las sesiones de esta lección vuelven a sin leer y la lección pasa al final de la cola. El historial se conserva. ¿Continuar?
+¿Eliminar todos los repasos de «{0}»? A partir de ahora las sesiones terminan al leerse y el historial de lo hecho se conserva.
+¿Eliminar «{0}» con todas sus sesiones e historial? El archivo de origen no se toca. Esto no se puede deshacer.
+No se encontraron encabezados en el archivo Markdown.
+p. ej. Capítulo 1
+ (caja {0})
+ ({0} min)
+Tiempo de repaso de esta sesión. Vacío = según la proporción
+Nota…
+¿Cerrar la aplicación?
+La aplicación se cerró. Puedes cerrar esta página.
+Deshecho: {0}
+Rehecho: {0}
+Hoy: {0} {1}
+Ruta de la bóveda: {0}\nHaz clic para cambiar
+Elegir la carpeta de la bóveda de Obsidian
+Deshacer «{0}» · Pasos disponibles: {1}
+Nada que deshacer
+Rehacer «{0}» · Pasos atrás: {1}
+Nada que rehacer
+Predeterminado
+ Libre
+{0} %
+Cada repaso ocupa el {0} % del tiempo de lectura de esa sesión, redondeado hacia arriba.
+Ejemplo: sesión de 60 minutos → cada repaso {0} min. Con {1} repasos, el tiempo total de esta sesión:
+60 + {0} × {1} = {2} minutos.
+Es decir, a la larga, de un límite diario de {0} minutos, unos {1} minutos van a material nuevo y el resto a repasos.
+Las lecciones con proporción propia usan la suya. También se puede fijar a mano el tiempo de repaso de una sesión.
+Meses: {0}
+El último repaso es el día {0}; adelántalo primero
+Repaso {0}
+{0} días después de {1}
+ (día {0} tras la lectura)
+Quitar el repaso {0}
+Estándar
+Intensivo (examen cerca)
+Leitner clásico
+A largo plazo
+Ligero (pocos repasos)
+Aún no hay fuentes.
+Aún no hay plantillas.
+No se encontró ninguna carpeta en la nube en este ordenador. Instala OneDrive, Google Drive, Dropbox o iCloud, o elige una carpeta con Browse.
+Última copia: {0} · Copias: {1}
+Copia guardada en la carpeta en la nube.
+La última copia ya está en la carpeta en la nube.
+ (copia previa a la restauración)
+ ☁ carpeta en la nube
+{0} KB
+¿Restaurar los datos a la versión de {0}? Se conserva una copia del estado actual.
+Copia restaurada.
+Restaurar
+Aún no hay copias.
+No hay errores registrados.
+Archivo de datos creado: {0}
+Los datos actuales se sustituirán por los del archivo. Se conserva una copia del estado actual. ¿Continuar?
+Datos importados.
+Como una lección, con repasos
+Como una rutina, sin repasos
+¿Eliminar el tipo «{0}»? Sus tareas se conservan y pasan a ser lecciones o rutinas normales.
+Aún no tienes tipos propios. Crea uno desde el menú «+».
+Vazirmatn
+Persa, incluida en la aplicación
+Añadida
+{0} — texto de muestra
+Fuente «{0}» añadida. Pulsa «Guardar» para usarla.
+Ajustes guardados y plan reorganizado.
+Todas
+Leyendo
+Leídas
+Archivo
+Trabajo pendiente: {0}
+Colores de lectura y repaso, en proporción a su cantidad
+Lectura {0} · Repaso {1}
+Fin previsto de todo: {0}
+Próximos 30 días, media diaria: {0} min de repaso y {1} min de material nuevo
+{0}: terminado ✓
+{0}: justo en el objetivo
+{0}: {1} días {2} el objetivo
+antes de
+después de
+Doble clic: renombrar · Arrastrar: mover
+Eliminar categoría
+¿Eliminar la categoría «{0}»? Sus lecciones se quedan sin categoría.
+Nueva categoría
+Nombre de la categoría
+Ninguna lección coincide con este filtro.
+Aún no hay nada. Empieza con el botón «+».
+{0} {1} %
+Progreso
+Repaso {0} de {1}
+Inactiva: no está en el calendario
+Fin
+Fin de repasos: {0}
+🔒 Esperando
+✓ Después de
+Estas sesiones están fijadas en un día y la prioridad de la cola no les afecta
+📌 Sesiones movidas a mano: {0}
+Quitar todos los movimientos manuales de esta lección
+Objetivo: {0}
+Arrastra para mover
+Activa / inactiva
+Abrir fuente
+Editar
+Sacar del archivo
+Sesión {0}: {1}
+Se quitó el movimiento manual de {0} sesiones de «{1}» para que siga la nueva prioridad.
+Semana del {0} al {1}
+Plan de la próxima semana
+Plan del próximo mes
+Desde {0} hasta hoy
+Trabajo restante
+{0}: {1} de {2}
+de {0}
+Regularidad
+Cantidad de trabajo
+Repasos a tiempo
+Informe guardado: {0}
+⇪ Exportar informe
+Tiempo de estudio
+Tareas hechas
+Días activos
+No hay nada registrado en este periodo.
+Atrasado: {0}
+No hay nada atrasado.
+Tiempo de estudio de los últimos 12: {0}
+Mapa de actividad del último año
+Sin estudio
+Menos
+Más
+{0} % · Lecciones: {1}
+El gráfico aparecerá aquí tras registrar la primera tarea.
+Mostrar como tabla
+Progreso de lectura por categoría
+Actualizar a la versión {0}
+Versión nueva: {0}
+Esta versión no tiene descripción.
+Tamaño del archivo: {0} MB
+{0} % · {1} de {2} MB
+Falló la descarga: {0}
+Novedades de la versión {0}
+La copia de hoy estaba dañada y no se guardó: {0}
+La copia de hoy no se copió a la carpeta en la nube: {0}
+Ocurrió un error inesperado. Los detalles están en «Registro de errores», en Ajustes.
+No encontrado.
+Campo desconocido: {0}
+{0} debe estar entre {1} y {2}.
+Ajuste desconocido: {0}
+Límite predeterminado
+Exceso permitido sobre el límite
+Número de copias
+El color debe tener la forma #rrggbb.
+Carpeta no encontrada: {0}
+Este archivo de base de datos está dañado.
+No es un archivo de base de datos de Dibacheh.
+Este archivo se creó con una versión más reciente de la aplicación.
+{0} debe ser un número.
+La proporción de repaso debe ser mayor que cero.
+Los intervalos de Leitner deben ser de 1 a 20 números.
+Intervalo de Leitner
+El límite por día de la semana no es válido.
+Límite por día de la semana
+Tiempo de sesión predeterminado
+Velocidad predeterminada
+Límite de tiempo de repaso
+Modo de visualización no válido.
+Nombre de fuente no válido.
+Idioma no válido.
+Calendario no válido.
+El primer día de la semana debe ser sábado, domingo o lunes.
+Colores no válidos.
+Modo de color no válido.
+Lista de plantillas no válida.
+Lista de fuentes no válida.
+No es un archivo de base de datos válido.
+Proporción de repaso no válida. Ejemplo: 1/3 o 0.5
+Día de la semana
+Día libre
+El nombre de la plantilla debe tener de 1 a 60 caracteres.
+Tipo de plantilla no válido.
+Lección intensiva de 10 días
+Lección de un mes
+Lección de tres meses
+Rutina diaria
+Rutina de tres días a la semana
+Proyecto corto
+Proyecto largo
+Creado el {0}.
+Plan del día
+Plan de la semana
+Plan del mes
+Las marcas de esta página son solo para ti y no vuelven a la aplicación.
+Vídeo
+Archivo
+Plan del día {0}.html
+Plan de la semana desde {0}.html
+Plan del mes {0}.html
+{0}: {1} a {2}
+El plan de los próximos días es una previsión y cambia con cualquier cambio en el plan.
+Informe semanal: {0} a {1}
+Informe mensual: {0} {1}
+Informe general hasta {0}
+Informe semanal desde {0}
+Informe mensual {0}
+Informe general {0}
+Enlace:
+Fuente no encontrada (quizá se movió).
+El rango de páginas de esta sesión no está definido.
+Tareas: {0}
+Nada que hacer.
+Total: {0} min
+No se pudo leer la fuente: {0}
+Página {0}
+{0}: {1} min.
+Por lección (minutos)
+Nada registrado.
+Nada.
+Tareas: {0}, en {1} días, {2} minutos en total: lectura {3}, repaso {4}, rutina {5}.
+Resumen
+Nota: {0} de {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Lunes
+Martes
+Miércoles
+Jueves
+Viernes
+Sábado
+Domingo
+enero
+febrero
+marzo
+abril
+mayo
+junio
+julio
+agosto
+septiembre
+octubre
+noviembre
+diciembre
+Para elegir archivos, instala el paquete zenity o kdialog.
+Excelente
+Muy bien
+Bien
+Aceptable
+Necesita más esfuerzo
+Rango de fechas no válido.
+Nada que deshacer.
+Nada que rehacer.
+Elige el archivo de datos de Dibacheh (zip)
+Nombre de archivo no válido.
+Archivo de exportación no encontrado.
+Tipo de exportación no válido.
+Periodo de informe no válido.
+No se eligió carpeta en la nube.
+No se copió: {0}
+Elige el archivo de origen
+Elige un archivo de fuente (ttf, otf, woff o woff2)
+Elige una carpeta
+Elige la carpeta de la bóveda de Obsidian
+El nombre de la categoría está vacío.
+Orden de categorías no válido.
+El nombre del tipo debe tener de 1 a 40 caracteres.
+Comportamiento del tipo no válido.
+El rango no puede superar un año.
+El límite diario no puede ser negativo.
+El límite diario debe ser un número.
+No hay versión nueva para descargar.
+Archivo descargado no encontrado.
+El plan no terminó en {0} días. Los límites diarios pueden ser muy bajos o todos los días libres.
+No se encontró esta copia.
+No es un archivo de fuente. Solo ttf, otf, woff y woff2.
+Este archivo zip no es válido.
+No se pudo leer el nombre de esta fuente.
+Este archivo no tiene datos de Dibacheh.
+Tiempo de sesión
+Dependencias no válidas.
+El título de la lección está vacío.
+Esta tarea no tiene repasos.
+Solo se archiva una lección terminada.
+No se escribió ninguna lección.
+Orden de cola no válido.
+Tipo de tarea no válido.
+Variante de tarea no válida.
+Tipo de sección no válido.
+Tipo de fuente no válido.
+Los enlaces deben empezar por http:// o https://.
+Rango de la lección no válido.
+El requisito debe ser otra lección.
+Tipo de dependencia no válido.
+Esta dependencia crea un bucle: dos lecciones se esperarían entre sí.
+Tipo de tarea no encontrado.
+Línea {0}: tras el título solo puede ir el número de sesiones y el tiempo.
+{0} debe ser al menos 1.
+Las tareas no se pueden mover a días pasados.
+Esta tarea no está en el historial.
+Marca primero como no hecha la tarea posterior de esta sesión.
+Esta lección volvió a sin leer después de esta tarea.
+Esta sesión ya está leída.
+Esta rutina ya se registró.
+El repaso debe ser posterior al día de lectura de esa sesión.
+Esta sesión ya se leyó.
+Minutos leídos
+Resultado no válido.
+Esta sesión no tiene repasos pendientes.
+Dirección de descarga no válida.
+El archivo descargado no tiene el tamaño correcto.
+La ruta de la bóveda de Obsidian no está en Ajustes.
+Archivo no encontrado. Quizá se renombró o se movió. Usa Browse otra vez.
+Esta tarea no tiene fuente que abrir.
+De {0} a {1}
+Enlace no válido.
+Páginas {0} a {1}
+De «{0}» a «{1}»
+El rango de algunas sesiones está vacío o no es válido.
+Sesión {0}: el final es anterior al inicio.
+Hay un hueco entre las sesiones {0} y {1}.
+La primera sesión no empieza al inicio del rango.
+La última sesión no llega al final del rango.
+Las sesiones {0} y {1} se solapan.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Añadir lección
+Editar lección
+Cambiar división
+Reiniciar lección
+Mover en la cola
+Lección al orden automático
+Eliminar repasos de la lección
+Recuperar repasos de la lección
+Editar sesión
+Mover tarea
+Cambiar límite diario
+Registrar tarea hecha
+Marcar tarea como no hecha
+Varios días libres
+Archivar lección
+Añadir en grupo
+Importar datos
+Añadir categoría
+Renombrar categoría
+Reordenar categorías
+Crear tipo de tarea
+Editar tipo de tarea
+Eliminar tipo de tarea
+Añadir fuente
+Quitar fuente
+Cambiar ajustes
+Solicitud no válida.
+la lectura de

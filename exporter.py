@@ -299,7 +299,7 @@ def markdown_section(text, start_heading, end_heading=None):
     last = find(end_heading, start[0] - 1) if end_heading else start
     last = last or start
     end_line = len(lines)
-    for line_no, level, _ in headings:
+    for line_no, level, _text in headings:
         if line_no > last[0] and level <= last[1]:
             end_line = line_no
             break

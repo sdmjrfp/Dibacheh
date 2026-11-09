@@ -1,0 +1,701 @@
+Dibacheh
+Disposição
+Tarefas e plano lado a lado
+◫ Lado a lado
+Tarefas e plano empilhados
+☰ Empilhados
+Só tarefas e fontes, em grande
+Só tarefas
+Só o plano, em grande
+Só plano
+Desfazer a última alteração
+↶ Desfazer
+Refazer
+↷ Refazer
+Estatísticas e relatório semanal
+📊 Relatório
+Configurações
+⚙ Configurações
+Fechar o aplicativo
+⏻ Fechar aplicativo
+Caminho do cofre do Obsidian
+Cofre:
+Não definido
+Tarefas e fontes
+Adicionar lição, rotina, tarefa única, projeto…
+Adicionar
+Pesquisar em lições, sessões e notas
+Ordem da fila = prioridade. Para mover uma lição, arraste a alça ⋮⋮.
+Alterar a largura de tarefas e plano
+Arraste para alterar a largura · Clique duplo: tamanho padrão
+Plano
+Diário
+Semanal
+Mensal
+De hoje até a última tarefa e a última revisão
+Tudo
+Direção do plano
+Cada dia é uma coluna
+⇅ Vertical
+Cada dia é uma linha
+⇄ Horizontal
+Anterior
+Hoje
+Próximo
+Exportar HTML para ler no celular e compartilhar
+⇪ Exportar
+Cada lição com sua cor · Tracejado = revisão
+📌 = movido à mão
+Dibacheh
+Idioma
+Calendário
+Solar hegírico
+Gregoriano
+Começar
+Este aplicativo roda a partir do código-fonte. Para atualizar esta cópia, execute git pull. O arquivo abaixo é a versão instalável.
+Baixado. Feche o aplicativo e instale o arquivo. Seus dados continuam onde estão.
+Abrir instalador
+Mostrar arquivo
+Baixar
+Fechar
+Entendi
+O que deseja adicionar?
+Modelo pronto
+Os modelos podem ser excluídos nas Configurações. Os valores podem ser alterados depois de escolher um.
+Nova lição
+Modelo
+Salvar como modelo
+Título
+Categoria
+Cor desta fonte
+Ativa (no calendário)
+Dia de fazer (vazio = primeiro espaço livre no plano)
+Divisão
+Número de sessões
+Tempo por sessão (minutos)
+Alterar a divisão das sessões não lidas
+Sessões restantes
+Tempo por sessão (vazio = distribuir o tempo atual)
+Aplicar divisão
+Sessões iniciadas e lidas não são alteradas.
+Velocidade: máximo de sessões novas por dia
+Proporção de revisão (vazio = configuração geral)
+Intervalos de Leitner próprios, em dias (vazio = configuração geral)
+1, 3, 7, 30
+Agenda da rotina
+Data de início
+Nenhum dia marcado = todos os dias. Um dia perdido não passa para depois.
+Dependência: depois de qual lição esta deve começar?
+Pré-requisito
+Quando começar
+Depois de lida
+Depois de terminar as revisões
+Data-alvo (opcional)
+Fonte
+Sem fonte
+Arquivo (Obsidian ou qualquer pasta)
+Link (YouTube ou web)
+Tipo de seção de cada sessão
+Texto livre
+Intervalo de páginas (PDF)
+Intervalo de tempo (vídeo)
+Títulos do Markdown
+Intervalo total de
+até
+O intervalo total é dividido automaticamente entre as sessões e pode ser editado na tabela abaixo. O tempo é como 1:05:00.
+Sessões
+Estado
+Seção
+Tempo (minutos)
+Tempo de revisão
+Nota
+Salvar
+Excluir todas as revisões
+Restaurar revisões
+Voltar a não lida
+Excluir lição
+Adicionar várias lições de uma vez
+Uma lição por linha: título, número de sessões, minutos por sessão. Os dois últimos números são opcionais.
+Inglês, 10, 45\nEstatística, 5\nHistória da ciência
+Tipo
+Relatório
+Novo tipo de tarefa
+Por exemplo "Prática" ou "Audiolivro". Depois de criado, também aparece no menu "+".
+Nome
+Comportamento no plano
+Como uma lição: sessões na ordem da fila, com revisões de Leitner
+Como uma rotina: todo dia (ou dias escolhidos), sem revisões
+Cor no calendário
+Nome e cor podem ser alterados depois nas Configurações.
+Criar
+Ao clicar em "Salvar", todo o plano é reorganizado na hora.
+Idioma e calendário
+Idioma
+Calendário
+Primeiro dia da semana
+As traduções foram escritas por IA e podem conter erros.
+Planejamento
+Limite padrão de estudo por dia
+minutos
+Excesso permitido acima do limite
+Hora de início do dia
+da madrugada
+Limite diário de revisão (vazio = desligado)
+Desligado
+% do limite diário
+O que for registrado antes da hora de início conta para o dia anterior.
+Limite por dia da semana (vazio = padrão) e folgas semanais fixas:
+Intervalos de Leitner
+Cada ponto é uma revisão. Arraste os pontos para a esquerda e a direita. Para excluir uma revisão, clique em × ao lado dela na lista abaixo.
+Um mês a mais
+Um mês a menos
++ Mais uma revisão
+− Excluir uma revisão
+Alterar os intervalos recalcula todas as datas de revisão (exceto lições com intervalos próprios).
+Padrões de nova lição
+Tempo por sessão
+Velocidade
+sessões novas por dia
+Modelos
+Restaurar modelos prontos
+Crie um novo modelo na janela de adicionar com "Salvar como modelo".
+Cores do plano
+Por tipo de tarefa: leitura, revisão, rotina
+Por fonte: cada lição com sua cor (revisões tracejadas)
+Leitura
+Revisão
+Rotina
+Projeto
+Tarefa única
+Aparência
+Modo
+Claro
+Escuro
+Tamanho da letra
+pixels
+Letra
+Texto em negrito
+Tamanho da interface
+Automático
+No modo automático, o aplicativo ajusta o tamanho pela largura da janela para caber também em Full HD e HD.
+Texto de exemplo nesta letra: aprender um pouco mais a cada dia. 12345
++ Adicionar arquivo de letra…
+ttf, otf, woff ou woff2. Uma cópia fica dentro do aplicativo.
+Arquivos
+Cofre do Obsidian
+Pasta de exportação
+Pasta de backup
+Número de backups guardados
+cópias
+Backup on-line
+Uma cópia de cada backup diário vai para sua pasta do OneDrive, Google Drive, Dropbox ou iCloud, e o aplicativo desse serviço a envia para sua conta. O Dibacheh não se conecta à internet nem pede senha. Este arquivo contém todos os dados do aplicativo e fica na sua conta na nuvem.
+Pasta sincronizada
+Vazio = desligado
+Copiar agora
+Restaurar um backup
+Antes de restaurar, é feita uma cópia do estado atual.
+Nova versão
+Ao abrir o aplicativo, verificar em segundo plano se há nova versão no GitHub
+Só o número da versão é lido e nenhum dado seu é enviado. Sem internet, nada acontece.
+Registro de erros
+Se o aplicativo não funcionar bem, este registro mostra a causa. Fica neste computador e não é enviado a lugar nenhum.
+Mostrar registro de erros
+Passar para outro computador
+Todos os dados e letras adicionadas em um arquivo zip. Os arquivos de origem (notas e PDF) não vão junto e devem ser movidos à parte.
+Criar arquivo de dados
+Importar de arquivo…
+Lição
+Sessões na ordem da fila, com revisões de Leitner
+Rotina
+Todo dia ou dias escolhidos, sem revisões
+Feita uma só vez, em dia marcado ou no primeiro espaço livre
+Várias sessões seguidas, sem revisões
+Como uma lição, com revisões de Leitner
+Como uma rotina, sem revisões
+Várias lições
+Uma lição por linha
+Novo tipo
+Crie seu próprio tipo de tarefa com o nome e a cor que quiser
+Sem modelo
+Decida tudo você mesmo
+Sessões: {0}
+{0} min
+Revisões: {0}
+Uma rotina não pode ser movida; se um dia for perdido, só esse dia se perde.
+Sessão não encontrada.
+Esta sessão ainda não foi lida; mova a leitura e as revisões irão junto.
+Só a próxima revisão desta sessão pode ser movida; as seguintes vão junto.
+Os dias com trabalho de "{0}" estão destacados. Clique de novo no nome para remover.
+{0} a {1}
+De hoje a {0} · Dias: {1}
+Folga
+Nada registrado
+Nada restante
+Clique para ver a semana toda
+Tarefas feitas
++{0} a mais
+Alterar o limite, tirar folga ou adicionar trabalho a este dia
+{0} de {1}
+✓ {0} feito
+Previsão
+ (continuação)
+Feito
+Movido à mão
+?
+Atrasado
+{0} · {1} min
+Lição excluída
+ (parcial)
+ · precisa de mais revisão
+Clique para marcar como não feito
+Sessão {0}
+{0} · {1} min · {2}
+Depois disso, outra tarefa desta sessão foi registrada. Marque-a primeiro como não feita.
+↩ Não feito
+{0}{1} · Sessão {2}
+ (hoje, antes do plano)
+✓ Revisão feita{0}
+↺ Precisa de mais revisão
+✓ Feito{0}
+Li só uma parte:
+Registrar
+↗ Abrir fonte
+Adiar para amanhã
+Mover para
+Mover
+Voltar à ordem automática
+Tempo de revisão desta sessão:
+Vazio = pela proporção. Vale para todas as revisões desta sessão.
+Nota desta sessão: um ponto ou pergunta…
+✎ Editar lição
+Limite deste dia:
+Aplicar
+Tirar folga neste dia
+Voltar ao limite normal
+Vários dias de folga, deste dia até:
+Tirar estes dias de folga
+Remover estas folgas
+Adiantar para este dia:
+ Sessão {0}
+ · {0} min · agora {1}
+Visão diária deste dia
+⇪ Exportar este dia
++ Adicionar a partir deste dia
+pasta
+Dia
+Semana
+Mês
+Amanhã
+Depois de amanhã
+Exportar para ler no celular
+Dia:
+Para semana e mês: a semana ou o mês que contém este dia.
+Com conteúdo (notas, páginas de PDF)
+Exportações semanais e mensais com conteúdo podem ficar grandes.
+Criando…
+Criar exportação
+✓ Exportação salva
+Tamanho: {0} KB
+A janela de compartilhar não abriu; o arquivo é mostrado em {0}.
+Compartilhar… (Telegram e outros aplicativos)
+Mostrar em {0} (para arrastar ao Telegram)
+Abrir arquivo
+Este navegador não compartilha arquivos. Arraste o arquivo de {0} para o Telegram.
+Dias: {0}
+Algo deu errado.
+{0} h {1} min
+{0} h
+Ano
+Limpar
+Data inválida.
+Não lida
+Lida em parte
+Em revisão
+Concluída
+Editar {0}
+Novo: {0}
+ de {0}
+Sem categoria
+,
+{0}  (dentro do cofre)
+Nível {0}: {1} {2}
+capítulo
+As sessões não lidas foram trocadas por {0} seções.
+Serão criadas {0} sessões.
+Esta nota tem títulos. Cada título pode ser uma sessão.
+Este PDF tem sumário. Cada capítulo pode ser uma sessão.
+Criar sessões a partir do arquivo
+Depois de {0} "{1}"
+as revisões de
+Fim da leitura
+Excluir
+A partir de um modelo…
+Nenhum modelo salvo
+Nome do modelo:
+Modelo "{0}" salvo.
+Para uma fonte de arquivo, clique primeiro em Browse e escolha o arquivo.
+Todas as sessões desta lição voltam a não lidas e a lição vai para o fim da fila. O histórico fica. Continuar?
+Excluir todas as revisões de "{0}"? A partir de agora as sessões terminam ao serem lidas e o histórico do que foi feito fica.
+Excluir "{0}" com todas as sessões e histórico? O arquivo de origem não é alterado. Isso não pode ser desfeito.
+Nenhum título encontrado no arquivo Markdown.
+ex.: Capítulo 1
+ (caixa {0})
+ ({0} min)
+Tempo de revisão desta sessão. Vazio = pela proporção
+Nota…
+Fechar o aplicativo?
+O aplicativo foi fechado. Você pode fechar esta página.
+Desfeito: {0}
+Refeito: {0}
+Hoje: {0} {1}
+Caminho do cofre: {0}\nClique para alterar
+Escolher a pasta do cofre do Obsidian
+Desfazer "{0}" · Etapas disponíveis: {1}
+Nada para desfazer
+Refazer "{0}" · Etapas voltadas: {1}
+Nada para refazer
+Padrão
+ Folga
+{0}%
+Cada revisão leva {0}% do tempo de leitura da sessão, arredondado para cima.
+Exemplo: sessão de 60 minutos → cada revisão {0} min. Com {1} revisões, o tempo total desta sessão:
+60 + {0} × {1} = {2} minutos.
+Ou seja, a longo prazo, de um limite diário de {0} minutos, cerca de {1} minutos vão para material novo e o resto para revisões.
+Lições com proporção própria usam a sua. O tempo de revisão também pode ser definido à mão para uma sessão.
+Meses: {0}
+A última revisão é no dia {0}; adiante-a primeiro
+Revisão {0}
+{0} dias depois de {1}
+ (dia {0} após a leitura)
+Excluir a revisão {0}
+Padrão
+Intensivo (prova próxima)
+Leitner clássico
+Longo prazo
+Leve (poucas revisões)
+Nenhuma fonte adicionada ainda.
+Nenhum modelo ainda.
+Nenhuma pasta na nuvem foi encontrada neste computador. Instale OneDrive, Google Drive, Dropbox ou iCloud, ou escolha uma pasta com Browse.
+Última cópia: {0} · Cópias: {1}
+Backup copiado para a pasta na nuvem.
+O último backup já está na pasta na nuvem.
+ (cópia feita antes de restaurar)
+ ☁ pasta na nuvem
+{0} KB
+Restaurar os dados para a versão de {0}? Uma cópia do estado atual é guardada.
+Backup restaurado.
+Restaurar
+Nenhum backup ainda.
+Nenhum erro registrado.
+Arquivo de dados criado: {0}
+Os dados atuais serão substituídos pelos do arquivo. Uma cópia do estado atual é guardada. Continuar?
+Dados importados.
+Como uma lição, com revisões
+Como uma rotina, sem revisões
+Excluir o tipo "{0}"? As tarefas ficam e viram lições ou rotinas comuns.
+Você ainda não tem tipos próprios. Crie um pelo menu "+".
+Vazirmatn
+Persa, incluída no aplicativo
+Adicionada
+{0} — texto de exemplo
+Letra "{0}" adicionada. Clique em "Salvar" para usar.
+Configurações salvas e plano reorganizado.
+Todas
+Lendo
+Lidas
+Arquivo
+Trabalho pendente: {0}
+Cores de leitura e revisão, na proporção de cada uma
+Leitura {0} · Revisão {1}
+Fim previsto de tudo: {0}
+Próximos 30 dias, média por dia: {0} min de revisão e {1} min de material novo
+{0}: concluído ✓
+{0}: exatamente na meta
+{0}: {1} dias {2} a meta
+antes de
+depois de
+Clique duplo: renomear · Arrastar: mover
+Excluir categoria
+Excluir a categoria "{0}"? As lições ficam sem categoria.
+Nova categoria
+Nome da categoria
+Nenhuma lição neste filtro.
+Nada adicionado ainda. Comece pelo botão "+".
+{0} {1}%
+Progresso
+Revisão {0} de {1}
+Inativa: fora do calendário
+Fim
+Fim das revisões: {0}
+🔒 Aguardando
+✓ Depois de
+Estas sessões ficam em um dia fixo e a prioridade da fila não as afeta
+📌 Sessões movidas à mão: {0}
+Remover todos os movimentos manuais desta lição
+Meta: {0}
+Arraste para mover
+Ativa / inativa
+Abrir fonte
+Editar
+Tirar do arquivo
+Sessão {0}: {1}
+O movimento manual de {0} sessões de "{1}" foi removido para seguir a nova prioridade.
+Semana de {0} a {1}
+Plano da próxima semana
+Plano do próximo mês
+De {0} até hoje
+Trabalho restante
+{0}: {1} de {2}
+de {0}
+Regularidade
+Volume de trabalho
+Revisões em dia
+Relatório salvo: {0}
+⇪ Exportar relatório
+Tempo de estudo
+Tarefas feitas
+Dias ativos
+Nada registrado neste período.
+Atrasado: {0}
+Nada atrasado.
+Tempo de estudo dos últimos 12: {0}
+Mapa de atividade do último ano
+Sem estudo
+Menos
+Mais
+{0}% · Lições: {1}
+O gráfico aparece aqui depois da primeira tarefa registrada.
+Mostrar como tabela
+Progresso de leitura por categoria
+Atualizar para a versão {0}
+Nova versão: {0}
+Esta versão não tem descrição.
+Tamanho do arquivo: {0} MB
+{0}% · {1} de {2} MB
+Falha no download: {0}
+Novidades da versão {0}
+O backup de hoje estava danificado e não foi salvo: {0}
+O backup de hoje não foi copiado para a pasta na nuvem: {0}
+Ocorreu um erro inesperado. Os detalhes estão em "Registro de erros" nas Configurações.
+Não encontrado.
+Campo desconhecido: {0}
+{0} deve estar entre {1} e {2}.
+Configuração desconhecida: {0}
+Limite padrão
+Excesso permitido acima do limite
+Número de backups
+A cor deve ter a forma #rrggbb.
+Pasta não encontrada: {0}
+Este arquivo de banco de dados está danificado.
+Este não é um banco de dados do Dibacheh.
+Este arquivo foi feito com uma versão mais nova do aplicativo.
+{0} deve ser um número.
+A proporção de revisão deve ser maior que zero.
+Os intervalos de Leitner devem ter de 1 a 20 números.
+Intervalo de Leitner
+O limite por dia da semana é inválido.
+Limite por dia da semana
+Tempo padrão de sessão
+Velocidade padrão
+Limite de tempo de revisão
+Modo de exibição inválido.
+Nome de letra inválido.
+Idioma inválido.
+Calendário inválido.
+O primeiro dia da semana deve ser sábado, domingo ou segunda-feira.
+Cores inválidas.
+Modo de cor inválido.
+Lista de modelos inválida.
+Lista de letras inválida.
+Este não é um banco de dados válido.
+Proporção de revisão inválida. Exemplo: 1/3 ou 0.5
+Dia da semana
+Dia de folga
+O nome do modelo deve ter de 1 a 60 caracteres.
+Tipo de modelo inválido.
+Lição intensiva de 10 dias
+Lição de um mês
+Lição de três meses
+Rotina diária
+Rotina de três dias por semana
+Projeto curto
+Projeto longo
+Criado em {0}.
+Plano do dia
+Plano da semana
+Plano do mês
+As marcações desta página são só para você e não voltam ao aplicativo.
+Vídeo
+Arquivo
+Plano do dia {0}.html
+Plano da semana de {0}.html
+Plano do mês {0}.html
+{0}: {1} a {2}
+O plano dos próximos dias é uma previsão e muda com qualquer alteração.
+Relatório semanal: {0} a {1}
+Relatório mensal: {0} {1}
+Relatório geral até {0}
+Relatório semanal de {0}
+Relatório mensal {0}
+Relatório geral {0}
+Link:
+Fonte não encontrada (talvez tenha sido movida).
+O intervalo de páginas desta sessão não está definido.
+Tarefas: {0}
+Nada a fazer.
+Total: {0} min
+Não foi possível ler a fonte: {0}
+Página {0}
+{0}: {1} min.
+Por lição (minutos)
+Nada registrado.
+Nada.
+Tarefas: {0}, em {1} dias, {2} minutos no total: leitura {3}, revisão {4}, rotina {5}.
+Resumo
+Nota: {0} de {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Segunda-feira
+Terça-feira
+Quarta-feira
+Quinta-feira
+Sexta-feira
+Sábado
+Domingo
+janeiro
+fevereiro
+março
+abril
+maio
+junho
+julho
+agosto
+setembro
+outubro
+novembro
+dezembro
+Para escolher arquivos, instale o pacote zenity ou kdialog.
+Excelente
+Muito bom
+Bom
+Aceitável
+Precisa de mais esforço
+Intervalo de datas inválido.
+Nada para desfazer.
+Nada para refazer.
+Escolha o arquivo de dados do Dibacheh (zip)
+Nome de arquivo inválido.
+Arquivo de exportação não encontrado.
+Tipo de exportação inválido.
+Período do relatório inválido.
+Nenhuma pasta na nuvem escolhida.
+Não copiado: {0}
+Escolha o arquivo de origem
+Escolha um arquivo de letra (ttf, otf, woff ou woff2)
+Escolha uma pasta
+Escolha a pasta do cofre do Obsidian
+O nome da categoria está vazio.
+Ordem de categorias inválida.
+O nome do tipo deve ter de 1 a 40 caracteres.
+Comportamento do tipo inválido.
+O intervalo não pode passar de um ano.
+O limite diário não pode ser negativo.
+O limite diário deve ser um número.
+Não há nova versão para baixar.
+Arquivo baixado não encontrado.
+O plano não terminou em {0} dias. Os limites diários podem estar baixos demais ou todos os dias de folga.
+Este backup não foi encontrado.
+Este não é um arquivo de letra. Só ttf, otf, woff e woff2.
+Este arquivo zip é inválido.
+Não foi possível ler o nome desta letra.
+Este arquivo não tem dados do Dibacheh.
+Tempo de sessão
+Dependências inválidas.
+O título da lição está vazio.
+Esta tarefa não tem revisões.
+Só uma lição concluída pode ser arquivada.
+Nenhuma lição foi escrita.
+Ordem da fila inválida.
+Tipo de tarefa inválido.
+Variante de tarefa inválida.
+Tipo de seção inválido.
+Tipo de fonte inválido.
+Links devem começar com http:// ou https://.
+Intervalo da lição inválido.
+O pré-requisito deve ser outra lição.
+Tipo de dependência inválido.
+Esta dependência cria um ciclo: duas lições esperariam uma pela outra.
+Tipo de tarefa não encontrado.
+Linha {0}: depois do título só podem vir o número de sessões e o tempo.
+{0} deve ser pelo menos 1.
+Tarefas não podem ser movidas para dias passados.
+Esta tarefa não foi encontrada no histórico.
+Marque primeiro como não feita a tarefa seguinte desta sessão.
+Esta lição voltou a não lida depois desta tarefa.
+Esta sessão já foi lida.
+Esta rotina já foi registrada.
+A revisão deve ser depois do dia de leitura da sessão.
+Esta sessão já foi lida antes.
+Minutos lidos
+Resultado inválido.
+Esta sessão não tem revisão pendente.
+Endereço de download inválido.
+O arquivo baixado tem o tamanho errado.
+O caminho do cofre do Obsidian não está nas Configurações.
+Arquivo não encontrado. Talvez tenha sido renomeado ou movido. Use Browse de novo.
+Esta tarefa não tem fonte para abrir.
+De {0} a {1}
+Link inválido.
+Páginas {0} a {1}
+De "{0}" a "{1}"
+O intervalo de algumas sessões está vazio ou inválido.
+Sessão {0}: o fim vem antes do início.
+Há um vão entre as sessões {0} e {1}.
+A primeira sessão não começa no início do intervalo.
+A última sessão não chega ao fim do intervalo.
+As sessões {0} e {1} se sobrepõem.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Adicionar lição
+Editar lição
+Alterar divisão
+Reiniciar lição
+Mover na fila
+Lição de volta à ordem automática
+Excluir revisões da lição
+Restaurar revisões da lição
+Editar sessão
+Mover tarefa
+Alterar limite diário
+Registrar tarefa feita
+Marcar tarefa como não feita
+Vários dias de folga
+Arquivar lição
+Adicionar em grupo
+Importar dados
+Adicionar categoria
+Renomear categoria
+Reordenar categorias
+Criar tipo de tarefa
+Editar tipo de tarefa
+Excluir tipo de tarefa
+Adicionar letra
+Remover letra
+Alterar configurações
+Pedido inválido.
+a leitura de

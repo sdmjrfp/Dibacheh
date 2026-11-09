@@ -75,12 +75,11 @@ def api_reorder_categories():
     return state_response()
 
 
-@bp.route("/api/settings", methods=["PATCH"])
-def api_settings():
-    """چند تنظیم را با هم ذخیره می‌کند. هر مقدار اول بررسی می‌شود؛ اگر یکی نامعتبر بود، هیچ‌کدام ذخیره نمی‌شود."""
+def save_settings(values):
+    """هر مقدار اول بررسی می‌شود؛ اگر یکی نامعتبر بود، هیچ‌کدام ذخیره نمی‌شود."""
     conn = get_db()
     cleaned = {}
-    for key, value in body().items():
+    for key, value in values.items():
         try:
             cleaned[key] = database.clean_setting(key, value)
         except ValueError as error:
@@ -88,6 +87,18 @@ def api_settings():
     for key, value in cleaned.items():
         database.set_setting(conn, key, value)
     return state_response()
+
+
+@bp.route("/api/settings", methods=["PATCH"])
+def api_settings():
+    """چند تنظیم را با هم ذخیره می‌کند."""
+    return save_settings(body())
+
+
+@bp.route("/api/setup", methods=["POST"])
+def api_setup():
+    """انتخاب‌های اولین اجرا. جزو تغییرهای قابل برگرداندن نیست."""
+    return save_settings({**body(), "setup_done": True})
 
 
 @bp.route("/api/fonts/add", methods=["POST"])

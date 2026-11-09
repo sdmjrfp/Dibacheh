@@ -22,6 +22,7 @@ import heapq
 from datetime import timedelta
 
 import leitner
+from i18n import _
 
 DEFAULT_SETTINGS = {
     "default_cap_minutes": 120,

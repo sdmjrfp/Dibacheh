@@ -443,7 +443,7 @@ function renderTypeSettings() {
         },
       }, t("حذف")))));
   if (!state.types.length) {
-    $("#type-settings").append(el("li", { class: "muted small" }, t("نوع کار ساخت شما هنوز نیست. با دکمهٔ «+» کنار «+ کار روتین» بسازید.")));
+    $("#type-settings").append(el("li", { class: "muted small" }, t("نوع کار ساخت شما هنوز نیست. با منوی «+» بسازید.")));
   }
 }
 

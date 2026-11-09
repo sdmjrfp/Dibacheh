@@ -550,3 +550,59 @@ def test_templates_can_be_deleted_and_restored(app):
     app.settle()
     state = app.call("GET", "/api/state")
     assert "study-90" in [t["id"] for t in state["templates"]]
+
+
+def test_first_run_asks_language_and_calendar(browser, server):
+    page = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="de-DE").new_page()
+    page.goto(server)
+    page.wait_for_selector("#setup-dialog[open]")
+    assert page.input_value("#setup-form [name=language]") == "de"
+    assert page.input_value("#setup-form [name=calendar]") == "gregorian"
+    page.keyboard.press("Escape")
+    assert page.is_visible("#setup-dialog")
+    with page.expect_navigation():
+        page.click("#setup-form button[type=submit]")
+    page.wait_for_selector("#today:not(:empty)")
+    assert page.get_attribute("html", "dir") == "ltr"
+    assert page.inner_text(".sources h2") == "Aufgaben und Quellen"
+    assert page.is_hidden("#setup-dialog")
+    assert page.inner_text("#undo-button .count") == ""
+    page.context.close()
+
+
+def test_changing_language_in_settings_reloads_translated(app):
+    page = app.page
+    page.click("#settings-button")
+    page.select_option("#settings-form [name=language]", "ar")
+    with page.expect_navigation():
+        page.click('#settings-form button[type="submit"]')
+    page.wait_for_selector("#today:not(:empty)")
+    assert page.get_attribute("html", "dir") == "rtl"
+    assert page.inner_text(".sources h2") == "المهام والمصادر"
+
+
+def test_gregorian_calendar_week_starts_on_chosen_day(app):
+    app.call("PATCH", "/api/settings", {"language": "en", "calendar": "gregorian", "first_weekday": 0})
+    page = app.open().page
+    assert page.locator(".week .cal-day .weekday").first.inner_text() == "Monday"
+    assert page.locator(".week .cal-day .weekday").last.inner_text() == "Sunday"
+    page.click("#view-month")
+    assert page.locator(".month-head").first.inner_text() == "Monday"
+    import re
+    assert re.fullmatch(r"[A-Z][a-z]+ \d{4}", page.inner_text("#cal-title"))
+
+
+def test_no_persian_text_left_on_page_in_english(app):
+    app.call("PATCH", "/api/settings", {"language": "en", "calendar": "gregorian", "first_weekday": 0})
+    app.add("Algebra", count=2)
+    page = app.open().page
+    app.settle()
+    left = page.evaluate(r"""(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const found = [];
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        if (/[\u0600-\u06FF]/.test(n.textContent) && !n.parentElement.closest("script, style")) found.push(n.textContent.trim());
+      }
+      return found;
+    })()""")
+    assert left == []

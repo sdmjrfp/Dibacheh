@@ -1,0 +1,701 @@
+Dibacheh
+Anordnung
+Aufgaben und Plan nebeneinander
+◫ Nebeneinander
+Aufgaben und Plan untereinander
+☰ Untereinander
+Nur Aufgaben und Quellen, groß
+Nur Aufgaben
+Nur der Plan, groß
+Nur Plan
+Letzte Änderung rückgängig machen
+↶ Rückgängig
+Wiederholen
+↷ Wiederholen
+Statistik und Wochenbericht
+📊 Bericht
+Einstellungen
+⚙ Einstellungen
+Programm schließen
+⏻ Programm schließen
+Pfad zum Obsidian-Vault
+Vault:
+Nicht festgelegt
+Aufgaben und Quellen
+Lektion, Routine, einmalige Aufgabe, Projekt hinzufügen…
+Hinzufügen
+In Lektionen, Einheiten und Notizen suchen
+Reihenfolge = Priorität. Zum Verschieben einer Lektion den Griff ⋮⋮ ziehen.
+Breite von Aufgaben und Plan ändern
+Ziehen ändert die Breite · Doppelklick: Standardgröße
+Plan
+Tag
+Woche
+Monat
+Von heute bis zur letzten Aufgabe und Wiederholung
+Alles
+Richtung des Plans
+Jeder Tag ist eine Spalte
+⇅ Vertikal
+Jeder Tag ist eine Zeile
+⇄ Horizontal
+Zurück
+Heute
+Weiter
+HTML-Export zum Lesen auf dem Handy und zum Teilen
+⇪ Export
+Jede Lektion in eigener Farbe · Gestrichelt = Wiederholung
+📌 = von Hand verschoben
+Dibacheh
+Sprache
+Kalender
+Solar-Hidschri
+Gregorianisch
+Start
+Dieses Programm läuft aus dem Quellcode. Führen Sie zum Aktualisieren git pull aus. Die Datei unten ist die Installationsversion.
+Heruntergeladen. Schließen Sie das Programm und installieren Sie die Datei. Ihre Daten bleiben erhalten.
+Installationsprogramm öffnen
+Datei anzeigen
+Herunterladen
+Schließen
+Verstanden
+Was möchten Sie hinzufügen?
+Fertige Vorlage
+Vorlagen lassen sich in den Einstellungen löschen. Die Werte bleiben nach der Auswahl änderbar.
+Neue Lektion
+Vorlage
+Als Vorlage speichern
+Titel
+Kategorie
+Farbe dieser Quelle
+Aktiv (im Kalender)
+Tag der Erledigung (leer = erste freie Stelle im Plan)
+Aufteilung
+Anzahl der Einheiten
+Zeit pro Einheit (Minuten)
+Aufteilung der ungelesenen Einheiten ändern
+Verbleibende Einheiten
+Zeit pro Einheit (leer = aktuelle Zeit verteilen)
+Aufteilung anwenden
+Begonnene und gelesene Einheiten bleiben unverändert.
+Tempo: höchstens neue Einheiten pro Tag
+Wiederholungsanteil (leer = allgemeine Einstellung)
+Eigene Leitner-Abstände in Tagen (leer = allgemeine Einstellung)
+1, 3, 7, 30
+Zeitplan der Routine
+Startdatum
+Kein Tag gewählt = jeden Tag. Ein verpasster Tag wird nicht nachgeholt.
+Abhängigkeit: Nach welcher Lektion beginnt diese?
+Voraussetzung
+Wann beginnen
+Nachdem sie gelesen wurde
+Nachdem ihre Wiederholungen fertig sind
+Zieldatum (optional)
+Quelle
+Keine Quelle
+Datei (Obsidian oder beliebiger Ordner)
+Link (YouTube oder Web)
+Abschnittstyp jeder Einheit
+Freier Text
+Seitenbereich (PDF)
+Zeitbereich (Video)
+Markdown-Überschriften
+Gesamtbereich von
+bis
+Der Gesamtbereich wird automatisch auf die Einheiten verteilt und ist in der Tabelle unten änderbar. Zeit wie 1:05:00.
+Einheiten
+Status
+Abschnitt
+Zeit (Minuten)
+Wiederholungszeit
+Notiz
+Speichern
+Alle Wiederholungen entfernen
+Wiederholungen wiederherstellen
+Auf ungelesen zurücksetzen
+Lektion löschen
+Mehrere Lektionen auf einmal hinzufügen
+Eine Lektion pro Zeile: Titel, Anzahl der Einheiten, Minuten pro Einheit. Die beiden letzten Zahlen sind optional.
+Englisch, 10, 45\nStatistik, 5\nWissenschaftsgeschichte
+Typ
+Bericht
+Neuer Aufgabentyp
+Zum Beispiel „Übung“ oder „Hörbuch“. Nach dem Erstellen erscheint er auch im „+“-Menü.
+Name
+Verhalten im Plan
+Wie eine Lektion: Einheiten nach Reihenfolge, mit Leitner-Wiederholungen
+Wie eine Routine: jeden Tag (oder gewählte Tage), ohne Wiederholung
+Farbe im Kalender
+Name und Farbe lassen sich später in den Einstellungen ändern.
+Erstellen
+Mit „Speichern“ wird der ganze Plan sofort neu geordnet.
+Sprache und Kalender
+Sprache
+Kalender
+Erster Wochentag
+Die Übersetzungen wurden von einer KI geschrieben und können Fehler enthalten.
+Planung
+Standard-Lernlimit pro Tag
+Minuten
+Erlaubte Überschreitung des Limits
+Tagesbeginn
+Uhr morgens
+Tägliches Wiederholungslimit (leer = aus)
+Aus
+% des Tageslimits
+Was vor dem Tagesbeginn eingetragen wird, zählt zum Vortag.
+Limit pro Wochentag (leer = Standard) und feste freie Tage:
+Leitner-Abstände
+Jeder Punkt ist eine Wiederholung. Ziehen Sie die Punkte nach links und rechts. Eine bestimmte Wiederholung entfernen Sie mit × in der Liste unten.
+Ein Monat mehr
+Ein Monat weniger
++ Noch eine Wiederholung
+− Eine Wiederholung entfernen
+Geänderte Abstände berechnen alle Wiederholungstermine neu (außer bei Lektionen mit eigenen Abständen).
+Standardwerte neuer Lektionen
+Zeit pro Einheit
+Tempo
+neue Einheiten pro Tag
+Vorlagen
+Fertige Vorlagen wiederherstellen
+Eine neue Vorlage erstellen Sie im Hinzufügen-Fenster mit „Als Vorlage speichern“.
+Farben des Plans
+Nach Aufgabentyp: Lesen, Wiederholung, Routine
+Nach Quelle: jede Lektion in eigener Farbe (Wiederholungen gestrichelt)
+Lesen
+Wiederholung
+Routine
+Projekt
+Einmalige Aufgabe
+Darstellung
+Modus
+Hell
+Dunkel
+Schriftgröße
+Pixel
+Schrift
+Fettdruck
+Größe der Oberfläche
+Automatisch
+Im Automatikmodus richtet sich die Größe nach der Fensterbreite, damit alles auch auf Full HD und HD passt.
+Beispieltext in dieser Schrift: jeden Tag ein wenig mehr lernen. 12345
++ Schriftdatei hinzufügen…
+ttf, otf, woff oder woff2. Eine Kopie bleibt im Programm.
+Dateien
+Obsidian-Vault
+Export-Ordner
+Backup-Ordner
+Anzahl aufbewahrter Backups
+Kopien
+Online-Backup
+Eine Kopie jedes täglichen Backups kommt in Ihren OneDrive-, Google-Drive-, Dropbox- oder iCloud-Ordner, und das Programm dieses Dienstes lädt sie in Ihr Konto hoch. Dibacheh selbst verbindet sich nicht mit dem Internet und braucht kein Passwort. Diese Datei enthält alle Programmdaten und liegt in Ihrem Cloud-Konto.
+Synchronisierter Ordner
+Leer = aus
+Jetzt kopieren
+Backup wiederherstellen
+Vor dem Wiederherstellen wird eine Kopie des aktuellen Stands angelegt.
+Neue Version
+Bei jedem Start im Hintergrund prüfen, ob es auf GitHub eine neue Version gibt
+Nur die Versionsnummer wird gelesen, keine Ihrer Daten werden gesendet. Ohne Internet passiert nichts.
+Fehlerprotokoll
+Wenn das Programm nicht richtig läuft, zeigt dieses Protokoll die Ursache. Es bleibt auf diesem Computer und wird nirgends hingeschickt.
+Fehlerprotokoll anzeigen
+Auf einen anderen Computer umziehen
+Alle Daten und hinzugefügten Schriften in einer zip-Datei. Die Quelldateien (Notizen und PDF) sind nicht enthalten und müssen separat kopiert werden.
+Datendatei erstellen
+Aus Datei importieren…
+Lektion
+Einheiten nach Reihenfolge, mit Leitner-Wiederholungen
+Routine
+Jeden Tag oder gewählte Tage, ohne Wiederholung
+Nur einmal zu erledigen, an einem Tag oder an der ersten freien Stelle
+Mehrere Einheiten nacheinander, ohne Wiederholung
+Wie eine Lektion, mit Leitner-Wiederholungen
+Wie eine Routine, ohne Wiederholung
+Mehrere Lektionen
+Eine Lektion pro Zeile
+Neuer Typ
+Erstellen Sie Ihren eigenen Aufgabentyp mit Name und Farbe
+Ohne Vorlage
+Alles selbst festlegen
+Einheiten: {0}
+{0} Min.
+Wiederholungen: {0}
+Eine Routine lässt sich nicht verschieben; ein verpasster Tag geht nur für sich verloren.
+Einheit nicht gefunden.
+Diese Einheit ist noch nicht gelesen; verschieben Sie das Lesen, die Wiederholungen folgen.
+Nur die nächste Wiederholung dieser Einheit lässt sich verschieben; spätere folgen.
+Tage mit Arbeit für „{0}“ sind hervorgehoben. Zum Aufheben erneut auf den Namen klicken.
+{0} bis {1}
+Von heute bis {0} · Tage: {1}
+Frei
+Nichts eingetragen
+Nichts mehr offen
+Klicken, um die ganze Woche zu sehen
+Erledigte Aufgaben
++{0} weitere
+Limit ändern, freinehmen oder Arbeit zu diesem Tag hinzufügen
+{0} von {1}
+✓ {0} erledigt
+Prognose
+ (Fortsetzung)
+Erledigt
+Von Hand verschoben
+?
+Überfällig
+{0} · {1} Min.
+Gelöschte Lektion
+ (teilweise)
+ · braucht mehr Wiederholung
+Klicken, um als nicht erledigt zu markieren
+Einheit {0}
+{0} · {1} Min. · {2}
+Danach wurde noch etwas für diese Einheit eingetragen. Markieren Sie das zuerst als nicht erledigt.
+↩ Nicht erledigt
+{0}{1} · Einheit {2}
+ (heute, vor dem Plan)
+✓ Wiederholung erledigt{0}
+↺ Braucht mehr Wiederholung
+✓ Erledigt{0}
+Nur teilweise gelesen:
+Eintragen
+↗ Quelle öffnen
+Auf morgen verschieben
+Verschieben nach
+Verschieben
+Zurück zur automatischen Reihenfolge
+Wiederholungszeit dieser Einheit:
+Leer = nach Wiederholungsanteil. Gilt für alle Wiederholungen dieser Einheit.
+Notiz zu dieser Einheit: ein Punkt oder eine Frage…
+✎ Lektion bearbeiten
+Limit dieses Tages:
+Anwenden
+Diesen Tag freinehmen
+Zurück zum normalen Limit
+Mehrere freie Tage, von diesem Tag bis:
+Diese Tage freinehmen
+Diese freien Tage aufheben
+Auf diesen Tag vorziehen:
+ Einheit {0}
+ · {0} Min. · jetzt {1}
+Tagesansicht dieses Tages
+⇪ Diesen Tag exportieren
++ Ab diesem Tag hinzufügen
+Ordner
+Tag
+Woche
+Monat
+Morgen
+Übermorgen
+Export zum Lesen auf dem Handy
+Tag:
+Bei Woche und Monat: die Woche oder der Monat, der diesen Tag enthält.
+Mit Inhalt (Notizen, PDF-Seiten)
+Wochen- und Monatsexporte mit Inhalt können groß werden.
+Wird erstellt…
+Export erstellen
+✓ Export gespeichert
+Größe: {0} KB
+Das Teilen-Fenster öffnete sich nicht; die Datei wird in {0} gezeigt.
+Teilen… (Telegram und andere Programme)
+In {0} anzeigen (zum Ziehen nach Telegram)
+Datei öffnen
+Dieser Browser kann keine Dateien teilen. Ziehen Sie die Datei aus {0} nach Telegram.
+Tage: {0}
+Etwas ist schiefgelaufen.
+{0} Std. {1} Min.
+{0} Std.
+Jahr
+Leeren
+Ungültiges Datum.
+Ungelesen
+Teilweise gelesen
+In Wiederholung
+Fertig
+{0} bearbeiten
+Neu: {0}
+ ab {0}
+Ohne Kategorie
+,
+{0}  (im Vault)
+Ebene {0}: {1} {2}
+Kapitel
+Die ungelesenen Einheiten wurden durch {0} Abschnitte ersetzt.
+{0} Einheiten werden erstellt.
+Diese Notiz hat Überschriften. Jede Überschrift kann eine Einheit werden.
+Dieses PDF hat ein Inhaltsverzeichnis. Jedes Kapitel kann eine Einheit werden.
+Einheiten aus der Datei erstellen
+Nach {0} „{1}“
+den Wiederholungen von
+Ende des Lesens
+Löschen
+Aus einer Vorlage…
+Keine gespeicherten Vorlagen
+Name der Vorlage:
+Vorlage „{0}“ gespeichert.
+Bei einer Dateiquelle zuerst auf Browse klicken und die Datei wählen.
+Alle Einheiten dieser Lektion werden wieder ungelesen, und die Lektion rückt ans Ende. Der Verlauf bleibt. Fortfahren?
+Alle Wiederholungen von „{0}“ entfernen? Einheiten enden künftig mit dem Lesen, der Verlauf bleibt.
+„{0}“ mit allen Einheiten und dem Verlauf löschen? Die Quelldatei bleibt unberührt. Das lässt sich nicht rückgängig machen.
+Keine Überschriften in der Markdown-Datei gefunden.
+z. B. Kapitel 1
+ (Fach {0})
+ ({0} Min.)
+Wiederholungszeit dieser Einheit. Leer = nach Wiederholungsanteil
+Notiz…
+Programm schließen?
+Das Programm wurde geschlossen. Sie können diese Seite schließen.
+Rückgängig: {0}
+Wiederholt: {0}
+Heute: {0} {1}
+Vault-Pfad: {0}\nZum Ändern klicken
+Ordner des Obsidian-Vaults wählen
+„{0}“ rückgängig machen · Schritte verfügbar: {1}
+Nichts rückgängig zu machen
+„{0}“ wiederholen · Schritte zurück: {1}
+Nichts zu wiederholen
+Standard
+ Frei
+{0} %
+Jede Wiederholung dauert {0} % der Lesezeit dieser Einheit, aufgerundet.
+Beispiel: 60-Minuten-Einheit → jede Wiederholung {0} Min. Mit {1} Wiederholungen beträgt die Gesamtzeit dieser Einheit:
+60 + {0} × {1} = {2} Minuten.
+Langfristig gehen also von einem Tageslimit von {0} Minuten etwa {1} Minuten in neuen Stoff, der Rest in Wiederholungen.
+Lektionen mit eigenem Anteil nutzen ihren. Für eine einzelne Einheit lässt sich die Zeit auch von Hand festlegen.
+Monate: {0}
+Die letzte Wiederholung liegt auf Tag {0}; ziehen Sie sie zuerst vor
+Wiederholung {0}
+{0} Tage nach {1}
+ (Tag {0} nach dem Lesen)
+Wiederholung {0} entfernen
+Standard
+Intensiv (Prüfung bald)
+Klassischer Leitner
+Langfristig
+Leicht (wenige Wiederholungen)
+Noch keine Quellen.
+Noch keine Vorlagen.
+Auf diesem Computer wurde kein Cloud-Ordner gefunden. Installieren Sie OneDrive, Google Drive, Dropbox oder iCloud, oder wählen Sie einen Ordner mit Browse.
+Letzte Kopie: {0} · Kopien: {1}
+Backup in den Cloud-Ordner kopiert.
+Das letzte Backup liegt schon im Cloud-Ordner.
+ (Kopie vor der Wiederherstellung)
+ ☁ Cloud-Ordner
+{0} KB
+Daten auf den Stand vom {0} zurücksetzen? Eine Kopie des aktuellen Stands bleibt erhalten.
+Backup wiederhergestellt.
+Wiederherstellen
+Noch keine Backups.
+Keine Fehler eingetragen.
+Datendatei erstellt: {0}
+Die aktuellen Daten werden durch die der Datei ersetzt. Eine Kopie des aktuellen Stands bleibt erhalten. Fortfahren?
+Daten importiert.
+Wie eine Lektion, mit Wiederholung
+Wie eine Routine, ohne Wiederholung
+Typ „{0}“ löschen? Seine Aufgaben bleiben und werden normale Lektionen oder Routinen.
+Sie haben noch keine eigenen Typen. Erstellen Sie einen über das „+“-Menü.
+Vazirmatn
+Persisch, im Programm enthalten
+Hinzugefügt
+{0} — Beispieltext
+Schrift „{0}“ hinzugefügt. Zum Verwenden „Speichern“ drücken.
+Einstellungen gespeichert und Plan neu geordnet.
+Alle
+Wird gelesen
+Gelesen
+Archiv
+Offene Arbeit: {0}
+Farben von Lesen und Wiederholung, im Verhältnis ihres Umfangs
+Lesen {0} · Wiederholung {1}
+Voraussichtliches Ende von allem: {0}
+Nächste 30 Tage, im Schnitt pro Tag: {0} Min. Wiederholung und {1} Min. neuer Stoff
+{0}: fertig ✓
+{0}: genau im Ziel
+{0}: {1} Tage {2} dem Ziel
+vor
+nach
+Doppelklick: umbenennen · Ziehen: verschieben
+Kategorie löschen
+Kategorie „{0}“ löschen? Ihre Lektionen bleiben ohne Kategorie.
+Neue Kategorie
+Name der Kategorie
+Keine Lektion passt zu diesem Filter.
+Noch nichts hinzugefügt. Beginnen Sie mit der „+“-Taste.
+{0} {1} %
+Fortschritt
+Wiederholung {0} von {1}
+Inaktiv: nicht im Kalender
+Ende
+Ende der Wiederholung: {0}
+🔒 Wartet auf
+✓ Nach
+Diese Einheiten liegen fest auf einem Tag, die Priorität ändert sie nicht
+📌 Von Hand verschobene Einheiten: {0}
+Alle manuellen Verschiebungen dieser Lektion entfernen
+Ziel: {0}
+Zum Verschieben ziehen
+Aktiv / inaktiv
+Quelle öffnen
+Bearbeiten
+Aus dem Archiv holen
+Einheit {0}: {1}
+Die manuelle Verschiebung von {0} Einheiten von „{1}“ wurde entfernt, damit die neue Priorität gilt.
+Woche {0} bis {1}
+Plan der nächsten Woche
+Plan des nächsten Monats
+Von {0} bis heute
+Restliche Arbeit
+{0}: {1} von {2}
+von {0}
+Regelmäßigkeit
+Arbeitsmenge
+Wiederholung pünktlich
+Bericht gespeichert: {0}
+⇪ Bericht exportieren
+Lernzeit
+Erledigte Aufgaben
+Aktive Tage
+In diesem Zeitraum wurde nichts eingetragen.
+Überfällig: {0}
+Nichts überfällig.
+Lernzeit der letzten 12: {0}
+Aktivitätskarte des letzten Jahres
+Kein Lernen
+Weniger
+Mehr
+{0} % · Lektionen: {1}
+Das Diagramm erscheint hier nach der ersten eingetragenen Aufgabe.
+Als Tabelle anzeigen
+Lesefortschritt nach Kategorie
+Auf Version {0} aktualisieren
+Neue Version: {0}
+Für diese Version gibt es keine Beschreibung.
+Dateigröße: {0} MB
+{0} % · {1} von {2} MB
+Download fehlgeschlagen: {0}
+Neu in Version {0}
+Das heutige Backup war beschädigt und wurde nicht gespeichert: {0}
+Das heutige Backup wurde nicht in den Cloud-Ordner kopiert: {0}
+Ein unerwarteter Fehler ist aufgetreten. Details stehen im „Fehlerprotokoll“ in den Einstellungen.
+Nicht gefunden.
+Unbekanntes Feld: {0}
+{0} muss zwischen {1} und {2} liegen.
+Unbekannte Einstellung: {0}
+Standardlimit
+Erlaubte Überschreitung des Limits
+Anzahl der Backups
+Die Farbe muss die Form #rrggbb haben.
+Ordner nicht gefunden: {0}
+Diese Datenbankdatei ist beschädigt.
+Das ist keine Dibacheh-Datenbank.
+Diese Datei stammt aus einer neueren Programmversion.
+{0} muss eine Zahl sein.
+Der Wiederholungsanteil muss größer als null sein.
+Leitner-Abstände müssen 1 bis 20 Zahlen sein.
+Leitner-Abstand
+Das Limit pro Wochentag ist ungültig.
+Limit pro Wochentag
+Standardzeit pro Einheit
+Standardtempo
+Wiederholungslimit
+Ungültiger Anzeigemodus.
+Ungültiger Schriftname.
+Ungültige Sprache.
+Ungültiger Kalender.
+Der erste Wochentag muss Samstag, Sonntag oder Montag sein.
+Ungültige Farben.
+Ungültiger Farbmodus.
+Ungültige Vorlagenliste.
+Ungültige Schriftliste.
+Das ist keine gültige Datenbankdatei.
+Ungültiger Wiederholungsanteil. Beispiel: 1/3 oder 0.5
+Wochentag
+Freier Tag
+Der Vorlagenname muss 1 bis 60 Zeichen haben.
+Ungültiger Vorlagentyp.
+Intensive 10-Tage-Lektion
+Ein-Monats-Lektion
+Drei-Monats-Lektion
+Tägliche Routine
+Routine an drei Tagen pro Woche
+Kurzes Projekt
+Langes Projekt
+Erstellt am {0}.
+Tagesplan
+Wochenplan
+Monatsplan
+Die Häkchen auf dieser Seite gelten nur für Sie und gehen nicht ins Programm zurück.
+Video
+Datei
+Tagesplan {0}.html
+Wochenplan ab {0}.html
+Monatsplan {0}.html
+{0}: {1} bis {2}
+Der Plan der kommenden Tage ist eine Prognose und ändert sich mit jeder Änderung.
+Wochenbericht: {0} bis {1}
+Monatsbericht: {0} {1}
+Gesamtbericht bis {0}
+Wochenbericht ab {0}
+Monatsbericht {0}
+Gesamtbericht {0}
+Link:
+Quelle nicht gefunden (vielleicht verschoben).
+Der Seitenbereich dieser Einheit ist nicht festgelegt.
+Aufgaben: {0}
+Nichts zu tun.
+Gesamt: {0} Min.
+Quelle konnte nicht gelesen werden: {0}
+Seite {0}
+{0}: {1} Min.
+Nach Lektion (Minuten)
+Nichts eingetragen.
+Nichts.
+Aufgaben: {0}, an {1} Tagen, {2} Minuten insgesamt: Lesen {3}, Wiederholung {4}, Routine {5}.
+Zusammenfassung
+Note: {0} von {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Montag
+Dienstag
+Mittwoch
+Donnerstag
+Freitag
+Samstag
+Sonntag
+Januar
+Februar
+März
+April
+Mai
+Juni
+Juli
+August
+September
+Oktober
+November
+Dezember
+Installieren Sie zur Dateiauswahl das Paket zenity oder kdialog.
+Ausgezeichnet
+Sehr gut
+Gut
+Annehmbar
+Braucht mehr Einsatz
+Ungültiger Datumsbereich.
+Nichts rückgängig zu machen.
+Nichts zu wiederholen.
+Dibacheh-Datendatei wählen (zip)
+Ungültiger Dateiname.
+Exportdatei nicht gefunden.
+Ungültiger Exporttyp.
+Ungültiger Berichtszeitraum.
+Kein Cloud-Ordner gewählt.
+Nicht kopiert: {0}
+Quelldatei wählen
+Schriftdatei wählen (ttf, otf, woff oder woff2)
+Ordner wählen
+Ordner des Obsidian-Vaults wählen
+Der Kategoriename ist leer.
+Ungültige Kategorie-Reihenfolge.
+Der Typname muss 1 bis 40 Zeichen haben.
+Ungültiges Typverhalten.
+Der Bereich darf nicht länger als ein Jahr sein.
+Das Tageslimit darf nicht negativ sein.
+Das Tageslimit muss eine Zahl sein.
+Keine neue Version zum Herunterladen.
+Heruntergeladene Datei nicht gefunden.
+Der Plan endete nicht innerhalb von {0} Tagen. Vielleicht sind die Tageslimits zu niedrig oder alle Tage frei.
+Dieses Backup wurde nicht gefunden.
+Das ist keine Schriftdatei. Nur ttf, otf, woff und woff2.
+Diese zip-Datei ist ungültig.
+Der Name dieser Schrift konnte nicht gelesen werden.
+Diese Datei enthält keine Dibacheh-Daten.
+Zeit pro Einheit
+Ungültige Abhängigkeiten.
+Der Titel der Lektion ist leer.
+Diese Aufgabe hat keine Wiederholungen.
+Nur eine fertige Lektion kann archiviert werden.
+Es wurde keine Lektion eingegeben.
+Ungültige Reihenfolge.
+Ungültiger Aufgabentyp.
+Ungültige Aufgabenvariante.
+Ungültiger Abschnittstyp.
+Ungültiger Quellentyp.
+Links müssen mit http:// oder https:// beginnen.
+Ungültiger Lektionsbereich.
+Die Voraussetzung muss eine andere Lektion sein.
+Ungültiger Abhängigkeitstyp.
+Diese Abhängigkeit bildet eine Schleife: Zwei Lektionen würden aufeinander warten.
+Aufgabentyp nicht gefunden.
+Zeile {0}: Nach dem Titel dürfen nur Anzahl der Einheiten und Zeit folgen.
+{0} muss mindestens 1 sein.
+Aufgaben lassen sich nicht auf vergangene Tage verschieben.
+Diese Aufgabe steht nicht im Verlauf.
+Markieren Sie zuerst die spätere Aufgabe dieser Einheit als nicht erledigt.
+Diese Lektion wurde nach dieser Aufgabe auf ungelesen zurückgesetzt.
+Diese Einheit ist gelesen.
+Diese Routine wurde bereits eingetragen.
+Die Wiederholung muss nach dem Lesetag dieser Einheit liegen.
+Diese Einheit wurde bereits gelesen.
+Gelesene Minuten
+Ungültiges Ergebnis.
+Diese Einheit hat keine offene Wiederholung.
+Ungültige Download-Adresse.
+Die heruntergeladene Datei hat die falsche Größe.
+Der Obsidian-Vault-Pfad fehlt in den Einstellungen.
+Datei nicht gefunden. Vielleicht wurde sie umbenannt oder verschoben. Nutzen Sie Browse erneut.
+Diese Aufgabe hat keine Quelle zum Öffnen.
+Von {0} bis {1}
+Ungültiger Link.
+Seiten {0} bis {1}
+Von „{0}“ bis „{1}“
+Der Bereich einiger Einheiten ist leer oder ungültig.
+Einheit {0}: Das Ende liegt vor dem Anfang.
+Zwischen den Einheiten {0} und {1} ist eine Lücke.
+Die erste Einheit beginnt nicht am Anfang des Bereichs.
+Die letzte Einheit erreicht nicht das Ende des Bereichs.
+Die Einheiten {0} und {1} überschneiden sich.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Lektion hinzufügen
+Lektion bearbeiten
+Aufteilung ändern
+Lektion zurücksetzen
+In der Reihenfolge verschieben
+Lektion zurück zur automatischen Reihenfolge
+Wiederholungen der Lektion entfernen
+Wiederholungen der Lektion wiederherstellen
+Einheit bearbeiten
+Aufgabe verschieben
+Tageslimit ändern
+Erledigte Aufgabe eintragen
+Aufgabe als nicht erledigt markieren
+Mehrere freie Tage
+Lektion archivieren
+Mehrere hinzufügen
+Daten importieren
+Kategorie hinzufügen
+Kategorie umbenennen
+Kategorien umsortieren
+Aufgabentyp erstellen
+Aufgabentyp bearbeiten
+Aufgabentyp löschen
+Schrift hinzufügen
+Schrift entfernen
+Einstellungen ändern
+Ungültige Anfrage.
+dem Lesen von

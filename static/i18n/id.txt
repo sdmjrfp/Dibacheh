@@ -1,0 +1,701 @@
+Dibacheh
+Tata letak
+Tugas dan rencana berdampingan
+◫ Berdampingan
+Tugas dan rencana bertumpuk
+☰ Bertumpuk
+Hanya tugas dan sumber, besar
+Hanya tugas
+Hanya rencana, besar
+Hanya rencana
+Batalkan perubahan terakhir
+↶ Batalkan
+Ulangi
+↷ Ulangi
+Statistik dan laporan mingguan
+📊 Laporan
+Pengaturan
+⚙ Pengaturan
+Tutup aplikasi
+⏻ Tutup aplikasi
+Lokasi vault Obsidian
+Vault:
+Belum diatur
+Tugas dan sumber
+Tambah pelajaran, rutinitas, tugas sekali, proyek…
+Tambah
+Cari di pelajaran, sesi, dan catatan
+Urutan antrean = prioritas. Untuk memindahkan pelajaran, seret pegangan ⋮⋮.
+Ubah lebar tugas dan rencana
+Seret untuk mengubah lebar · Klik dua kali: ukuran bawaan
+Rencana
+Harian
+Mingguan
+Bulanan
+Dari hari ini sampai tugas dan ulasan terakhir
+Semua
+Arah rencana
+Setiap hari satu kolom
+⇅ Vertikal
+Setiap hari satu baris
+⇄ Horizontal
+Sebelumnya
+Hari ini
+Berikutnya
+Ekspor HTML untuk dibaca di ponsel dan dibagikan
+⇪ Ekspor
+Setiap pelajaran dengan warnanya · Putus-putus = ulasan
+📌 = dipindah manual
+Dibacheh
+Bahasa
+Kalender
+Hijriah Syamsiah
+Masehi
+Mulai
+Aplikasi ini berjalan dari kode sumber. Untuk memperbarui salinan ini, jalankan git pull. Berkas di bawah adalah versi instal.
+Sudah diunduh. Tutup aplikasi dan instal berkasnya. Data Anda tetap di tempatnya.
+Buka penginstal
+Tampilkan berkas
+Unduh
+Tutup
+Mengerti
+Apa yang ingin ditambahkan?
+Templat siap pakai
+Templat bisa dihapus di Pengaturan. Nilainya tetap bisa diubah setelah memilih templat.
+Pelajaran baru
+Templat
+Simpan sebagai templat
+Judul
+Kategori
+Warna sumber ini
+Aktif (di kalender)
+Hari pengerjaan (kosong = tempat kosong pertama di rencana)
+Pembagian
+Jumlah sesi
+Waktu per sesi (menit)
+Ubah pembagian sesi yang belum dibaca
+Sesi tersisa
+Waktu per sesi (kosong = bagi waktu saat ini)
+Terapkan pembagian
+Sesi yang sudah dimulai dan dibaca tidak berubah.
+Kecepatan: sesi baru terbanyak per hari
+Rasio ulasan (kosong = pengaturan umum)
+Jeda Leitner khusus, dalam hari (kosong = pengaturan umum)
+1, 3, 7, 30
+Jadwal rutinitas
+Tanggal mulai
+Tidak memilih hari = setiap hari. Hari yang terlewat tidak dipindahkan.
+Ketergantungan: pelajaran ini dimulai setelah pelajaran apa?
+Prasyarat
+Mulai kapan
+Setelah selesai dibaca
+Setelah ulasannya selesai
+Tanggal target (opsional)
+Sumber
+Tanpa sumber
+Berkas (Obsidian atau folder apa pun)
+Tautan (YouTube atau web)
+Jenis bagian tiap sesi
+Teks bebas
+Rentang halaman (PDF)
+Rentang waktu (video)
+Judul Markdown
+Seluruh rentang dari
+sampai
+Seluruh rentang dibagi otomatis antarsesi dan bisa diedit di tabel bawah. Waktu seperti 1:05:00.
+Sesi
+Status
+Bagian
+Waktu (menit)
+Waktu ulasan
+Catatan
+Simpan
+Hapus semua ulasan
+Kembalikan ulasan
+Kembalikan ke belum dibaca
+Hapus pelajaran
+Tambah beberapa pelajaran sekaligus
+Satu pelajaran per baris: judul, jumlah sesi, menit per sesi. Dua angka terakhir opsional.
+Bahasa Inggris, 10, 45\nStatistika, 5\nSejarah sains
+Jenis
+Laporan
+Jenis tugas baru
+Misalnya "Latihan" atau "Buku audio". Setelah dibuat, jenis ini juga muncul di menu "+".
+Nama
+Perilaku dalam rencana
+Seperti pelajaran: sesi menurut antrean, dengan ulasan Leitner
+Seperti rutinitas: setiap hari (atau hari pilihan), tanpa ulasan
+Warna di kalender
+Nama dan warna bisa diubah nanti di Pengaturan.
+Buat
+Dengan "Simpan", seluruh rencana langsung disusun ulang.
+Bahasa dan kalender
+Bahasa
+Kalender
+Hari pertama dalam minggu
+Terjemahan ditulis oleh AI dan mungkin mengandung kesalahan.
+Perencanaan
+Batas belajar bawaan per hari
+menit
+Kelebihan yang diizinkan dari batas
+Jam mulai hari
+dini hari
+Batas waktu ulasan harian (kosong = mati)
+Mati
+% dari batas harian
+Catatan sebelum jam mulai hari dihitung untuk hari sebelumnya.
+Batas tiap hari dalam minggu (kosong = bawaan) dan hari libur tetap:
+Jeda Leitner
+Tiap titik adalah satu ulasan. Seret titik ke kiri dan kanan. Untuk menghapus ulasan tertentu, tekan × di sampingnya pada daftar bawah.
+Satu bulan lebih
+Satu bulan kurang
++ Satu ulasan lagi
+− Hapus satu ulasan
+Mengubah jeda menghitung ulang semua tanggal ulasan (kecuali pelajaran dengan jeda khusus).
+Bawaan pelajaran baru
+Waktu per sesi
+Kecepatan
+sesi baru per hari
+Templat
+Kembalikan templat siap pakai
+Buat templat baru di jendela tambah dengan "Simpan sebagai templat".
+Warna rencana
+Menurut jenis tugas: membaca, ulasan, rutinitas
+Menurut sumber: tiap pelajaran dengan warnanya (ulasan putus-putus)
+Membaca
+Ulasan
+Rutinitas
+Proyek
+Tugas sekali
+Tampilan
+Mode
+Terang
+Gelap
+Ukuran huruf
+piksel
+Huruf
+Teks tebal
+Ukuran antarmuka
+Otomatis
+Dalam mode otomatis, aplikasi mengatur ukuran menurut lebar jendela agar muat di Full HD dan HD.
+Contoh teks dengan huruf ini: belajar sedikit lebih banyak setiap hari. 12345
++ Tambah berkas huruf…
+ttf, otf, woff, atau woff2. Salinannya disimpan di dalam aplikasi.
+Berkas
+Vault Obsidian
+Folder ekspor
+Folder cadangan
+Jumlah cadangan yang disimpan
+salinan
+Cadangan daring
+Salinan cadangan harian ditaruh di folder OneDrive, Google Drive, Dropbox, atau iCloud Anda, dan aplikasi layanan itu mengunggahnya ke akun Anda. Dibacheh sendiri tidak terhubung ke internet dan tidak meminta kata sandi. Berkas ini berisi semua data aplikasi dan disimpan di akun awan Anda.
+Folder tersinkron
+Kosong = mati
+Salin sekarang
+Pulihkan cadangan
+Sebelum pemulihan, salinan keadaan saat ini dibuat.
+Versi baru
+Setiap kali aplikasi dibuka, periksa di latar belakang apakah ada versi baru di GitHub
+Hanya nomor versi yang dibaca dan tidak ada data Anda yang dikirim. Tanpa internet, tidak terjadi apa-apa.
+Catatan galat
+Jika aplikasi bermasalah, catatan ini menunjukkan penyebabnya. Catatan tetap di komputer ini dan tidak dikirim ke mana pun.
+Tampilkan catatan galat
+Pindah ke komputer lain
+Semua data dan huruf tambahan dalam satu berkas zip. Berkas sumber (catatan dan PDF) tidak termasuk dan harus dipindahkan terpisah.
+Buat berkas data
+Impor dari berkas…
+Pelajaran
+Sesi menurut antrean, dengan ulasan Leitner
+Rutinitas
+Setiap hari atau hari pilihan, tanpa ulasan
+Dikerjakan sekali, pada hari tertentu atau tempat kosong pertama
+Beberapa sesi berturut-turut, tanpa ulasan
+Seperti pelajaran, dengan ulasan Leitner
+Seperti rutinitas, tanpa ulasan
+Beberapa pelajaran
+Satu pelajaran per baris
+Jenis baru
+Buat jenis tugas Anda sendiri dengan nama dan warna pilihan
+Tanpa templat
+Tentukan semuanya sendiri
+{0} sesi
+{0} mnt
+{0} ulasan
+Rutinitas tidak bisa dipindah; jika satu hari terlewat, hanya hari itu yang hilang.
+Sesi tidak ditemukan.
+Sesi ini belum dibaca; pindahkan pembacaannya dan ulasan akan ikut.
+Hanya ulasan berikutnya dari sesi ini yang bisa dipindah; yang lain ikut.
+Hari dengan pekerjaan "{0}" disorot. Klik nama pelajaran lagi untuk menghapus.
+{0} sampai {1}
+Hari ini sampai {0} · {1} hari
+Libur
+Tidak ada catatan
+Tidak ada sisa
+Klik untuk melihat seluruh minggu ini
+Tugas selesai
++{0} lagi
+Ubah batas, jadikan libur, atau tambah pekerjaan ke hari ini
+{0} dari {1}
+✓ {0} selesai
+Perkiraan
+ (lanjutan)
+Selesai
+Dipindah manual
+?
+Terlambat
+{0} · {1} mnt
+Pelajaran terhapus
+ (sebagian)
+ · perlu ulasan lagi
+Klik untuk menandai belum selesai
+Sesi {0}
+{0} · {1} mnt · {2}
+Setelah ini ada catatan lain untuk sesi ini. Tandai dulu yang itu sebagai belum selesai.
+↩ Belum selesai
+{0}{1} · Sesi {2}
+ (hari ini, lebih awal dari rencana)
+✓ Ulasan selesai{0}
+↺ Perlu ulasan lagi
+✓ Selesai{0}
+Hanya membaca sebagian:
+Catat
+↗ Buka sumber
+Tunda ke besok
+Pindah ke
+Pindah
+Kembali ke urutan otomatis
+Waktu ulasan sesi ini:
+Kosong = dari rasio ulasan. Berlaku untuk semua ulasan sesi ini.
+Catatan sesi ini: poin atau pertanyaan…
+✎ Edit pelajaran
+Batas hari ini:
+Terapkan
+Jadikan hari ini libur
+Kembali ke batas biasa
+Libur beberapa hari, dari hari ini sampai:
+Jadikan libur
+Hapus libur ini
+Majukan ke hari ini:
+ Sesi {0}
+ · {0} mnt · sekarang {1}
+Tampilan harian hari ini
+⇪ Ekspor hari ini
++ Tambah mulai hari ini
+folder
+Hari
+Minggu
+Bulan
+Besok
+Lusa
+Ekspor untuk dibaca di ponsel
+Hari:
+Untuk minggu dan bulan: minggu atau bulan yang memuat hari ini.
+Dengan isi (catatan, halaman PDF)
+Ekspor mingguan dan bulanan dengan isi bisa berukuran besar.
+Membuat…
+Buat ekspor
+✓ Ekspor disimpan
+Ukuran: {0} KB
+Jendela Bagikan tidak terbuka; berkas ditampilkan di {0}.
+Bagikan… (Telegram dan aplikasi lain)
+Tampilkan di {0} (untuk diseret ke Telegram)
+Buka berkas
+Peramban ini tidak bisa membagikan berkas. Seret berkas dari {0} ke Telegram.
+{0} hari
+Terjadi kesalahan.
+{0} jam {1} mnt
+{0} jam
+Tahun
+Bersihkan
+Tanggal tidak valid.
+Belum dibaca
+Dibaca sebagian
+Sedang diulas
+Selesai
+Edit {0}
+{0} baru
+ dari {0}
+Tanpa kategori
+,
+{0}  (di dalam vault)
+Tingkat {0}: {1} {2}
+bab
+Sesi yang belum dibaca diganti dengan {0} bagian.
+{0} sesi akan dibuat.
+Catatan ini punya judul. Tiap judul bisa menjadi satu sesi.
+PDF ini punya daftar isi. Tiap bab bisa menjadi satu sesi.
+Buat sesi dari berkas
+Setelah {0} "{1}"
+ulasan
+Akhir membaca
+Hapus
+Dari templat…
+Tidak ada templat tersimpan
+Nama templat:
+Templat "{0}" disimpan.
+Untuk sumber berkas, tekan Browse dulu dan pilih berkasnya.
+Semua sesi pelajaran ini kembali belum dibaca dan pelajaran pindah ke akhir antrean. Riwayat tetap ada. Lanjutkan?
+Hapus semua ulasan "{0}"? Mulai sekarang sesi selesai saat dibaca, dan riwayat tetap ada.
+Hapus "{0}" beserta semua sesi dan riwayatnya? Berkas sumber tidak berubah. Ini tidak bisa dibatalkan.
+Tidak ada judul di berkas Markdown.
+mis. Bab 1
+ (kotak {0})
+ ({0} mnt)
+Waktu ulasan sesi ini. Kosong = dari rasio ulasan
+Catatan…
+Tutup aplikasi?
+Aplikasi ditutup. Anda bisa menutup halaman ini.
+Dibatalkan: {0}
+Diulangi: {0}
+Hari ini: {0} {1}
+Lokasi vault: {0}\nKlik untuk mengubah
+Pilih folder vault Obsidian
+Batalkan "{0}" · {1} langkah tersedia
+Tidak ada yang bisa dibatalkan
+Ulangi "{0}" · {1} langkah mundur
+Tidak ada yang bisa diulangi
+Bawaan
+ Libur
+{0}%
+Tiap ulasan memakan {0}% waktu baca sesi itu, dibulatkan ke atas.
+Contoh: sesi 60 menit → tiap ulasan {0} mnt. Dengan {1} ulasan, total waktu sesi ini:
+60 + {0} × {1} = {2} menit.
+Jadi dalam jangka panjang, dari batas harian {0} menit, sekitar {1} menit untuk materi baru dan sisanya untuk ulasan.
+Pelajaran dengan rasio khusus memakai rasionya. Waktu ulasan satu sesi juga bisa diatur manual.
+{0} bulan
+Ulasan terakhir pada hari ke-{0}; majukan dulu
+Ulasan {0}
+{0} hari setelah {1}
+ (hari ke-{0} setelah membaca)
+Hapus ulasan {0}
+Standar
+Intensif (ujian dekat)
+Leitner klasik
+Jangka panjang
+Ringan (sedikit ulasan)
+Belum ada sumber.
+Belum ada templat.
+Folder awan tidak ditemukan di komputer ini. Instal OneDrive, Google Drive, Dropbox, atau iCloud, atau pilih folder dengan Browse.
+Salinan terakhir: {0} · {1} salinan
+Cadangan disalin ke folder awan.
+Cadangan terbaru sudah ada di folder awan.
+ (salinan sebelum pemulihan)
+ ☁ folder awan
+{0} KB
+Kembalikan data ke versi {0}? Salinan keadaan saat ini disimpan.
+Cadangan dipulihkan.
+Pulihkan
+Belum ada cadangan.
+Tidak ada galat tercatat.
+Berkas data dibuat: {0}
+Data saat ini akan diganti dengan data berkas. Salinan keadaan saat ini disimpan. Lanjutkan?
+Data diimpor.
+Seperti pelajaran, dengan ulasan
+Seperti rutinitas, tanpa ulasan
+Hapus jenis "{0}"? Tugasnya tetap ada dan menjadi pelajaran atau rutinitas biasa.
+Anda belum punya jenis sendiri. Buat dari menu "+".
+Vazirmatn
+Persia, disertakan dalam aplikasi
+Ditambahkan
+{0} — contoh teks
+Huruf "{0}" ditambahkan. Tekan "Simpan" untuk memakainya.
+Pengaturan disimpan dan rencana disusun ulang.
+Semua
+Sedang dibaca
+Sudah dibaca
+Arsip
+Pekerjaan menunggu: {0}
+Warna membaca dan ulasan, sesuai porsi masing-masing
+Membaca {0} · Ulasan {1}
+Perkiraan akhir semuanya: {0}
+30 hari ke depan, rata-rata per hari: {0} mnt ulasan dan {1} mnt materi baru
+{0}: selesai ✓
+{0}: tepat pada target
+{0}: {1} hari {2} target
+lebih awal dari
+lebih lambat dari
+Klik dua kali: ganti nama · Seret: pindah
+Hapus kategori
+Hapus kategori "{0}"? Pelajarannya tetap ada tanpa kategori.
+Kategori baru
+Nama kategori
+Tidak ada pelajaran dengan filter ini.
+Belum ada apa pun. Mulai dengan tombol "+".
+{0} {1}%
+Kemajuan
+Ulasan {0} dari {1}
+Tidak aktif: tidak di kalender
+Akhir
+Akhir ulasan: {0}
+🔒 Menunggu
+✓ Setelah
+Sesi ini tetap pada hari tertentu dan prioritas antrean tidak memengaruhinya
+📌 {0} sesi dipindah manual
+Hapus semua pemindahan manual pelajaran ini
+Target: {0}
+Seret untuk memindahkan
+Aktif / tidak aktif
+Buka sumber
+Edit
+Keluarkan dari arsip
+Sesi {0}: {1}
+Pemindahan manual {0} sesi "{1}" dihapus agar mengikuti prioritas baru.
+Minggu {0} sampai {1}
+Rencana minggu depan
+Rencana bulan depan
+Dari {0} sampai hari ini
+Sisa pekerjaan
+{0}: {1} dari {2}
+dari {0}
+Keteraturan
+Jumlah pekerjaan
+Ulasan tepat waktu
+Laporan disimpan: {0}
+⇪ Ekspor laporan
+Waktu belajar
+Tugas selesai
+Hari aktif
+Tidak ada catatan pada periode ini.
+Terlambat: {0}
+Tidak ada yang terlambat.
+Waktu belajar 12 {0} terakhir
+Peta aktivitas setahun terakhir
+Tanpa belajar
+Lebih sedikit
+Lebih banyak
+{0}% · {1} pelajaran
+Grafik muncul di sini setelah tugas pertama dicatat.
+Tampilkan sebagai tabel
+Kemajuan membaca per kategori
+Perbarui ke versi {0}
+Versi baru: {0}
+Versi ini tidak punya keterangan.
+Ukuran berkas: {0} MB
+{0}% · {1} dari {2} MB
+Gagal mengunduh: {0}
+Yang baru di versi {0}
+Cadangan hari ini rusak dan tidak disimpan: {0}
+Cadangan hari ini tidak disalin ke folder awan: {0}
+Terjadi galat tak terduga. Detailnya ada di "Catatan galat" pada Pengaturan.
+Tidak ditemukan.
+Kolom tidak dikenal: {0}
+{0} harus antara {1} dan {2}.
+Pengaturan tidak dikenal: {0}
+Batas bawaan
+Kelebihan yang diizinkan dari batas
+Jumlah cadangan
+Warna harus berbentuk #rrggbb.
+Folder tidak ditemukan: {0}
+Berkas basis data ini rusak.
+Ini bukan berkas basis data Dibacheh.
+Berkas ini dibuat dengan versi aplikasi yang lebih baru.
+{0} harus berupa angka.
+Rasio ulasan harus lebih dari nol.
+Jeda Leitner harus 1 sampai 20 angka.
+Jeda Leitner
+Batas hari dalam minggu tidak valid.
+Batas hari dalam minggu
+Waktu sesi bawaan
+Kecepatan bawaan
+Batas waktu ulasan
+Mode tampilan tidak valid.
+Nama huruf tidak valid.
+Bahasa tidak valid.
+Kalender tidak valid.
+Hari pertama harus Sabtu, Minggu, atau Senin.
+Warna tidak valid.
+Mode warna tidak valid.
+Daftar templat tidak valid.
+Daftar huruf tidak valid.
+Ini bukan berkas basis data yang valid.
+Rasio ulasan tidak valid. Contoh: 1/3 atau 0.5
+Hari dalam minggu
+Hari libur
+Nama templat harus 1 sampai 60 karakter.
+Jenis templat tidak valid.
+Pelajaran intensif 10 hari
+Pelajaran satu bulan
+Pelajaran tiga bulan
+Rutinitas harian
+Rutinitas tiga hari seminggu
+Proyek pendek
+Proyek panjang
+Dibuat pada {0}.
+Rencana harian
+Rencana mingguan
+Rencana bulanan
+Centang di halaman ini hanya untuk Anda dan tidak kembali ke aplikasi.
+Video
+Berkas
+Rencana harian {0}.html
+Rencana mingguan dari {0}.html
+Rencana bulanan {0}.html
+{0}: {1} sampai {2}
+Rencana hari-hari mendatang adalah perkiraan dan berubah setiap ada perubahan.
+Laporan minggu: {0} sampai {1}
+Laporan bulan: {0} {1}
+Laporan umum sampai {0}
+Laporan minggu dari {0}
+Laporan bulan {0}
+Laporan umum {0}
+Tautan:
+Sumber tidak ditemukan (mungkin dipindahkan).
+Rentang halaman sesi ini belum diatur.
+{0} tugas
+Tidak ada tugas.
+Total: {0} mnt
+Sumber tidak bisa dibaca: {0}
+Halaman {0}
+{0}: {1} mnt.
+Per pelajaran (menit)
+Tidak ada catatan.
+Tidak ada.
+{0} tugas dalam {1} hari, total {2} menit: membaca {3}, ulasan {4}, rutinitas {5}.
+Ringkasan
+Nilai: {0} dari {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Senin
+Selasa
+Rabu
+Kamis
+Jumat
+Sabtu
+Minggu
+Januari
+Februari
+Maret
+April
+Mei
+Juni
+Juli
+Agustus
+September
+Oktober
+November
+Desember
+Untuk memilih berkas, instal paket zenity atau kdialog.
+Luar biasa
+Sangat baik
+Baik
+Cukup
+Perlu usaha lebih
+Rentang tanggal tidak valid.
+Tidak ada yang bisa dibatalkan.
+Tidak ada yang bisa diulangi.
+Pilih berkas data Dibacheh (zip)
+Nama berkas tidak valid.
+Berkas ekspor tidak ditemukan.
+Jenis ekspor tidak valid.
+Periode laporan tidak valid.
+Folder awan belum dipilih.
+Tidak tersalin: {0}
+Pilih berkas sumber
+Pilih berkas huruf (ttf, otf, woff, atau woff2)
+Pilih folder
+Pilih folder vault Obsidian
+Nama kategori kosong.
+Urutan kategori tidak valid.
+Nama jenis harus 1 sampai 40 karakter.
+Perilaku jenis tidak valid.
+Rentang tidak boleh lebih dari setahun.
+Batas harian tidak boleh negatif.
+Batas harian harus berupa angka.
+Tidak ada versi baru untuk diunduh.
+Berkas unduhan tidak ditemukan.
+Rencana tidak selesai dalam {0} hari. Mungkin batas harian terlalu rendah atau semua hari libur.
+Cadangan ini tidak ditemukan.
+Ini bukan berkas huruf. Hanya ttf, otf, woff, dan woff2.
+Berkas zip ini tidak valid.
+Nama huruf ini tidak terbaca.
+Berkas ini tidak berisi data Dibacheh.
+Waktu sesi
+Ketergantungan tidak valid.
+Judul pelajaran kosong.
+Tugas ini tidak punya ulasan.
+Hanya pelajaran selesai yang bisa diarsipkan.
+Tidak ada pelajaran yang ditulis.
+Urutan antrean tidak valid.
+Jenis tugas tidak valid.
+Bentuk tugas tidak valid.
+Jenis bagian tidak valid.
+Jenis sumber tidak valid.
+Tautan harus diawali http:// atau https://.
+Rentang pelajaran tidak valid.
+Prasyarat harus pelajaran lain.
+Jenis ketergantungan tidak valid.
+Ketergantungan ini membuat lingkaran: dua pelajaran saling menunggu.
+Jenis tugas tidak ditemukan.
+Baris {0}: setelah judul hanya boleh jumlah sesi dan waktu sesi.
+{0} minimal 1.
+Tugas tidak bisa dipindah ke hari yang telah lewat.
+Tugas ini tidak ditemukan di riwayat.
+Tandai dulu tugas berikutnya dari sesi ini sebagai belum selesai.
+Pelajaran ini dikembalikan ke belum dibaca setelah tugas ini.
+Sesi ini sudah dibaca.
+Rutinitas ini sudah dicatat.
+Ulasan harus setelah hari sesi itu dibaca.
+Sesi ini sudah pernah dibaca.
+Menit dibaca
+Hasil tidak valid.
+Sesi ini tidak punya ulasan tertunda.
+Alamat unduhan tidak valid.
+Ukuran berkas unduhan salah.
+Lokasi vault Obsidian belum diatur di Pengaturan.
+Berkas tidak ditemukan. Mungkin diganti nama atau dipindah. Gunakan Browse lagi.
+Tugas ini tidak punya sumber untuk dibuka.
+Dari {0} sampai {1}
+Tautan tidak valid.
+Halaman {0} sampai {1}
+Dari "{0}" sampai "{1}"
+Rentang beberapa sesi kosong atau tidak valid.
+Sesi {0}: akhir sebelum awal.
+Ada celah antara sesi {0} dan {1}.
+Sesi pertama tidak dimulai dari awal rentang.
+Sesi terakhir tidak mencapai akhir rentang.
+Sesi {0} dan {1} tumpang tindih.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Tambah pelajaran
+Edit pelajaran
+Ubah pembagian
+Atur ulang pelajaran
+Pindah di antrean
+Pelajaran kembali ke urutan otomatis
+Hapus ulasan pelajaran
+Kembalikan ulasan pelajaran
+Edit sesi
+Pindahkan tugas
+Ubah batas harian
+Catat tugas selesai
+Tandai tugas belum selesai
+Libur beberapa hari
+Arsipkan pelajaran
+Tambah sekaligus
+Impor data
+Tambah kategori
+Ganti nama kategori
+Atur ulang kategori
+Buat jenis tugas
+Edit jenis tugas
+Hapus jenis tugas
+Tambah huruf
+Hapus huruf
+Ubah pengaturan
+Permintaan tidak valid.
+pembacaan

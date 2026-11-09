@@ -130,7 +130,7 @@ def app(browser, server):
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" and "400" not in m.text else None)
     page.on("dialog", lambda dialog: dialog.accept(dialog.default_value or "الگوی آزمایشی"))
     app_page = App(page, server).open()
-    app_page.call("PATCH", "/api/settings", {"setup_done": True})
+    app_page.call("POST", "/api/setup", {})
     app_page.open()
     yield app_page
     context.close()

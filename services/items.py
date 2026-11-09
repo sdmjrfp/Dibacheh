@@ -254,7 +254,7 @@ def bulk_add(conn, data):
     defaults = database.get_settings(conn)["new_item_defaults"]
     rows = []
     for number, line in enumerate(str(data.get("text", "")).splitlines(), start=1):
-        parts = [p.strip() for p in re.split(_("[،,|\\t]"), line) if p.strip()]
+        parts = [p.strip() for p in re.split(r"[،,|\t]", line) if p.strip()]
         if not parts:
             continue
         digits = [_latin_digits(p) for p in parts[1:]]
@@ -279,7 +279,7 @@ def bulk_add(conn, data):
 
 
 def _latin_digits(text):
-    return text.translate(str.maketrans(_("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"), "01234567890123456789"))
+    return text.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789"))
 
 
 def reorder(conn, data):

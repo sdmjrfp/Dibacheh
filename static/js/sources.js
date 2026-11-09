@@ -195,7 +195,7 @@ export function renderItems() {
 
 /** حرف‌های عربی و فارسی یکی می‌شوند تا «ي» و «ی» در جست‌وجو فرق نکنند */
 function normalize(text) {
-  return String(text || "").toLowerCase().replace(/ي/g, t("ی")).replace(/ك/g, t("ک")).replace(/\u200c/g, " ");
+  return String(text || "").toLowerCase().replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/\u200c/g, " ");
 }
 
 /** جست‌وجو در نام درس، منبع، بخش جلسه‌ها و یادداشت‌ها */
@@ -231,7 +231,7 @@ function itemCard(item) {
     const other = itemById(req.id);
     if (!other) continue;
     const waiting = item.waiting_for.includes(other.title);
-    const when = req.until === "finished" ? t("پایان مرورهای") : t("پایان خواندن");
+    const when = req.until === "finished" ? t("پایان مرورهای") : t("پایان خواندنِ");
     meta.push(el("span", { class: waiting ? "waiting" : "" }, `${waiting ? t("🔒 منتظر") : t("✓ بعد از")} ${when} «${other.title}»`));
   }
   if (item.pinned) {

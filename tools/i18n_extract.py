@@ -71,6 +71,10 @@ def from_python():
                 found.append(node.args[0].value)
         if path.name in CONSTANT_MODULES:
             for statement in tree.body:
+                targets = getattr(statement, "targets", [getattr(statement, "target", None)])
+                names = [getattr(target, "id", "") for target in targets]
+                if any(name == "MIGRATIONS" or name.startswith("_") for name in names):
+                    continue   # کد SQL و جدول رقم‌ها متن نیستند
                 if isinstance(statement, (ast.Assign, ast.AnnAssign)):
                     for node in ast.walk(statement):
                         if isinstance(node, ast.Constant) and isinstance(node.value, str) and PERSIAN.search(node.value):

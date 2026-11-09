@@ -1,0 +1,701 @@
+Dibacheh
+Disposition
+Tâches et plan côte à côte
+◫ Côte à côte
+Tâches et plan empilés
+☰ Empilés
+Seulement tâches et sources, en grand
+Tâches seules
+Seulement le plan, en grand
+Plan seul
+Annuler la dernière modification
+↶ Annuler
+Rétablir
+↷ Rétablir
+Statistiques et rapport hebdomadaire
+📊 Rapport
+Paramètres
+⚙ Paramètres
+Fermer l'application
+⏻ Fermer l'application
+Chemin du coffre Obsidian
+Coffre :
+Non défini
+Tâches et sources
+Ajouter une leçon, une routine, une tâche unique, un projet…
+Ajouter
+Rechercher dans les leçons, séances et notes
+Ordre de la file = priorité. Pour déplacer une leçon, faites glisser sa poignée ⋮⋮.
+Modifier la largeur des tâches et du plan
+Faites glisser pour redimensionner · Double-clic : taille par défaut
+Plan
+Jour
+Semaine
+Mois
+D'aujourd'hui jusqu'à la dernière tâche et la dernière révision
+Tout
+Sens du plan
+Chaque jour est une colonne
+⇅ Vertical
+Chaque jour est une ligne
+⇄ Horizontal
+Précédent
+Aujourd'hui
+Suivant
+Export HTML à lire sur le téléphone et à partager
+⇪ Exporter
+Chaque leçon a sa couleur · Pointillés = révision
+📌 = déplacé à la main
+Dibacheh
+Langue
+Calendrier
+Hégirien solaire
+Grégorien
+Commencer
+Cette application tourne depuis le code source. Pour mettre à jour cette copie, lancez git pull. Le fichier ci-dessous est la version à installer.
+Téléchargé. Fermez l'application et installez le fichier. Vos données restent en place.
+Ouvrir l'installateur
+Afficher le fichier
+Télécharger
+Fermer
+Compris
+Que voulez-vous ajouter ?
+Modèle prêt à l'emploi
+Les modèles peuvent être supprimés dans les Paramètres. Les valeurs restent modifiables après le choix.
+Nouvelle leçon
+Modèle
+Enregistrer comme modèle
+Titre
+Catégorie
+Couleur de cette source
+Active (sur le calendrier)
+Jour à faire (vide = première place libre du plan)
+Découpage
+Nombre de séances
+Durée par séance (minutes)
+Changer le découpage des séances non lues
+Séances restantes
+Durée par séance (vide = répartir la durée actuelle)
+Appliquer le découpage
+Les séances commencées et lues ne sont pas touchées.
+Vitesse : maximum de nouvelles séances par jour
+Proportion de révision (vide = réglage général)
+Intervalles de Leitner propres, en jours (vide = réglage général)
+1, 3, 7, 30
+Horaire de la routine
+Date de début
+Aucun jour coché = tous les jours. Un jour manqué n'est pas reporté.
+Dépendance : après quelle leçon celle-ci commence-t-elle ?
+Prérequis
+Quand commencer
+Une fois lue
+Une fois ses révisions terminées
+Date cible (facultatif)
+Source
+Sans source
+Fichier (Obsidian ou tout dossier)
+Lien (YouTube ou web)
+Type de section de chaque séance
+Texte libre
+Plage de pages (PDF)
+Plage de temps (vidéo)
+Titres Markdown
+Plage entière de
+à
+La plage entière est répartie automatiquement entre les séances et modifiable dans le tableau ci-dessous. Le temps s'écrit 1:05:00.
+Séances
+État
+Section
+Durée (minutes)
+Durée de révision
+Note
+Enregistrer
+Supprimer toutes les révisions
+Rétablir les révisions
+Remettre à non lue
+Supprimer la leçon
+Ajouter plusieurs leçons à la fois
+Une leçon par ligne : titre, nombre de séances, minutes par séance. Les deux derniers nombres sont facultatifs.
+Anglais, 10, 45\nStatistiques, 5\nHistoire des sciences
+Type
+Rapport
+Nouveau type de tâche
+Par exemple « Exercices » ou « Livre audio ». Une fois créé, il apparaît aussi dans le menu « + ».
+Nom
+Comportement dans le plan
+Comme une leçon : séances dans l'ordre de la file, avec révisions de Leitner
+Comme une routine : chaque jour (ou jours choisis), sans révision
+Couleur sur le calendrier
+Le nom et la couleur se changent ensuite dans les Paramètres.
+Créer
+À l'enregistrement, tout le plan est réorganisé aussitôt.
+Langue et calendrier
+Langue
+Calendrier
+Premier jour de la semaine
+Les traductions ont été écrites par une IA et peuvent contenir des erreurs.
+Planification
+Limite d'étude par défaut par jour
+minutes
+Dépassement autorisé de la limite
+Heure de début de journée
+du matin
+Limite quotidienne de révision (vide = désactivé)
+Désactivé
+% de la limite du jour
+Ce qui est noté avant l'heure de début compte pour la veille.
+Limite par jour de semaine (vide = défaut) et jours de repos fixes :
+Intervalles de Leitner
+Chaque point est une révision. Faites glisser les points à gauche et à droite. Pour retirer une révision, cliquez sur × à côté d'elle dans la liste.
+Un mois de plus
+Un mois de moins
++ Une révision de plus
+− Retirer une révision
+Changer les intervalles recalcule toutes les dates de révision (sauf leçons à intervalles propres).
+Valeurs par défaut d'une nouvelle leçon
+Durée par séance
+Vitesse
+nouvelles séances par jour
+Modèles
+Rétablir les modèles prêts à l'emploi
+Créez un modèle dans la fenêtre d'ajout avec « Enregistrer comme modèle ».
+Couleurs du plan
+Par type de tâche : lecture, révision, routine
+Par source : chaque leçon a sa couleur (révisions en pointillés)
+Lecture
+Révision
+Routine
+Projet
+Tâche unique
+Apparence
+Mode
+Clair
+Sombre
+Taille de police
+pixels
+Police
+Texte en gras
+Taille de l'interface
+Automatique
+En mode automatique, l'application règle la taille selon la largeur de la fenêtre pour tenir aussi en Full HD et HD.
+Exemple avec cette police : apprendre un peu plus chaque jour. 12345
++ Ajouter un fichier de police…
+ttf, otf, woff ou woff2. Une copie est gardée dans l'application.
+Fichiers
+Coffre Obsidian
+Dossier d'export
+Dossier de sauvegarde
+Nombre de sauvegardes conservées
+copies
+Sauvegarde en ligne
+Une copie de chaque sauvegarde quotidienne va dans votre dossier OneDrive, Google Drive, Dropbox ou iCloud, et l'application de ce service l'envoie sur votre compte. Dibacheh ne se connecte pas à Internet et ne demande aucun mot de passe. Ce fichier contient toutes les données de l'application et reste sur votre compte cloud.
+Dossier synchronisé
+Vide = désactivé
+Copier maintenant
+Restaurer une sauvegarde
+Avant la restauration, une copie de l'état actuel est faite.
+Nouvelle version
+À chaque ouverture, vérifier en arrière-plan si GitHub propose une nouvelle version
+Seul le numéro de version est lu et aucune donnée n'est envoyée. Sans Internet, rien ne se passe.
+Journal d'erreurs
+Si l'application fonctionne mal, ce journal en montre la cause. Il reste sur cet ordinateur et n'est envoyé nulle part.
+Afficher le journal d'erreurs
+Passer à un autre ordinateur
+Toutes les données et polices ajoutées dans un fichier zip. Les fichiers sources (notes et PDF) n'y sont pas et doivent être déplacés à part.
+Créer le fichier de données
+Importer depuis un fichier…
+Leçon
+Séances dans l'ordre de la file, avec révisions de Leitner
+Routine
+Chaque jour ou jours choisis, sans révision
+Faite une seule fois, un jour précis ou à la première place libre
+Plusieurs séances à la suite, sans révision
+Comme une leçon, avec révisions de Leitner
+Comme une routine, sans révision
+Plusieurs leçons
+Une leçon par ligne
+Nouveau type
+Créez votre type de tâche avec le nom et la couleur de votre choix
+Sans modèle
+Décidez de tout vous-même
+Séances : {0}
+{0} min
+Révisions : {0}
+Une routine ne se déplace pas ; un jour manqué est simplement perdu.
+Séance introuvable.
+Cette séance n'est pas encore lue ; déplacez sa lecture et les révisions suivront.
+Seule la prochaine révision de cette séance se déplace ; les suivantes suivent.
+Les jours de travail de « {0} » sont surlignés. Cliquez à nouveau sur le nom pour enlever.
+{0} au {1}
+D'aujourd'hui au {0} · Jours : {1}
+Repos
+Rien de noté
+Plus rien à faire
+Cliquez pour voir toute cette semaine
+Tâches faites
++{0} de plus
+Changer la limite, prendre congé ou ajouter du travail à ce jour
+{0} sur {1}
+✓ {0} fait
+Prévision
+ (suite)
+Fait
+Déplacé à la main
+?
+En retard
+{0} · {1} min
+Leçon supprimée
+ (partiel)
+ · a besoin de plus de révision
+Cliquez pour marquer comme non fait
+Séance {0}
+{0} · {1} min · {2}
+Autre chose a été noté ensuite pour cette séance. Marquez-le d'abord comme non fait.
+↩ Non fait
+{0}{1} · Séance {2}
+ (aujourd'hui, en avance)
+✓ Révision faite{0}
+↺ Besoin de plus de révision
+✓ Fait{0}
+Lu en partie seulement :
+Noter
+↗ Ouvrir la source
+Reporter à demain
+Déplacer vers
+Déplacer
+Retour à l'ordre automatique
+Durée de révision de cette séance :
+Vide = selon la proportion. S'applique à toutes les révisions de cette séance.
+Note de cette séance : un point ou une question…
+✎ Modifier la leçon
+Limite de ce jour :
+Appliquer
+Prendre ce jour de repos
+Retour à la limite normale
+Plusieurs jours de repos, de ce jour jusqu'au :
+Prendre ces jours de repos
+Retirer ces jours de repos
+Avancer à ce jour :
+ Séance {0}
+ · {0} min · actuellement {1}
+Vue journalière de ce jour
+⇪ Exporter ce jour
++ Ajouter à partir de ce jour
+dossier
+Jour
+Semaine
+Mois
+Demain
+Après-demain
+Export à lire sur le téléphone
+Jour :
+Pour semaine et mois : la semaine ou le mois contenant ce jour.
+Avec le contenu (notes, pages PDF)
+Les exports hebdomadaires et mensuels avec contenu peuvent être volumineux.
+Création…
+Créer l'export
+✓ Export enregistré
+Taille : {0} Ko
+La fenêtre de partage ne s'est pas ouverte ; le fichier est affiché dans {0}.
+Partager… (Telegram et autres applications)
+Afficher dans {0} (à faire glisser vers Telegram)
+Ouvrir le fichier
+Ce navigateur ne partage pas les fichiers. Faites glisser le fichier de {0} vers Telegram.
+Jours : {0}
+Une erreur s'est produite.
+{0} h {1} min
+{0} h
+Année
+Effacer
+Date non valide.
+Non lue
+Lue en partie
+En révision
+Terminée
+Modifier : {0}
+Nouveau : {0}
+ à partir du {0}
+Sans catégorie
+,
+{0}  (dans le coffre)
+Niveau {0} : {1} {2}
+chapitre
+Les séances non lues ont été remplacées par {0} sections.
+{0} séances seront créées.
+Cette note a des titres. Chaque titre peut devenir une séance.
+Ce PDF a une table des matières. Chaque chapitre peut devenir une séance.
+Créer les séances depuis le fichier
+Après {0} « {1} »
+les révisions de
+Fin de lecture
+Supprimer
+À partir d'un modèle…
+Aucun modèle enregistré
+Nom du modèle :
+Modèle « {0} » enregistré.
+Pour une source fichier, cliquez d'abord sur Browse et choisissez le fichier.
+Toutes les séances de cette leçon redeviennent non lues et la leçon passe en fin de file. L'historique reste. Continuer ?
+Supprimer toutes les révisions de « {0} » ? Désormais les séances se terminent à la lecture, et l'historique reste.
+Supprimer « {0} » avec toutes ses séances et son historique ? Le fichier source n'est pas touché. C'est irréversible.
+Aucun titre trouvé dans le fichier Markdown.
+p. ex. Chapitre 1
+ (boîte {0})
+ ({0} min)
+Durée de révision de cette séance. Vide = selon la proportion
+Note…
+Fermer l'application ?
+L'application est fermée. Vous pouvez fermer cette page.
+Annulé : {0}
+Rétabli : {0}
+Aujourd'hui : {0} {1}
+Chemin du coffre : {0}\nCliquez pour changer
+Choisir le dossier du coffre Obsidian
+Annuler « {0} » · Étapes disponibles : {1}
+Rien à annuler
+Rétablir « {0} » · Étapes en arrière : {1}
+Rien à rétablir
+Par défaut
+ Repos
+{0} %
+Chaque révision prend {0} % du temps de lecture de cette séance, arrondi au supérieur.
+Exemple : séance de 60 minutes → chaque révision {0} min. Avec {1} révisions, le temps total de cette séance :
+60 + {0} × {1} = {2} minutes.
+À long terme, sur une limite de {0} minutes par jour, environ {1} minutes vont au nouveau contenu et le reste aux révisions.
+Les leçons à proportion propre utilisent la leur. La durée peut aussi être fixée à la main pour une séance.
+Mois : {0}
+La dernière révision est au jour {0} ; avancez-la d'abord
+Révision {0}
+{0} jours après {1}
+ (jour {0} après la lecture)
+Retirer la révision {0}
+Standard
+Intensif (examen proche)
+Leitner classique
+Long terme
+Léger (peu de révisions)
+Aucune source pour l'instant.
+Aucun modèle pour l'instant.
+Aucun dossier cloud trouvé sur cet ordinateur. Installez OneDrive, Google Drive, Dropbox ou iCloud, ou choisissez un dossier avec Browse.
+Dernière copie : {0} · Copies : {1}
+Sauvegarde copiée dans le dossier cloud.
+La dernière sauvegarde est déjà dans le dossier cloud.
+ (copie faite avant restauration)
+ ☁ dossier cloud
+{0} Ko
+Revenir aux données du {0} ? Une copie de l'état actuel est gardée.
+Sauvegarde restaurée.
+Restaurer
+Aucune sauvegarde pour l'instant.
+Aucune erreur notée.
+Fichier de données créé : {0}
+Les données actuelles seront remplacées par celles du fichier. Une copie de l'état actuel est gardée. Continuer ?
+Données importées.
+Comme une leçon, avec révisions
+Comme une routine, sans révision
+Supprimer le type « {0} » ? Ses tâches restent et deviennent des leçons ou routines normales.
+Vous n'avez pas encore de type personnel. Créez-en un depuis le menu « + ».
+Vazirmatn
+Persan, inclus dans l'application
+Ajoutée
+{0} — texte d'exemple
+Police « {0} » ajoutée. Cliquez sur « Enregistrer » pour l'utiliser.
+Paramètres enregistrés et plan réorganisé.
+Toutes
+En lecture
+Lues
+Archives
+Travail en attente : {0}
+Couleurs de lecture et de révision, selon leur part
+Lecture {0} · Révision {1}
+Fin prévue de tout : {0}
+30 prochains jours, en moyenne par jour : {0} min de révision et {1} min de nouveau contenu
+{0} : terminé ✓
+{0} : pile dans l'objectif
+{0} : {1} jours {2} l'objectif
+avant
+après
+Double-clic : renommer · Glisser : déplacer
+Supprimer la catégorie
+Supprimer la catégorie « {0} » ? Ses leçons restent, sans catégorie.
+Nouvelle catégorie
+Nom de la catégorie
+Aucune leçon pour ce filtre.
+Rien pour l'instant. Commencez avec le bouton « + ».
+{0} {1} %
+Progression
+Révision {0} sur {1}
+Inactive : pas sur le calendrier
+Fin
+Fin des révisions : {0}
+🔒 En attente de
+✓ Après
+Ces séances restent à un jour fixe et la priorité de file ne les change pas
+📌 Séances déplacées à la main : {0}
+Retirer tous les déplacements manuels de cette leçon
+Objectif : {0}
+Faites glisser pour déplacer
+Active / inactive
+Ouvrir la source
+Modifier
+Sortir des archives
+Séance {0} : {1}
+Le déplacement manuel de {0} séances de « {1} » a été retiré pour suivre la nouvelle priorité.
+Semaine du {0} au {1}
+Plan de la semaine prochaine
+Plan du mois prochain
+Du {0} à aujourd'hui
+Travail restant
+{0} : {1} sur {2}
+sur {0}
+Régularité
+Quantité de travail
+Révisions à l'heure
+Rapport enregistré : {0}
+⇪ Exporter le rapport
+Temps d'étude
+Tâches faites
+Jours actifs
+Rien de noté sur cette période.
+En retard : {0}
+Rien en retard.
+Temps d'étude des 12 derniers : {0}
+Carte d'activité de la dernière année
+Pas d'étude
+Moins
+Plus
+{0} % · Leçons : {1}
+Le graphique apparaît ici après la première tâche notée.
+Afficher en tableau
+Progression de lecture par catégorie
+Mettre à jour vers la version {0}
+Nouvelle version : {0}
+Aucune description pour cette version.
+Taille du fichier : {0} Mo
+{0} % · {1} sur {2} Mo
+Échec du téléchargement : {0}
+Nouveautés de la version {0}
+La sauvegarde du jour était endommagée et n'a pas été gardée : {0}
+La sauvegarde du jour n'a pas été copiée dans le dossier cloud : {0}
+Une erreur inattendue s'est produite. Les détails sont dans « Journal d'erreurs », dans les Paramètres.
+Introuvable.
+Champ inconnu : {0}
+{0} doit être entre {1} et {2}.
+Réglage inconnu : {0}
+Limite par défaut
+Dépassement autorisé de la limite
+Nombre de sauvegardes
+La couleur doit avoir la forme #rrggbb.
+Dossier introuvable : {0}
+Ce fichier de base de données est endommagé.
+Ce n'est pas une base de données Dibacheh.
+Ce fichier a été créé avec une version plus récente de l'application.
+{0} doit être un nombre.
+La proportion de révision doit être supérieure à zéro.
+Les intervalles de Leitner doivent compter de 1 à 20 nombres.
+Intervalle de Leitner
+La limite par jour de semaine n'est pas valide.
+Limite par jour de semaine
+Durée de séance par défaut
+Vitesse par défaut
+Limite de durée de révision
+Mode d'affichage non valide.
+Nom de police non valide.
+Langue non valide.
+Calendrier non valide.
+Le premier jour de la semaine doit être samedi, dimanche ou lundi.
+Couleurs non valides.
+Mode de couleur non valide.
+Liste de modèles non valide.
+Liste de polices non valide.
+Ce n'est pas une base de données valide.
+Proportion de révision non valide. Exemple : 1/3 ou 0.5
+Jour de la semaine
+Jour de repos
+Le nom du modèle doit faire 1 à 60 caractères.
+Type de modèle non valide.
+Leçon intensive de 10 jours
+Leçon d'un mois
+Leçon de trois mois
+Routine quotidienne
+Routine trois jours par semaine
+Projet court
+Projet long
+Créé le {0}.
+Plan du jour
+Plan de la semaine
+Plan du mois
+Les cases de cette page ne servent qu'à vous et ne reviennent pas dans l'application.
+Vidéo
+Fichier
+Plan du jour {0}.html
+Plan de la semaine du {0}.html
+Plan du mois {0}.html
+{0} : {1} au {2}
+Le plan des prochains jours est une prévision et change à chaque modification.
+Rapport hebdomadaire : {0} au {1}
+Rapport mensuel : {0} {1}
+Rapport général jusqu'au {0}
+Rapport hebdomadaire du {0}
+Rapport mensuel {0}
+Rapport général {0}
+Lien :
+Source introuvable (peut-être déplacée).
+La plage de pages de cette séance n'est pas définie.
+Tâches : {0}
+Rien à faire.
+Total : {0} min
+Impossible de lire la source : {0}
+Page {0}
+{0} : {1} min.
+Par leçon (minutes)
+Rien de noté.
+Rien.
+Tâches : {0}, sur {1} jours, {2} minutes en tout : lecture {3}, révision {4}, routine {5}.
+Résumé
+Note : {0} sur {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Lundi
+Mardi
+Mercredi
+Jeudi
+Vendredi
+Samedi
+Dimanche
+janvier
+février
+mars
+avril
+mai
+juin
+juillet
+août
+septembre
+octobre
+novembre
+décembre
+Pour choisir des fichiers, installez le paquet zenity ou kdialog.
+Excellent
+Très bien
+Bien
+Acceptable
+Demande plus d'efforts
+Plage de dates non valide.
+Rien à annuler.
+Rien à rétablir.
+Choisissez le fichier de données Dibacheh (zip)
+Nom de fichier non valide.
+Fichier d'export introuvable.
+Type d'export non valide.
+Période de rapport non valide.
+Aucun dossier cloud choisi.
+Non copié : {0}
+Choisissez le fichier source
+Choisissez un fichier de police (ttf, otf, woff ou woff2)
+Choisissez un dossier
+Choisissez le dossier du coffre Obsidian
+Le nom de la catégorie est vide.
+Ordre des catégories non valide.
+Le nom du type doit faire 1 à 40 caractères.
+Comportement du type non valide.
+La plage ne peut pas dépasser un an.
+La limite du jour ne peut pas être négative.
+La limite du jour doit être un nombre.
+Aucune nouvelle version à télécharger.
+Fichier téléchargé introuvable.
+Le plan ne s'est pas terminé en {0} jours. Les limites sont peut-être trop basses ou tous les jours sont en repos.
+Cette sauvegarde est introuvable.
+Ce n'est pas un fichier de police. Seulement ttf, otf, woff et woff2.
+Ce fichier zip n'est pas valide.
+Impossible de lire le nom de cette police.
+Ce fichier ne contient pas de données Dibacheh.
+Durée de séance
+Dépendances non valides.
+Le titre de la leçon est vide.
+Cette tâche n'a pas de révision.
+Seule une leçon terminée peut être archivée.
+Aucune leçon écrite.
+Ordre de file non valide.
+Type de tâche non valide.
+Variante de tâche non valide.
+Type de section non valide.
+Type de source non valide.
+Un lien doit commencer par http:// ou https://.
+Plage de leçon non valide.
+Le prérequis doit être une autre leçon.
+Type de dépendance non valide.
+Cette dépendance crée une boucle : deux leçons s'attendraient mutuellement.
+Type de tâche introuvable.
+Ligne {0} : seuls le nombre de séances et la durée peuvent suivre le titre.
+{0} doit valoir au moins 1.
+Une tâche ne peut pas aller vers un jour passé.
+Cette tâche n'est pas dans l'historique.
+Marquez d'abord la tâche suivante de cette séance comme non faite.
+Cette leçon a été remise à non lue après cette tâche.
+Cette séance est lue.
+Cette routine est déjà notée.
+La révision doit venir après le jour de lecture de cette séance.
+Cette séance a déjà été lue.
+Minutes lues
+Résultat non valide.
+Cette séance n'a pas de révision en attente.
+Adresse de téléchargement non valide.
+Le fichier téléchargé n'a pas la bonne taille.
+Le chemin du coffre Obsidian n'est pas défini dans les Paramètres.
+Fichier introuvable. Il a peut-être été renommé ou déplacé. Utilisez Browse à nouveau.
+Cette tâche n'a pas de source à ouvrir.
+Du {0} au {1}
+Lien non valide.
+Pages {0} à {1}
+De « {0} » à « {1} »
+La plage de certaines séances est vide ou non valide.
+Séance {0} : la fin précède le début.
+Il y a un trou entre les séances {0} et {1}.
+La première séance ne commence pas au début de la plage.
+La dernière séance n'atteint pas la fin de la plage.
+Les séances {0} et {1} se chevauchent.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Ajouter une leçon
+Modifier la leçon
+Changer le découpage
+Réinitialiser la leçon
+Déplacer dans la file
+Leçon de retour à l'ordre automatique
+Supprimer les révisions de la leçon
+Rétablir les révisions de la leçon
+Modifier la séance
+Déplacer la tâche
+Changer la limite du jour
+Noter une tâche faite
+Marquer la tâche comme non faite
+Plusieurs jours de repos
+Archiver la leçon
+Ajout groupé
+Importer des données
+Ajouter une catégorie
+Renommer la catégorie
+Réordonner les catégories
+Créer un type de tâche
+Modifier le type de tâche
+Supprimer le type de tâche
+Ajouter une police
+Retirer une police
+Changer les paramètres
+Requête non valide.
+la lecture de

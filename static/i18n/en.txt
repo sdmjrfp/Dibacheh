@@ -1,0 +1,701 @@
+Dibacheh
+Layout
+Tasks and plan side by side
+◫ Side by side
+Tasks and plan stacked
+☰ Stacked
+Only tasks and sources, large
+Tasks only
+Only the plan, large
+Plan only
+Undo the last change
+↶ Undo
+Redo
+↷ Redo
+Statistics and weekly report
+📊 Report
+Settings
+⚙ Settings
+Close the app
+⏻ Close app
+Obsidian vault path
+Vault:
+Not set
+Tasks and sources
+Add a lesson, routine, one-off task, project…
+Add
+Search lessons, sessions and notes
+Queue order = priority. To move a lesson, drag its ⋮⋮ handle.
+Change the width of tasks and plan
+Drag to resize · Double-click: default size
+Plan
+Daily
+Weekly
+Monthly
+From today until the last task and last review
+All
+Plan direction
+Each day is a column
+⇅ Vertical
+Each day is a row
+⇄ Horizontal
+Previous
+Today
+Next
+HTML export to read on your phone and share
+⇪ Export
+Each lesson in its own color · Dashed = review
+📌 = moved by hand
+Dibacheh
+Language
+Calendar
+Solar Hijri
+Gregorian
+Start
+This app runs from source. To update this copy, run git pull. The file below is the installed version.
+Downloaded. Close the app and install the file. Your data stays where it is.
+Open installer
+Show file
+Download
+Close
+Got it
+What do you want to add?
+Ready-made template
+Templates can be removed in Settings. Values can still be changed after choosing one.
+New lesson
+Template
+Save as template
+Title
+Category
+Color of this source
+Active (on the calendar)
+Day to do it (empty = first free slot in the plan)
+Splitting
+Number of sessions
+Time per session (minutes)
+Change the split of unread sessions
+Remaining sessions
+Time per session (empty = spread the current time)
+Apply split
+Started and read sessions are not touched.
+Speed: most new sessions per day
+Review ratio (empty = general setting)
+Custom Leitner intervals, in days (empty = general setting)
+1, 3, 7, 30
+Routine schedule
+Start date
+No day selected = every day. A missed day is not moved forward.
+Dependency: which lesson must come before this one?
+Prerequisite
+Start when
+After it has been read
+After its reviews are done
+Target date (optional)
+Source
+No source
+File (Obsidian or any folder)
+Link (YouTube or web)
+Section type of each session
+Free text
+Page range (PDF)
+Time range (video)
+Markdown headings
+Whole range from
+to
+The whole range is split automatically between sessions and can be edited in the table below. Time looks like 1:05:00.
+Sessions
+Status
+Section
+Time (minutes)
+Review time
+Note
+Save
+Remove all reviews
+Restore reviews
+Reset to unread
+Delete lesson
+Add several lessons at once
+One lesson per line: title, number of sessions, minutes per session. The last two numbers are optional.
+English, 10, 45\nStatistics, 5\nHistory of science
+Type
+Report
+New task type
+For example "Practice" or "Audiobook". Once created, it also appears in the "+" menu.
+Name
+Behavior in the plan
+Like a lesson: sessions in queue order, with Leitner reviews
+Like a routine: every day (or chosen days), no reviews
+Color on the calendar
+Name and color can be changed later in Settings.
+Create
+On "Save", the whole plan is rebuilt right away.
+Language and calendar
+Language
+Calendar
+First day of the week
+Translations were written by AI and may contain mistakes.
+Planning
+Default study limit per day
+minutes
+Allowed amount over the limit
+Day start hour
+a.m.
+Daily review time limit (empty = off)
+Off
+% of the daily limit
+Work logged before the day start hour counts for the previous day.
+Limit per weekday (empty = default limit) and fixed weekly days off:
+Leitner intervals
+Each point is a review. Drag points left and right. To remove a specific review, press × next to it in the list below.
+One month more
+One month less
++ One more review
+− Remove a review
+Changing intervals recalculates all review dates (except lessons with their own intervals).
+New lesson defaults
+Time per session
+Speed
+new sessions per day
+Templates
+Restore ready-made templates
+Create a new template in the add window with "Save as template".
+Plan colors
+By task type: reading, review, routine
+By source: each lesson in its own color (reviews dashed)
+Reading
+Review
+Routine
+Project
+One-off task
+Appearance
+Mode
+Light
+Dark
+Font size
+pixels
+Font
+Bold text
+Interface size
+Automatic
+In automatic mode, the app sets the size from the window width so it also fits Full HD and HD.
+Sample text in this font: learning a little more every day. 12345
++ Add font file…
+ttf, otf, woff or woff2. A copy is kept inside the app.
+Files
+Obsidian vault
+Export folder
+Backup folder
+Number of backups to keep
+copies
+Online backup
+A copy of each daily backup goes into your OneDrive, Google Drive, Dropbox or iCloud folder, and that service's app uploads it to your account. Dibacheh itself does not connect to the internet and needs no password. This file holds all the app's data and is kept in your cloud account.
+Synced folder
+Empty = off
+Copy now
+Restore a backup
+Before restoring, a copy of the current state is made.
+New version
+Each time the app opens, check in the background whether GitHub has a new version
+Only the version number is read and none of your data is sent. Without internet, nothing happens.
+Error log
+If the app misbehaves, this log shows why. It stays on this computer and is sent nowhere.
+Show error log
+Move to another computer
+All data and added fonts in one zip file. The source files themselves (notes and PDFs) are not included and must be moved separately.
+Create data file
+Import from file…
+Lesson
+Sessions in queue order, with Leitner reviews
+Routine
+Every day or chosen days, no reviews
+Done just once, on a set day or the first free slot
+Several sessions in a row, no reviews
+Like a lesson, with Leitner reviews
+Like a routine, no reviews
+Several lessons
+One lesson per line
+New type
+Create your own task type with any name and color
+No template
+Decide everything yourself
+{0} sessions
+{0} min
+{0} reviews
+A routine cannot be moved; if a day is missed, only that day is lost.
+Session not found.
+This session has not been read yet; move its reading and the reviews will follow.
+Only the next review of this session can be moved; later reviews move with it.
+Days with work for "{0}" are highlighted. Click the lesson name again to clear.
+{0} to {1}
+From today to {0} · {1} days
+Day off
+Nothing logged
+Nothing left
+Click to see this whole week
+Completed tasks
++{0} more
+Change the limit, take the day off, or add work to this day
+{0} of {1}
+✓ {0} done
+Forecast
+ (continued)
+Done
+Moved by hand
+?
+Overdue
+{0} · {1} min
+Deleted lesson
+ (partial)
+ · needs more review
+Click to mark as not done
+Session {0}
+{0} · {1} min · {2}
+Something later was logged for this session. Mark that as not done first.
+↩ Not done
+{0}{1} · Session {2}
+ (today, ahead of plan)
+✓ Review done{0}
+↺ Needs more review
+✓ Done{0}
+Read only part:
+Log
+↗ Open source
+Postpone to tomorrow
+Move to
+Move
+Back to automatic order
+Review time for this session:
+Empty = from the review ratio. Applies to all reviews of this session.
+Note for this session: a point or question…
+✎ Edit lesson
+Limit for this day:
+Apply
+Take this day off
+Back to normal limit
+Several days off, from this day to:
+Take these days off
+Remove these days off
+Bring forward to this day:
+ Session {0}
+ · {0} min · now {1}
+Daily view of this day
+⇪ Export this day
++ Add from this day
+folder
+Day
+Week
+Month
+Tomorrow
+Day after tomorrow
+Export to read on your phone
+Day:
+For week and month: the week or month containing this day.
+With content (notes, PDF pages)
+Weekly and monthly exports with content can get large.
+Creating…
+Create export
+✓ Export saved
+Size: {0} KB
+The Share window did not open; the file is shown in {0}.
+Share… (Telegram and other apps)
+Show in {0} (to drag into Telegram)
+Open file
+This browser cannot share files. Drag the file from {0} into Telegram.
+{0} days
+Something went wrong.
+{0} h {1} min
+{0} h
+Year
+Clear
+Invalid date.
+Unread
+Partly read
+In review
+Finished
+Edit {0}
+New {0}
+ from {0}
+No category
+,
+{0}  (inside the vault)
+Level {0}: {1} {2}
+chapter
+Unread sessions were replaced with {0} sections.
+{0} sessions will be created.
+This note has headings. Each heading can become a session.
+This PDF has a table of contents. Each chapter can become a session.
+Create sessions from the file
+After {0} "{1}"
+the reviews of
+Reading ends
+Delete
+From a template…
+No saved templates
+Template name:
+Template "{0}" saved.
+For a file source, press Browse and choose a file first.
+All sessions of this lesson go back to unread and the lesson moves to the end of the queue. Past history stays. Continue?
+Remove all reviews of "{0}"? From now on sessions finish when read, and the history of completed work stays.
+Delete "{0}" with all its sessions and history? The source file on your computer is not touched. This cannot be undone.
+No headings were found in the Markdown file.
+e.g. Chapter 1
+ (box {0})
+ ({0} min)
+Review time of this session. Empty = from the review ratio
+Note…
+Close the app?
+The app is closed. You can close this page.
+Undone: {0}
+Redone: {0}
+Today: {0} {1}
+Vault path: {0}\nClick to change
+Choose the Obsidian vault folder
+Undo "{0}" · {1} steps available
+Nothing to undo
+Redo "{0}" · {1} steps back
+Nothing to redo
+Default
+ Off
+{0}%
+Each review takes {0}% of the reading time of that session, rounded up.
+Example: a 60-minute session → each review is {0} min. With {1} reviews, the total time for this session:
+60 + {0} × {1} = {2} minutes.
+So in the long run, of a daily limit of {0} minutes, about {1} minutes go to new material and the rest to reviews.
+Lessons with their own review ratio use it. Review time can also be set by hand for a single session.
+{0} months
+The last review is on day {0}; move it earlier first
+Review {0}
+{0} days after {1}
+ (day {0} after reading)
+Remove review {0}
+Standard
+Intensive (exam soon)
+Classic Leitner
+Long-term
+Light (few reviews)
+No sources added yet.
+No templates yet.
+No cloud folder was found on this computer. Install OneDrive, Google Drive, Dropbox or iCloud, or choose a folder with Browse.
+Last copy: {0} · {1} copies
+Backup copied to the cloud folder.
+The latest backup is already in the cloud folder.
+ (copy made before restoring)
+ ☁ cloud folder
+{0} KB
+Restore the app's data to the version of {0}? A copy of the current state is kept.
+Backup restored.
+Restore
+No backups yet.
+No errors logged.
+Data file created: {0}
+Current data will be replaced with the file's data. A copy of the current state is kept. Continue?
+Data imported.
+Like a lesson, with reviews
+Like a routine, no reviews
+Delete type "{0}"? Its tasks stay and become regular lessons or routines.
+You have no task types of your own yet. Create one from the "+" menu.
+Vazirmatn
+Persian, included with the app
+Added
+{0} — sample text
+Font "{0}" added. Press "Save" to use it.
+Settings saved and the plan was rebuilt.
+All
+Reading now
+Read
+Archive
+Work waiting: {0}
+Reading and review colors, in proportion to their amounts
+Reading {0} · Review {1}
+Expected end of everything: {0}
+Next 30 days, on average per day: {0} min of review and {1} min of new material
+{0}: finished ✓
+{0}: exactly on target
+{0}: {1} days {2} target
+ahead of
+behind
+Double-click: rename · Drag: move
+Delete category
+Delete category "{0}"? Its lessons stay, without a category.
+New category
+Category name
+No lessons match this filter.
+Nothing added yet. Start with the "+" button.
+{0} {1}%
+Progress
+Review {0} of {1}
+Inactive: not on the calendar
+End
+Reviews end: {0}
+🔒 Waiting for
+✓ After
+These sessions stay on a set day and queue priority does not affect them
+📌 {0} sessions moved by hand
+Remove all manual moves of this lesson
+Target: {0}
+Drag to move
+Active / inactive
+Open source
+Edit
+Bring back from archive
+Session {0}: {1}
+The manual move of {0} sessions of "{1}" was removed so it follows the new priority.
+Week of {0} to {1}
+Next week's plan
+Next month's plan
+From {0} until today
+Work remaining
+{0}: {1} of {2}
+of {0}
+Regularity
+Amount of work
+Reviews on time
+Report saved: {0}
+⇪ Export report
+Study time
+Tasks done
+Active days
+Nothing logged in this period.
+Overdue: {0}
+Nothing overdue.
+Study time of the last 12 {0}
+Activity map of the past year
+No study
+Less
+More
+{0}% · {1} lessons
+The chart appears here after your first logged task.
+Show as a table
+Reading progress by category
+Update to version {0}
+New version: {0}
+No description was written for this version.
+File size: {0} MB
+{0}% · {1} of {2} MB
+Download failed: {0}
+What's new in version {0}
+Today's backup was damaged and was not saved: {0}
+Today's backup was not copied to the cloud folder: {0}
+An unexpected error occurred. Details are in "Error log" in Settings.
+Not found.
+Unknown field: {0}
+{0} must be between {1} and {2}.
+Unknown setting: {0}
+Default limit
+Allowed amount over the limit
+Number of backups
+Color must look like #rrggbb.
+Folder not found: {0}
+This database file is damaged.
+This is not a Dibacheh database file.
+This file was made with a newer version of the app.
+{0} must be a number.
+The review ratio must be greater than zero.
+Leitner intervals must be between 1 and 20 numbers.
+Leitner interval
+The weekday limit is invalid.
+Weekday limit
+Default session time
+Default speed
+Review time limit
+Invalid display mode.
+Invalid font name.
+Invalid language.
+Invalid calendar.
+The first day of the week must be Saturday, Sunday or Monday.
+Invalid colors.
+Invalid color mode.
+Invalid template list.
+Invalid font list.
+This is not a valid database file.
+Invalid review ratio. Example: 1/3 or 0.5
+Weekday
+Day off
+Template name must be 1 to 60 characters.
+Invalid template type.
+Intensive 10-day lesson
+One-month lesson
+Three-month lesson
+Daily routine
+Routine three days a week
+Short project
+Long project
+Created on {0}.
+Daily plan
+Weekly plan
+Monthly plan
+The checkboxes on this page are just for you and do not go back to the app.
+Video
+File
+Daily plan {0}.html
+Weekly plan from {0}.html
+Monthly plan {0}.html
+{0}: {1} to {2}
+The plan for coming days is a forecast and changes with any change to the plan.
+Weekly report: {0} to {1}
+Monthly report: {0} {1}
+Overall report until {0}
+Weekly report from {0}
+Monthly report {0}
+Overall report {0}
+Link:
+Source not found (it may have moved).
+The page range of this session is not set.
+{0} tasks
+Nothing to do.
+Total: {0} min
+Could not read the source: {0}
+Page {0}
+{0}: {1} min.
+By lesson (minutes)
+Nothing logged.
+None.
+{0} tasks on {1} days, {2} minutes in all: reading {3}, review {4}, routine {5}.
+Summary
+Score: {0} of {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+Saturday
+Sunday
+January
+February
+March
+April
+May
+June
+July
+August
+September
+October
+November
+December
+To choose files, install the zenity or kdialog package.
+Excellent
+Very good
+Good
+Acceptable
+Needs more effort
+Invalid date range.
+Nothing to undo.
+Nothing to redo.
+Choose the Dibacheh data file (zip)
+Invalid file name.
+Export file not found.
+Invalid export type.
+Invalid report period.
+No cloud folder is selected.
+Not copied: {0}
+Choose the source file
+Choose a font file (ttf, otf, woff or woff2)
+Choose a folder
+Choose the Obsidian vault folder
+The category name is empty.
+Invalid category order.
+Task type name must be 1 to 40 characters.
+Invalid task type behavior.
+The range cannot be longer than a year.
+The daily limit cannot be negative.
+The daily limit must be a number.
+There is no new version to download.
+Downloaded file not found.
+The plan did not finish within {0} days. The daily limits may be too low or every day may be off.
+This backup was not found.
+This is not a font file. Only ttf, otf, woff and woff2.
+This zip file is not valid.
+Could not read this font's name.
+This file has no Dibacheh data.
+Session time
+Invalid dependencies.
+The lesson title is empty.
+This task has no reviews.
+Only a finished lesson can be archived.
+No lessons were written.
+Invalid queue order.
+Invalid task type.
+Invalid task variant.
+Invalid section type.
+Invalid source type.
+Links must start with http:// or https://.
+Invalid lesson range.
+The prerequisite must be another lesson.
+Invalid dependency type.
+This dependency makes a loop: two lessons would wait for each other.
+Task type not found.
+Line {0}: only the number of sessions and session time may follow the title.
+{0} must be at least 1.
+Tasks cannot be moved to past days.
+This task was not found in the history.
+First mark the later task of this session as not done.
+This lesson was reset to unread after this task.
+This session has been read.
+This routine was already logged.
+A review must come after the day the session was read.
+This session was already read.
+Minutes read
+Invalid result.
+This session has no pending review.
+Invalid download address.
+The downloaded file has the wrong size.
+The Obsidian vault path is not set in Settings.
+File not found. It may have been renamed or moved. Browse again.
+This task has no source to open.
+From {0} to {1}
+Invalid link.
+Pages {0} to {1}
+From "{0}" to "{1}"
+The range of some sessions is empty or invalid.
+Session {0}: the end is before the start.
+There is a gap between sessions {0} and {1}.
+The first session does not start at the start of the lesson range.
+The last session does not reach the end of the lesson range.
+Sessions {0} and {1} overlap.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Add lesson
+Edit lesson
+Change split
+Reset lesson
+Move in queue
+Lesson back to automatic order
+Remove the lesson's reviews
+Restore the lesson's reviews
+Edit session
+Move task
+Change daily limit
+Log a completed task
+Mark task as not done
+Several days off
+Archive lesson
+Bulk add
+Import data
+Add category
+Rename category
+Reorder categories
+Create task type
+Edit task type
+Delete task type
+Add font
+Remove font
+Change settings
+Invalid request.
+the reading of

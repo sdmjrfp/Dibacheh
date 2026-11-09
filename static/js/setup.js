@@ -31,12 +31,11 @@ form.addEventListener("submit", async (e) => {
   const language = form.elements.language.value;
   const calendar = form.elements.calendar.value;
   const usesPersianScript = ["fa", "ar"].includes(language);
-  await api("PATCH", "/api/settings", {
+  await api("POST", "/api/setup", {
     language,
     calendar,
     first_weekday: calendar === "persian" ? 5 : 0,
     font_family: usesPersianScript ? "Vazirmatn" : "Noto Sans",
-    setup_done: true,
   });
   window.location.reload();
 });

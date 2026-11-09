@@ -180,7 +180,7 @@ function renderRequires() {
   $("#requires-list").replaceChildren(...list.map((req, i) => {
     const other = itemById(req.id);
     return el("li", {},
-      el("span", {}, t("بعد از {0} «{1}»", req.until === "finished" ? t("پایان مرورهای") : t("پایان خواندن"), other ? other.title : t("؟"))),
+      el("span", {}, t("بعد از {0} «{1}»", req.until === "finished" ? t("پایان مرورهای") : t("پایان خواندنِ"), other ? other.title : t("؟"))),
       el("button", { type: "button", class: "danger", onclick: () => { list.splice(i, 1); renderRequires(); } }, t("حذف")));
   }));
   const taken = new Set(list.map((r) => r.id));

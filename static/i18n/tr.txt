@@ -1,0 +1,701 @@
+Dibacheh
+Düzen
+Görevler ve plan yan yana
+◫ Yan yana
+Görevler ve plan alt alta
+☰ Alt alta
+Yalnızca görevler ve kaynaklar, büyük
+Yalnızca görevler
+Yalnızca plan, büyük
+Yalnızca plan
+Son değişikliği geri al
+↶ Geri al
+Yinele
+↷ Yinele
+İstatistikler ve haftalık rapor
+📊 Rapor
+Ayarlar
+⚙ Ayarlar
+Uygulamayı kapat
+⏻ Uygulamayı kapat
+Obsidian kasası yolu
+Kasa:
+Ayarlanmadı
+Görevler ve kaynaklar
+Ders, rutin, tek seferlik görev, proje ekle…
+Ekle
+Derslerde, oturumlarda ve notlarda ara
+Sıra = öncelik. Bir dersi taşımak için ⋮⋮ tutamacını sürükleyin.
+Görevler ve planın genişliğini değiştir
+Genişlik için sürükleyin · Çift tıklama: varsayılan boyut
+Plan
+Günlük
+Haftalık
+Aylık
+Bugünden son göreve ve son tekrara kadar
+Tümü
+Plan yönü
+Her gün bir sütun
+⇅ Dikey
+Her gün bir satır
+⇄ Yatay
+Önceki
+Bugün
+Sonraki
+Telefonda okumak ve paylaşmak için HTML dışa aktarımı
+⇪ Dışa aktar
+Her ders kendi renginde · Kesik çizgi = tekrar
+📌 = elle taşındı
+Dibacheh
+Dil
+Takvim
+Hicri Şemsi
+Miladi
+Başla
+Bu uygulama kaynak koddan çalışıyor. Bu kopyayı güncellemek için git pull çalıştırın. Aşağıdaki dosya kurulum sürümüdür.
+İndirildi. Uygulamayı kapatıp dosyayı kurun. Verileriniz yerinde kalır.
+Kurulum dosyasını aç
+Dosyayı göster
+İndir
+Kapat
+Anladım
+Ne eklemek istiyorsunuz?
+Hazır şablon
+Şablonlar Ayarlar'dan silinebilir. Değerler şablon seçildikten sonra da değiştirilebilir.
+Yeni ders
+Şablon
+Şablon olarak kaydet
+Başlık
+Kategori
+Bu kaynağın rengi
+Etkin (takvimde)
+Yapılacak gün (boş = plandaki ilk boş yer)
+Bölme
+Oturum sayısı
+Oturum başına süre (dakika)
+Okunmamış oturumların bölünmesini değiştir
+Kalan oturumlar
+Oturum başına süre (boş = mevcut süreyi dağıt)
+Bölmeyi uygula
+Başlanmış ve okunmuş oturumlar değişmez.
+Hız: günde en fazla yeni oturum
+Tekrar oranı (boş = genel ayar)
+Özel Leitner aralıkları, gün olarak (boş = genel ayar)
+1, 3, 7, 30
+Rutin takvimi
+Başlangıç tarihi
+Hiç gün seçilmezse = her gün. Kaçırılan gün sonraya aktarılmaz.
+Bağımlılık: bu ders hangi dersten sonra başlasın?
+Ön koşul
+Ne zaman başlasın
+Okunduktan sonra
+Tekrarları bittikten sonra
+Hedef tarih (isteğe bağlı)
+Kaynak
+Kaynak yok
+Dosya (Obsidian veya herhangi bir klasör)
+Bağlantı (YouTube veya web)
+Her oturumun bölüm türü
+Serbest metin
+Sayfa aralığı (PDF)
+Zaman aralığı (video)
+Markdown başlıkları
+Tüm aralık, başlangıç
+bitiş
+Tüm aralık oturumlara otomatik bölünür ve aşağıdaki tabloda düzenlenebilir. Süre 1:05:00 gibi yazılır.
+Oturumlar
+Durum
+Bölüm
+Süre (dakika)
+Tekrar süresi
+Not
+Kaydet
+Tüm tekrarları sil
+Tekrarları geri getir
+Okunmamışa döndür
+Dersi sil
+Birkaç dersi birlikte ekle
+Her satıra bir ders: başlık, oturum sayısı, oturum başına dakika. Son iki sayı isteğe bağlıdır.
+İngilizce, 10, 45\nİstatistik, 5\nBilim tarihi
+Tür
+Rapor
+Yeni görev türü
+Örneğin "Alıştırma" veya "Sesli kitap". Oluşturulunca "+" menüsünde de görünür.
+Ad
+Plandaki davranış
+Ders gibi: oturumlar sıraya göre, Leitner tekrarlarıyla
+Rutin gibi: her gün (veya seçili günler), tekrarsız
+Takvimdeki renk
+Ad ve renk daha sonra Ayarlar'dan değiştirilebilir.
+Oluştur
+"Kaydet" ile tüm plan hemen yeniden düzenlenir.
+Dil ve takvim
+Dil
+Takvim
+Haftanın ilk günü
+Çeviriler yapay zekâ tarafından yazıldı ve hata içerebilir.
+Planlama
+Günlük varsayılan çalışma sınırı
+dakika
+Sınırın izin verilen aşımı
+Günün başlangıç saati
+gece
+Günlük tekrar süresi sınırı (boş = kapalı)
+Kapalı
+% günlük sınırın
+Başlangıç saatinden önce kaydedilen iş önceki güne sayılır.
+Haftanın günlerine göre sınır (boş = varsayılan) ve sabit tatil günleri:
+Leitner aralıkları
+Her nokta bir tekrardır. Noktaları sola ve sağa sürükleyin. Belirli bir tekrarı silmek için aşağıdaki listede yanındaki × işaretine basın.
+Bir ay daha fazla
+Bir ay daha az
++ Bir tekrar daha
+− Bir tekrarı sil
+Aralıkları değiştirmek tüm tekrar tarihlerini yeniden hesaplar (özel aralıklı dersler hariç).
+Yeni ders varsayılanları
+Oturum başına süre
+Hız
+günde yeni oturum
+Şablonlar
+Hazır şablonları geri getir
+Yeni şablonu ekleme penceresinde "Şablon olarak kaydet" ile oluşturun.
+Plan renkleri
+Görev türüne göre: okuma, tekrar, rutin
+Kaynağa göre: her ders kendi renginde (tekrarlar kesik çizgili)
+Okuma
+Tekrar
+Rutin
+Proje
+Tek seferlik görev
+Görünüm
+Mod
+Açık
+Koyu
+Yazı boyutu
+piksel
+Yazı tipi
+Kalın metin
+Arayüz boyutu
+Otomatik
+Otomatik modda uygulama boyutu pencere genişliğine göre ayarlar; böylece Full HD ve HD'ye de sığar.
+Bu yazı tipiyle örnek metin: her gün biraz daha öğrenmek. 12345
++ Yazı tipi dosyası ekle…
+ttf, otf, woff veya woff2. Bir kopyası uygulamada tutulur.
+Dosyalar
+Obsidian kasası
+Dışa aktarım klasörü
+Yedek klasörü
+Saklanacak yedek sayısı
+kopya
+Çevrimiçi yedek
+Her günlük yedeğin bir kopyası OneDrive, Google Drive, Dropbox veya iCloud klasörünüze konur ve o hizmetin uygulaması onu hesabınıza yükler. Dibacheh internete bağlanmaz ve parola istemez. Bu dosya uygulamanın tüm verilerini içerir ve bulut hesabınızda saklanır.
+Eşitlenen klasör
+Boş = kapalı
+Şimdi kopyala
+Yedeği geri yükle
+Geri yüklemeden önce mevcut durumun bir kopyası alınır.
+Yeni sürüm
+Uygulama her açıldığında GitHub'da yeni sürüm olup olmadığını arka planda denetle
+Yalnızca sürüm numarası okunur, verileriniz gönderilmez. İnternet yoksa hiçbir şey olmaz.
+Hata günlüğü
+Uygulama düzgün çalışmazsa bu günlük nedenini gösterir. Bu bilgisayarda kalır ve hiçbir yere gönderilmez.
+Hata günlüğünü göster
+Başka bir bilgisayara taşı
+Tüm veriler ve eklenen yazı tipleri tek bir zip dosyasında. Kaynak dosyalar (notlar ve PDF) dahil değildir, ayrıca taşınmalıdır.
+Veri dosyası oluştur
+Dosyadan içe aktar…
+Ders
+Oturumlar sıraya göre, Leitner tekrarlarıyla
+Rutin
+Her gün veya seçili günler, tekrarsız
+Yalnızca bir kez yapılır, belirli bir günde veya ilk boş yerde
+Art arda birkaç oturum, tekrarsız
+Ders gibi, Leitner tekrarlarıyla
+Rutin gibi, tekrarsız
+Birkaç ders
+Her satıra bir ders
+Yeni tür
+İstediğiniz ad ve renkle kendi görev türünüzü oluşturun
+Şablonsuz
+Her şeye kendiniz karar verin
+{0} oturum
+{0} dk
+{0} tekrar
+Rutin taşınamaz; bir gün kaçırılırsa yalnızca o gün kaybolur.
+Oturum bulunamadı.
+Bu oturum henüz okunmadı; okumasını taşıyın, tekrarlar da onunla gider.
+Bu oturumun yalnızca sonraki tekrarı taşınabilir; sonrakiler onunla gider.
+"{0}" için işi olan günler vurgulandı. Kaldırmak için ada yeniden tıklayın.
+{0} - {1}
+Bugünden {0} tarihine · {1} gün
+Tatil
+Kayıt yok
+İş kalmadı
+Bu haftanın tamamını görmek için tıklayın
+Yapılan görevler
++{0} daha
+Sınırı değiştir, tatil yap veya bu güne iş ekle
+{0} / {1}
+✓ {0} yapıldı
+Tahmin
+ (devamı)
+Yapıldı
+Elle taşındı
+?
+Gecikmiş
+{0} · {1} dk
+Silinmiş ders
+ (kısmi)
+ · daha fazla tekrar gerekiyor
+Yapılmadı olarak işaretlemek için tıklayın
+Oturum {0}
+{0} · {1} dk · {2}
+Bundan sonra bu oturum için başka kayıt yapıldı. Önce onu yapılmadı olarak işaretleyin.
+↩ Yapılmadı
+{0}{1} · Oturum {2}
+ (bugün, plandan önce)
+✓ Tekrar yapıldı{0}
+↺ Daha fazla tekrar gerekiyor
+✓ Yapıldı{0}
+Yalnızca bir kısmını okudum:
+Kaydet
+↗ Kaynağı aç
+Yarına ertele
+Şuraya taşı
+Taşı
+Otomatik sıraya dön
+Bu oturumun tekrar süresi:
+Boş = tekrar oranından. Bu oturumun tüm tekrarlarını etkiler.
+Bu oturumun notu: bir nokta veya soru…
+✎ Dersi düzenle
+Bu günün sınırı:
+Uygula
+Bu günü tatil yap
+Normal sınıra dön
+Birkaç günlük tatil, bu günden şuna kadar:
+Bu günleri tatil yap
+Bu tatili kaldır
+Bu güne öne al:
+ Oturum {0}
+ · {0} dk · şu an {1}
+Bu günün günlük görünümü
+⇪ Bu günü dışa aktar
++ Bu günden itibaren ekle
+klasör
+Gün
+Hafta
+Ay
+Yarın
+Öbür gün
+Telefonda okumak için dışa aktar
+Gün:
+Hafta ve ay için: bu günü içeren hafta veya ay.
+İçerikle birlikte (notlar, PDF sayfaları)
+İçerikli haftalık ve aylık dışa aktarımlar büyük olabilir.
+Oluşturuluyor…
+Dışa aktarımı oluştur
+✓ Dışa aktarım kaydedildi
+Boyut: {0} KB
+Paylaş penceresi açılmadı; dosya {0} içinde gösteriliyor.
+Paylaş… (Telegram ve diğer uygulamalar)
+{0} içinde göster (Telegram'a sürüklemek için)
+Dosyayı aç
+Bu tarayıcı dosya paylaşamıyor. Dosyayı {0} üzerinden Telegram'a sürükleyin.
+{0} gün
+Bir sorun oluştu.
+{0} sa {1} dk
+{0} sa
+Yıl
+Temizle
+Geçersiz tarih.
+Okunmadı
+Kısmen okundu
+Tekrarda
+Bitti
+{0} düzenle
+Yeni {0}
+ {0} tarihinden
+Kategorisiz
+,
+{0}  (kasa içinde)
+Düzey {0}: {1} {2}
+bölüm
+Okunmamış oturumlar {0} bölümle değiştirildi.
+{0} oturum oluşturulacak.
+Bu notun başlıkları var. Her başlık bir oturum olabilir.
+Bu PDF'nin içindekiler tablosu var. Her bölüm bir oturum olabilir.
+Dosyadan oturum oluştur
+{0} "{1}" sonrası
+tekrarların bitişi
+Okuma bitişi
+Sil
+Şablondan…
+Kayıtlı şablon yok
+Şablon adı:
+"{0}" şablonu kaydedildi.
+Dosya kaynağı için önce Browse'a basıp dosyayı seçin.
+Bu dersin tüm oturumları okunmamışa döner ve ders sıranın sonuna gider. Geçmiş kalır. Devam edilsin mi?
+"{0}" dersinin tüm tekrarları silinsin mi? Bundan sonra oturumlar okunmakla biter, yapılanların geçmişi kalır.
+"{0}" tüm oturumları ve geçmişiyle silinsin mi? Bilgisayardaki kaynak dosya etkilenmez. Bu geri alınamaz.
+Markdown dosyasında başlık bulunamadı.
+örn. Bölüm 1
+ (kutu {0})
+ ({0} dk)
+Bu oturumun tekrar süresi. Boş = tekrar oranından
+Not…
+Uygulama kapatılsın mı?
+Uygulama kapatıldı. Bu sayfayı kapatabilirsiniz.
+Geri alındı: {0}
+Yinelendi: {0}
+Bugün: {0} {1}
+Kasa yolu: {0}\nDeğiştirmek için tıklayın
+Obsidian kasası klasörünü seç
+"{0}" geri al · {1} adım kullanılabilir
+Geri alınacak bir şey yok
+"{0}" yinele · {1} adım geride
+Yinelenecek bir şey yok
+Varsayılan
+ Tatil
+%{0}
+Her tekrar o oturumun okuma süresinin %{0} kadarıdır, yukarı yuvarlanır.
+Örnek: 60 dakikalık oturum → her tekrar {0} dk. {1} tekrarla bu oturumun toplam süresi:
+60 + {0} × {1} = {2} dakika.
+Yani uzun vadede {0} dakikalık günlük sınırın yaklaşık {1} dakikası yeni konuya, kalanı tekrara gider.
+Özel oranı olan dersler kendi oranını kullanır. Tek bir oturumun tekrar süresi de elle ayarlanabilir.
+{0} ay
+Son tekrar {0}. günde; önce onu öne alın
+Tekrar {0}
+{1} sonrasında {0} gün
+ (okumadan sonra {0}. gün)
+Tekrar {0} sil
+Standart
+Yoğun (sınav yakın)
+Klasik Leitner
+Uzun vadeli
+Hafif (az tekrar)
+Henüz kaynak eklenmedi.
+Henüz şablon yok.
+Bu bilgisayarda bulut klasörü bulunamadı. OneDrive, Google Drive, Dropbox veya iCloud kurun ya da Browse ile bir klasör seçin.
+Son kopya: {0} · {1} kopya
+Yedek bulut klasörüne kopyalandı.
+Son yedek zaten bulut klasöründe.
+ (geri yüklemeden önceki kopya)
+ ☁ bulut klasörü
+{0} KB
+Veriler {0} sürümüne dönsün mü? Mevcut durumun bir kopyası saklanır.
+Yedek geri yüklendi.
+Geri yükle
+Henüz yedek yok.
+Kayıtlı hata yok.
+Veri dosyası oluşturuldu: {0}
+Mevcut veriler dosyadaki verilerle değiştirilecek. Mevcut durumun bir kopyası saklanır. Devam edilsin mi?
+Veriler içe aktarıldı.
+Ders gibi, tekrarlı
+Rutin gibi, tekrarsız
+"{0}" türü silinsin mi? Görevleri kalır ve normal ders veya rutin olur.
+Henüz kendi türünüz yok. "+" menüsünden oluşturun.
+Vazirmatn
+Farsça, uygulamayla birlikte gelir
+Eklendi
+{0} — örnek metin
+"{0}" yazı tipi eklendi. Kullanmak için "Kaydet"e basın.
+Ayarlar kaydedildi ve plan yeniden düzenlendi.
+Tümü
+Okunuyor
+Okundu
+Arşiv
+Bekleyen iş: {0}
+Okuma ve tekrar renkleri, miktarlarının oranında
+Okuma {0} · Tekrar {1}
+Her şeyin beklenen bitişi: {0}
+Önümüzdeki 30 gün, günlük ortalama: {0} dk tekrar ve {1} dk yeni konu
+{0}: bitti ✓
+{0}: tam hedefte
+{0}: hedeften {1} gün {2}
+önce
+sonra
+Çift tıklama: yeniden adlandır · Sürükleme: taşı
+Kategoriyi sil
+"{0}" kategorisi silinsin mi? Dersleri kategorisiz kalır.
+Yeni kategori
+Kategori adı
+Bu filtreye uyan ders yok.
+Henüz bir şey eklenmedi. "+" düğmesiyle başlayın.
+{0} %{1}
+İlerleme
+Tekrar {0} / {1}
+Etkin değil: takvimde yok
+Bitiş
+Tekrar bitişi: {0}
+🔒 Bekliyor
+✓ Şundan sonra
+Bu oturumlar belirli bir günde sabit, sıra önceliği onları etkilemez
+📌 {0} oturum elle taşındı
+Bu dersin tüm elle taşımalarını kaldır
+Hedef: {0}
+Taşımak için sürükleyin
+Etkin / etkin değil
+Kaynağı aç
+Düzenle
+Arşivden çıkar
+Oturum {0}: {1}
+"{1}" dersinin {0} oturumunun elle taşınması yeni önceliğe uysun diye kaldırıldı.
+{0} - {1} haftası
+Gelecek haftanın planı
+Gelecek ayın planı
+{0} tarihinden bugüne
+Kalan iş
+{0}: {1} / {2}
+/ {0}
+Düzenlilik
+İş miktarı
+Zamanında tekrar
+Rapor kaydedildi: {0}
+⇪ Raporu dışa aktar
+Çalışma süresi
+Yapılan görev
+Etkin gün
+Bu dönemde kayıt yok.
+Gecikmiş: {0}
+Gecikmiş iş yok.
+Son 12 {0} çalışma süresi
+Son bir yılın etkinlik haritası
+Çalışma yok
+Az
+Çok
+%{0} · {1} ders
+İlk görev kaydedildikten sonra grafik burada görünür.
+Tablo olarak göster
+Kategoriye göre okuma ilerlemesi
+{0} sürümüne güncelle
+Yeni sürüm: {0}
+Bu sürüm için açıklama yazılmadı.
+Dosya boyutu: {0} MB
+%{0} · {1} / {2} MB
+İndirilemedi: {0}
+{0} sürümündeki yenilikler
+Bugünün yedeği bozuktu ve kaydedilmedi: {0}
+Bugünün yedeği bulut klasörüne kopyalanmadı: {0}
+Beklenmeyen bir hata oluştu. Ayrıntılar Ayarlar'daki "Hata günlüğü"nde.
+Bulunamadı.
+Bilinmeyen alan: {0}
+{0}, {1} ile {2} arasında olmalı.
+Bilinmeyen ayar: {0}
+Varsayılan sınır
+Sınırın izin verilen aşımı
+Yedek sayısı
+Renk #rrggbb biçiminde olmalı.
+Klasör bulunamadı: {0}
+Bu veritabanı dosyası bozuk.
+Bu bir Dibacheh veritabanı dosyası değil.
+Bu dosya uygulamanın daha yeni bir sürümüyle yapılmış.
+{0} sayı olmalı.
+Tekrar oranı sıfırdan büyük olmalı.
+Leitner aralıkları 1 ile 20 sayı arasında olmalı.
+Leitner aralığı
+Hafta günü sınırı geçersiz.
+Hafta günü sınırı
+Varsayılan oturum süresi
+Varsayılan hız
+Tekrar süresi sınırı
+Geçersiz görüntü modu.
+Geçersiz yazı tipi adı.
+Geçersiz dil.
+Geçersiz takvim.
+Haftanın ilk günü cumartesi, pazar veya pazartesi olmalı.
+Geçersiz renkler.
+Geçersiz renk modu.
+Geçersiz şablon listesi.
+Geçersiz yazı tipi listesi.
+Bu geçerli bir veritabanı dosyası değil.
+Geçersiz tekrar oranı. Örnek: 1/3 veya 0.5
+Hafta günü
+Tatil günü
+Şablon adı 1 ile 60 karakter arasında olmalı.
+Geçersiz şablon türü.
+10 günlük yoğun ders
+Bir aylık ders
+Üç aylık ders
+Günlük rutin
+Haftada üç günlük rutin
+Kısa proje
+Uzun proje
+Oluşturulma: {0}.
+Günlük plan
+Haftalık plan
+Aylık plan
+Bu sayfadaki işaretler yalnızca sizin içindir, uygulamaya geri dönmez.
+Video
+Dosya
+Günlük plan {0}.html
+Haftalık plan {0}.html
+Aylık plan {0}.html
+{0}: {1} - {2}
+Önümüzdeki günlerin planı tahmindir ve her değişiklikle değişir.
+Haftalık rapor: {0} - {1}
+Aylık rapor: {0} {1}
+{0} tarihine kadar genel rapor
+Haftalık rapor {0}
+Aylık rapor {0}
+Genel rapor {0}
+Bağlantı:
+Kaynak bulunamadı (taşınmış olabilir).
+Bu oturumun sayfa aralığı belirtilmedi.
+{0} görev
+İş yok.
+Toplam: {0} dk
+Kaynak okunamadı: {0}
+Sayfa {0}
+{0}: {1} dk.
+Derse göre (dakika)
+Kayıt yok.
+Yok.
+{1} günde {0} görev, toplam {2} dakika: okuma {3}, tekrar {4}, rutin {5}.
+Özet
+Puan: {0} / {1} ({2})
+Farvardin
+Ordibehesht
+Khordad
+Tir
+Mordad
+Shahrivar
+Mehr
+Aban
+Azar
+Dey
+Bahman
+Esfand
+Pazartesi
+Salı
+Çarşamba
+Perşembe
+Cuma
+Cumartesi
+Pazar
+Ocak
+Şubat
+Mart
+Nisan
+Mayıs
+Haziran
+Temmuz
+Ağustos
+Eylül
+Ekim
+Kasım
+Aralık
+Dosya seçmek için zenity veya kdialog paketini kurun.
+Mükemmel
+Çok iyi
+İyi
+Kabul edilebilir
+Daha fazla çaba gerekiyor
+Geçersiz tarih aralığı.
+Geri alınacak bir şey yok.
+Yinelenecek bir şey yok.
+Dibacheh veri dosyasını seçin (zip)
+Geçersiz dosya adı.
+Dışa aktarım dosyası bulunamadı.
+Geçersiz dışa aktarım türü.
+Geçersiz rapor dönemi.
+Bulut klasörü seçilmedi.
+Kopyalanmadı: {0}
+Kaynak dosyayı seçin
+Yazı tipi dosyası seçin (ttf, otf, woff veya woff2)
+Bir klasör seçin
+Obsidian kasası klasörünü seçin
+Kategori adı boş.
+Geçersiz kategori sırası.
+Tür adı 1 ile 40 karakter arasında olmalı.
+Geçersiz tür davranışı.
+Aralık bir yıldan uzun olamaz.
+Günlük sınır negatif olamaz.
+Günlük sınır sayı olmalı.
+İndirilecek yeni sürüm yok.
+İndirilen dosya bulunamadı.
+Plan {0} gün içinde bitmedi. Günlük sınırlar çok düşük ya da tüm günler tatil olabilir.
+Bu yedek bulunamadı.
+Bu bir yazı tipi dosyası değil. Yalnızca ttf, otf, woff ve woff2.
+Bu zip dosyası geçersiz.
+Bu yazı tipinin adı okunamadı.
+Bu dosyada Dibacheh verisi yok.
+Oturum süresi
+Geçersiz bağımlılıklar.
+Ders başlığı boş.
+Bu görevin tekrarı yok.
+Yalnızca biten ders arşivlenebilir.
+Hiç ders yazılmadı.
+Geçersiz sıra.
+Geçersiz görev türü.
+Geçersiz görev biçimi.
+Geçersiz bölüm türü.
+Geçersiz kaynak türü.
+Bağlantılar http:// veya https:// ile başlamalı.
+Geçersiz ders aralığı.
+Ön koşul başka bir ders olmalı.
+Geçersiz bağımlılık türü.
+Bu bağımlılık döngü oluşturur: iki ders birbirini bekler.
+Görev türü bulunamadı.
+Satır {0}: başlıktan sonra yalnızca oturum sayısı ve süre gelebilir.
+{0} en az 1 olmalı.
+Görevler geçmiş günlere taşınamaz.
+Bu görev geçmişte bulunamadı.
+Önce bu oturumun sonraki görevini yapılmadı olarak işaretleyin.
+Bu ders bu görevden sonra okunmamışa döndürüldü.
+Bu oturum okundu.
+Bu rutin zaten kaydedildi.
+Tekrar, oturumun okunduğu günden sonra olmalı.
+Bu oturum zaten okundu.
+Okunan dakika
+Geçersiz sonuç.
+Bu oturumun bekleyen tekrarı yok.
+Geçersiz indirme adresi.
+İndirilen dosyanın boyutu yanlış.
+Obsidian kasası yolu Ayarlar'da belirtilmedi.
+Dosya bulunamadı. Adı değişmiş veya taşınmış olabilir. Yeniden Browse kullanın.
+Bu görevin açılacak kaynağı yok.
+{0} - {1}
+Geçersiz bağlantı.
+Sayfa {0} - {1}
+"{0}" - "{1}"
+Bazı oturumların aralığı boş veya geçersiz.
+Oturum {0}: bitiş başlangıçtan önce.
+{0} ve {1}. oturumlar arasında boşluk var.
+İlk oturum ders aralığının başından başlamıyor.
+Son oturum ders aralığının sonuna ulaşmıyor.
+{0} ve {1}. oturumlar çakışıyor.
+Samim
+Shabnam
+Sahel
+Estedad
+Parastoo
+Gandom
+Tanha
+Ders ekleme
+Ders düzenleme
+Bölmeyi değiştirme
+Dersi sıfırlama
+Sırada taşıma
+Dersi otomatik sıraya döndürme
+Dersin tekrarlarını silme
+Dersin tekrarlarını geri getirme
+Oturum düzenleme
+Görev taşıma
+Günlük sınırı değiştirme
+Yapılan görevi kaydetme
+Görevi yapılmadı işaretleme
+Birkaç günlük tatil
+Dersi arşivleme
+Toplu ekleme
+Veri içe aktarma
+Kategori ekleme
+Kategori adlandırma
+Kategorileri taşıma
+Görev türü oluşturma
+Görev türü düzenleme
+Görev türü silme
+Yazı tipi ekleme
+Yazı tipi silme
+Ayarları değiştirme
+Geçersiz istek.
+okumanın bitişi
