@@ -4,7 +4,7 @@ import { renderCalendar } from "./calendar.js";
 import { $, el, fa, showMessage, state } from "./core.js";
 import { editing, renderSessions } from "./item-dialog.js";
 import { applyScale } from "./layout.js";
-import { renderAddButtons, renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./sources.js";
+import { renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./sources.js";
 
 // ---------------------------------------------------------------------------
 // کشیدن صفحه
@@ -26,9 +26,8 @@ export function renderNow() {
   applyScale();
   // رنگ کارها در تقویم، از تنظیمات
   const colors = state.settings.colors || {};
-  for (const kind of ["read", "review", "routine"]) if (colors[kind]) root.setProperty(`--c-${kind}`, colors[kind]);
+  for (const kind of ["read", "review", "routine", "project", "once"]) if (colors[kind]) root.setProperty(`--c-${kind}`, colors[kind]);
   renderCustomFonts();
-  renderAddButtons();
   renderCategoryTabs();
   renderTabs();
   renderItems();

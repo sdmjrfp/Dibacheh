@@ -35,6 +35,8 @@ function openSettings() {
   sf.color_read.value = colors.read || "#e5484d";
   sf.color_review.value = colors.review || "#3b82f6";
   sf.color_routine.value = colors.routine || "#f5b400";
+  sf.color_project.value = colors.project || "#0d9488";
+  sf.color_once.value = colors.once || "#db2777";
   sf.color_mode.value = s.color_mode || "kind";
   updateColorMode();
   sf.theme.value = s.theme;
@@ -303,19 +305,27 @@ function updateColorMode() {
 for (const radio of sf.color_mode) radio.addEventListener("change", updateColorMode);
 
 function renderTemplateSettings() {
-  const templates = state.settings.item_templates || [];
-  $("#template-settings").replaceChildren(...templates.map((t, i) =>
+  const remove = async (template) => {
+    const settings = state.settings;
+    if (template.builtin) {
+      await api("PATCH", "/api/settings", { hidden_templates: [...settings.hidden_templates, template.id] });
+    } else {
+      await api("PATCH", "/api/settings", { item_templates: settings.item_templates.filter((_, i) => i !== template.index) });
+    }
+    renderTemplateSettings();
+  };
+  $("#template-settings").replaceChildren(...state.templates.map((template) =>
     el("li", {},
-      el("span", {}, t.name),
-      el("button", {
-        type: "button", class: "danger",
-        onclick: async () => {
-          await api("PATCH", "/api/settings", { item_templates: templates.filter((_, j) => j !== i) });
-          renderTemplateSettings();
-        },
-      }, "حذف"))));
-  if (!templates.length) $("#template-settings").append(el("li", { class: "muted small" }, "هنوز الگویی نیست."));
+      el("span", {}, template.name),
+      el("button", { type: "button", class: "danger", onclick: () => remove(template) }, "حذف"))));
+  if (!state.templates.length) $("#template-settings").append(el("li", { class: "muted small" }, "هنوز الگویی نیست."));
+  $("#templates-restore").hidden = !state.settings.hidden_templates.length;
 }
+
+$("#templates-restore").addEventListener("click", async () => {
+  await api("PATCH", "/api/settings", { hidden_templates: [] });
+  renderTemplateSettings();
+});
 
 async function renderBackups() {
   const backups = await (await fetch("/api/backups")).json();
@@ -459,7 +469,10 @@ function collectSettings() {
       max_new_sessions_per_day: Number(sf.default_max_new.value),
       category_id: sf.default_category.value ? Number(sf.default_category.value) : null,
     },
-    colors: { read: sf.color_read.value, review: sf.color_review.value, routine: sf.color_routine.value },
+    colors: {
+      read: sf.color_read.value, review: sf.color_review.value, routine: sf.color_routine.value,
+      project: sf.color_project.value, once: sf.color_once.value,
+    },
     color_mode: sf.color_mode.value,
     theme: sf.theme.value,
     font_size: Number(sf.font_size.value),

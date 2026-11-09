@@ -153,6 +153,24 @@ MIGRATIONS = [
 SOURCE_PALETTE = ["#e5484d", "#3b82f6", "#f5b400", "#10b981", "#8b5cf6", "#f97316",
                   "#ec4899", "#14b8a6", "#84cc16", "#6366f1", "#a16207", "#06b6d4"]
 
+# الگوهای آمادهٔ منوی «+». کاربر می‌تواند پنهانشان کند و از تنظیمات برگرداند.
+BUILTIN_TEMPLATES = [
+    {"id": "study-10", "kind": "study", "name": "درس فشردهٔ ۱۰ روزه",
+     "fields": {"session_count": 10, "session_minutes": 60, "max_new_sessions_per_day": 1, "review_intervals": [1, 3, 6]}},
+    {"id": "study-30", "kind": "study", "name": "درس یک‌ماهه",
+     "fields": {"session_count": 20, "session_minutes": 45, "max_new_sessions_per_day": 1, "review_intervals": [1, 3, 7, 14]}},
+    {"id": "study-90", "kind": "study", "name": "درس سه‌ماهه",
+     "fields": {"session_count": 40, "session_minutes": 45, "max_new_sessions_per_day": 1, "review_intervals": [1, 3, 7, 30]}},
+    {"id": "routine-daily", "kind": "routine", "name": "روتین روزانه",
+     "fields": {"session_count": 30, "session_minutes": 20}},
+    {"id": "routine-3", "kind": "routine", "name": "روتین سه روز در هفته",
+     "fields": {"session_count": 12, "session_minutes": 30, "routine_weekdays": [5, 0, 2]}},
+    {"id": "project-5", "kind": "project", "name": "پروژهٔ کوتاه",
+     "fields": {"session_count": 5, "session_minutes": 60, "max_new_sessions_per_day": 1}},
+    {"id": "project-20", "kind": "project", "name": "پروژهٔ بلند",
+     "fields": {"session_count": 20, "session_minutes": 90, "max_new_sessions_per_day": 1}},
+]
+
 # مقدار پیش‌فرض تنظیمات. فقط تنظیم‌هایی که کاربر عوض کند در جدول settings ذخیره می‌شوند.
 DEFAULT_SETTINGS = {
     "default_cap_minutes": 120,
@@ -175,13 +193,15 @@ DEFAULT_SETTINGS = {
     "backup_folder": "data/backups",
     "backup_retention": 30,
     # رنگ کارها در تقویم. پیش‌فرض: روتین زرد، مرور آبی، خواندن قرمز
-    "colors": {"read": "#e5484d", "review": "#3b82f6", "routine": "#f5b400"},
+    "colors": {"read": "#e5484d", "review": "#3b82f6", "routine": "#f5b400", "project": "#0d9488", "once": "#db2777"},
     # رنگ‌بندی تقویم: kind = بر اساس خواندن و مرور و روتین، source = بر اساس رنگ خود منبع
     "color_mode": "kind",
     # فونت‌هایی که کاربر اضافه کرده: [{"family": "...", "file": "..."}]؛ فایل‌ها در data/fonts
     "custom_fonts": [],
     # الگوهای درس: [{"name": "...", "fields": {...}}]
     "item_templates": [],
+    # شمارهٔ الگوهای آماده‌ای که کاربر حذف کرده
+    "hidden_templates": [],
 }
 
 FONTS_DIR = DATA_DIR / "fonts"
@@ -416,15 +436,24 @@ def clean_setting(key, value):
         if not isinstance(value, list):
             raise ValueError("فهرست الگوها نامعتبر است.")
         allowed = {"session_count", "session_minutes", "max_new_sessions_per_day", "review_ratio",
-                   "review_intervals", "section_unit", "category_id", "item_type", "custom_type_id", "color"}
+                   "review_intervals", "section_unit", "category_id", "item_type", "custom_type_id", "color",
+                   "routine_weekdays"}
         result = []
         for template in value:
             name = str(template.get("name", "")).strip()
             if not name or len(name) > 60:
                 raise ValueError("نام الگو باید بین 1 تا 60 حرف باشد.")
             fields = template.get("fields") or {}
-            result.append({"name": name, "fields": {k: v for k, v in fields.items() if k in allowed}})
+            kind = template.get("kind", "study")
+            if kind not in ("study", "routine", "project", "once"):
+                raise ValueError("نوع الگو نامعتبر است.")
+            result.append({"name": name, "kind": kind, "fields": {k: v for k, v in fields.items() if k in allowed}})
         return result
+    if key == "hidden_templates":
+        if not isinstance(value, list):
+            raise ValueError("فهرست الگوها نامعتبر است.")
+        known = {t["id"] for t in BUILTIN_TEMPLATES}
+        return sorted({str(v) for v in value} & known)
     if key == "custom_fonts":
         if not isinstance(value, list):
             raise ValueError("فهرست فونت‌ها نامعتبر است.")

@@ -1,4 +1,4 @@
-/* ستون منابع درسی: تب‌ها، فهرست درس‌ها، صف و نشانگر حجم کار. */
+/* ستون کارها و منابع: تب‌ها، فهرست درس‌ها، صف و نشانگر حجم کار. */
 
 import { $, api, el, fa, itemById, minutesText, render, renderPart, showMessage, state, typeOf } from "./core.js";
 import { openItemDialog } from "./item-dialog.js";
@@ -174,19 +174,6 @@ sortable($("#category-tabs"), {
   onDrop: (ids) => api("POST", "/api/categories/reorder", { ids: ids.filter(Boolean).map(Number) }),
 });
 
-// ---------------------------------------------------------------------------
-// دکمه‌های افزودن: درس، کار روتین، نوع‌های ساخت کاربر، و «+» برای نوع تازه
-// ---------------------------------------------------------------------------
-
-export function renderAddButtons() {
-  $("#custom-add-buttons").replaceChildren(...state.types.map((t) =>
-    el("button", {
-      class: "type-button", style: `--c:${t.color}`,
-      title: t.behavior === "study" ? "مثل درس، با مرور لایتنر" : "مثل کار روتین، بدون مرور",
-      onclick: () => openItemDialog(null, t.behavior, null, t),
-    }, `+ ${t.name}`)));
-}
-
 export function renderItems() {
   const list = $("#item-list");
   const visible = state.items.filter((item) =>
@@ -201,7 +188,7 @@ export function renderItems() {
       list.replaceChildren(...visible.map(itemCard));
     } else {
       list.replaceChildren(el("li", { class: "muted" }, state.items.length
-        ? "درسی با این فیلتر نیست." : "هنوز درسی اضافه نشده. با دکمهٔ «+ درس» شروع کنید."));
+        ? "درسی با این فیلتر نیست." : "هنوز چیزی اضافه نشده. با دکمهٔ «+» شروع کنید."));
     }
   });
 }
@@ -229,13 +216,15 @@ function itemCard(item) {
   if (category) meta.push(el("span", { class: "chip" }, category.name));
   if (custom) meta.push(el("span", { class: "chip typed", style: `--c:${custom.color}` }, custom.name));
   else if (item.item_type === "routine") meta.push(el("span", { class: "chip routine" }, "روتین"));
+  else if (item.variant === "project") meta.push(el("span", { class: "chip typed kind-project" }, "پروژه"));
+  else if (item.variant === "once") meta.push(el("span", { class: "chip typed kind-once" }, "کار یک‌باره"));
   meta.push(el("span", {}, `${fa(item.sessions.length)} جلسه`));
-  meta.push(el("span", {}, `خواندن ${fa(p.read_percent)}٪`));
+  meta.push(el("span", {}, `${item.variant === "study" ? "خواندن" : "پیشرفت"} ${fa(p.read_percent)}٪`));
   if (p.reviews_total) meta.push(el("span", {}, `مرور ${fa(p.reviews_done)} از ${fa(p.reviews_total)}`));
   if (!item.is_active) {
     meta.push(el("span", {}, "غیرفعال: روی تقویم نیست"));
   } else {
-    if (item.finish.read_end) meta.push(el("span", {}, `پایان خواندن: ${Jalali.formatShort(item.finish.read_end)}`));
+    if (item.finish.read_end) meta.push(el("span", {}, `${item.variant === "study" ? "پایان خواندن" : "پایان"}: ${Jalali.formatShort(item.finish.read_end)}`));
     if (item.finish.review_end) meta.push(el("span", {}, `پایان مرور: ${Jalali.format(item.finish.review_end)}`));
   }
   for (const req of item.requires) {

@@ -185,7 +185,7 @@ def test_templates_saved_in_settings(client):
     templates = [{"name": "کتاب", "fields": {"session_count": 10, "session_minutes": 60, "hack": 1}}]
     state = client.patch("/api/settings", json={"item_templates": templates}).get_json()
     assert state["settings"]["item_templates"] == [
-        {"name": "کتاب", "fields": {"session_count": 10, "session_minutes": 60}}]
+        {"name": "کتاب", "kind": "study", "fields": {"session_count": 10, "session_minutes": 60}}]
     assert client.patch("/api/settings", json={"item_templates": [{"name": ""}]}).status_code == 400
 
 

@@ -30,16 +30,12 @@
   <div id="message" class="message" hidden></div>
 
   <main class="layout">
-    <!-- ستون منابع درسی -->
+    <!-- ستون کارها و منابع -->
     <section class="panel sources">
       <div class="panel-head">
-        <h2>منابع درسی</h2>
+        <h2>کارها و منابع</h2>
         <span class="spacer"></span>
-        <button id="add-study" class="primary">+ درس</button>
-        <button id="add-routine">+ کار روتین</button>
-        <span id="custom-add-buttons" class="add-buttons"></span>
-        <button id="add-type" class="icon" title="ساختن نوع کار تازه (مثلاً پروژه یا تمرین)">+</button>
-        <button id="add-bulk" title="چند درس با هم">+ چند درس</button>
+        <button id="add-button" class="primary add-plus" title="افزودن درس، کار روتین، کار یک‌باره، پروژه…" aria-label="افزودن">+</button>
       </div>
 
       <!-- تب دسته‌ها: دوبار کلیک = تغییر نام، × = حذف، + = دستهٔ تازه، کشیدن = جابه‌جایی -->
@@ -57,7 +53,7 @@
 
     <!-- جداکننده: با کشیدن، پهنای دو ستون عوض می‌شود. دوبار کلیک = اندازهٔ پیش‌فرض -->
     <div id="splitter" class="splitter" role="separator" aria-orientation="vertical"
-         aria-label="تغییر پهنای منابع درسی و برنامه" tabindex="0"
+         aria-label="تغییر پهنای کارها و منابع و برنامه" tabindex="0"
          title="برای تغییر پهنا بکشید · دوبار کلیک: اندازهٔ پیش‌فرض"></div>
 
     <!-- ستون تقویم -->
@@ -92,6 +88,21 @@
     </section>
   </main>
 
+  <!-- منوی «+»: چه چیزی اضافه شود -->
+  <dialog id="add-dialog" class="dialog wide">
+    <div class="panel-head">
+      <h2>چه چیزی اضافه شود؟</h2>
+      <span class="spacer"></span>
+      <button type="button" id="close-add">بستن</button>
+    </div>
+    <div id="add-kinds" class="add-tiles"></div>
+    <div id="add-templates" hidden>
+      <h3>الگوی آماده</h3>
+      <div id="add-template-list" class="add-tiles"></div>
+      <p class="muted small">الگوها را از تنظیمات می‌شود حذف کرد. مقدارها بعد از انتخاب الگو هم قابل تغییرند.</p>
+    </div>
+  </dialog>
+
   <!-- پنجرهٔ افزودن و ویرایش درس -->
   <dialog id="item-dialog" class="dialog wide">
     <form id="item-form" method="dialog">
@@ -114,7 +125,11 @@
           <input type="checkbox" name="is_active" checked> فعال (روی تقویم)
         </label>
 
-        <fieldset class="span-2 split" data-when="create">
+        <label class="span-2" data-variant="once">روز انجام (خالی = اولین جای خالی برنامه)
+          <span class="jalali-input" data-name="once_date"></span>
+        </label>
+
+        <fieldset class="span-2 split" data-when="create" data-sessions>
           <legend>تقسیم‌بندی</legend>
           <label>تعداد جلسه <input name="session_count" type="number" min="1" value="1"></label>
           <label>زمان هر جلسه (دقیقه) <input name="session_minutes" type="number" min="1" value="60"></label>
@@ -131,10 +146,10 @@
         <label data-only="study">سرعت: حداکثر جلسهٔ جدید در روز
           <input name="max_new_sessions_per_day" type="number" min="1" value="1">
         </label>
-        <label data-only="study">نسبت مرور (خالی = تنظیم کلی)
+        <label data-only="study" data-reviews>نسبت مرور (خالی = تنظیم کلی)
           <input name="review_ratio" placeholder="1/3" autocomplete="off">
         </label>
-        <label data-only="study" class="span-2">فاصله‌های لایتنر اختصاصی، به روز (خالی = تنظیم کلی)
+        <label data-only="study" data-reviews class="span-2">فاصله‌های لایتنر اختصاصی، به روز (خالی = تنظیم کلی)
           <input name="review_intervals" placeholder="1، 3، 7، 30" autocomplete="off">
         </label>
 
@@ -245,7 +260,7 @@
   <dialog id="type-dialog" class="dialog">
     <form id="type-form" method="dialog">
       <h2>نوع کار تازه</h2>
-      <p class="muted small">مثلاً «پروژه»، «تمرین» یا «کتاب صوتی». بعد از ساختن، یک دکمهٔ «+» با همین نام کنار «+ درس» می‌آید.</p>
+      <p class="muted small">مثلاً «تمرین» یا «کتاب صوتی». بعد از ساختن، در منوی «+» هم می‌آید.</p>
       <label class="stack">نام <input name="name" required maxlength="40" autocomplete="off"></label>
       <fieldset>
         <legend>رفتار در برنامه</legend>
@@ -324,9 +339,12 @@
       </fieldset>
 
       <fieldset>
-        <legend>الگوهای درس</legend>
+        <legend>الگوها</legend>
         <ul id="template-settings" class="type-settings"></ul>
-        <p class="muted small">الگو را در پنجرهٔ درس جدید با «ذخیره به‌عنوان الگو» بسازید.</p>
+        <div class="pop-row">
+          <button type="button" id="templates-restore">برگرداندن الگوهای آماده</button>
+        </div>
+        <p class="muted small">الگوی تازه را در پنجرهٔ افزودن با «ذخیره به‌عنوان الگو» بسازید.</p>
       </fieldset>
 
       <fieldset>
@@ -337,6 +355,8 @@
           <label class="check"><input type="color" name="color_read"> خواندن</label>
           <label class="check"><input type="color" name="color_review"> مرور</label>
           <label class="check"><input type="color" name="color_routine"> روتین</label>
+          <label class="check"><input type="color" name="color_project"> پروژه</label>
+          <label class="check"><input type="color" name="color_once"> کار یک‌باره</label>
         </div>
         <ul id="source-colors" class="type-settings"></ul>
         <ul id="type-settings" class="type-settings"></ul>

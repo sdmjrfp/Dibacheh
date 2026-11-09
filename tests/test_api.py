@@ -231,3 +231,43 @@ def test_undoing_tick_of_item_without_reviews_does_not_leave_it_reviewing(client
     client.delete(f"/api/items/{item['id']}/reviews")
     state = client.post("/api/tasks/undone", json={"log_id": state["history"][-1]["id"]}).get_json()
     assert item_named(state, "A")["sessions"][0]["status"] == "unread"
+
+
+# ---------------------------------------------------------------------------
+# گونه‌های کار: پروژه و کار یک‌باره
+# ---------------------------------------------------------------------------
+
+def test_project_and_once_have_no_reviews(client):
+    state = add(client, "P", count=3, variant="project")
+    assert plan_kinds(state, item_named(state, "P")["id"]) == {"read"}
+    state = add(client, "O", count=1, variant="once")
+    assert item_named(state, "O")["no_reviews"] is True
+
+
+def test_once_task_goes_to_chosen_day(client):
+    state = client.get("/api/state").get_json()
+    from datetime import date, timedelta
+    day = (date.fromisoformat(state["today"]) + timedelta(days=5)).isoformat()
+    state = add(client, "O", count=1, variant="once", first_date=day)
+    days = [d["date"] for d in state["plan"]["days"] if d["tasks"]]
+    assert days == [day]
+
+
+def test_invalid_variant_is_rejected(client):
+    assert client.post("/api/items", json={"title": "X", "variant": "exam"}).status_code == 400
+
+
+def test_builtin_templates_are_listed_and_can_be_hidden(client):
+    state = client.get("/api/state").get_json()
+    ids = [t["id"] for t in state["templates"]]
+    assert {"study-10", "study-30", "study-90"} <= set(ids)
+    state = client.patch("/api/settings", json={"hidden_templates": ["study-10"]}).get_json()
+    assert "study-10" not in [t["id"] for t in state["templates"]]
+
+
+def test_own_template_keeps_kind_and_weekdays(client):
+    template = {"name": "T", "kind": "routine", "fields": {"session_count": 3, "routine_weekdays": [1, 2]}}
+    state = client.patch("/api/settings", json={"item_templates": [template]}).get_json()
+    own = next(t for t in state["templates"] if t["name"] == "T")
+    assert own["kind"] == "routine"
+    assert own["fields"]["routine_weekdays"] == [1, 2]

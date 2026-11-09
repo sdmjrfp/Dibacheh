@@ -55,7 +55,8 @@ def test_reorder_categories(client):
 
 def test_colors_setting(client):
     state = client.patch("/api/settings", json={"colors": {"read": "#FF0000"}}).get_json()
-    assert state["settings"]["colors"] == {"read": "#ff0000", "review": "#3b82f6", "routine": "#f5b400"}
+    assert state["settings"]["colors"] == {
+        "read": "#ff0000", "review": "#3b82f6", "routine": "#f5b400", "project": "#0d9488", "once": "#db2777"}
     assert client.patch("/api/settings", json={"colors": {"read": "red"}}).status_code == 400
 
 

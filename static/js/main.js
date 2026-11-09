@@ -1,5 +1,6 @@
 /* نقطهٔ شروع صفحه. */
 
+import "./add-menu.js";
 import "./calendar.js";
 import "./item-dialog.js";
 import "./layout.js";

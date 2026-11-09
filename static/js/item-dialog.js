@@ -30,13 +30,17 @@ const fields = form.elements;
 /** پنجرهٔ درس.
  *  firstDate: وقتی درس از روی یک روز تقویم اضافه می‌شود.
  *  customType: وقتی از دکمهٔ یکی از نوع‌های ساخت کاربر (مثلاً «+ پروژه») باز می‌شود. */
-export function openItemDialog(item, type = "study", firstDate = null, customType = null) {
+export function openItemDialog(item, type = "study", firstDate = null, customType = null, { variant = "study", template = null } = {}) {
   customType = customType || (item ? typeOf(item) : null);
-  editing = { id: item ? item.id : null, type: item ? item.item_type : type, firstDate, customType };
+  editing = {
+    id: item ? item.id : null, type: item ? item.item_type : type, firstDate, customType,
+    variant: item ? item.variant : variant,
+  };
   pickedSource = null;
   headingsCache = [];
   const isRoutine = editing.type === "routine";
-  const typeName = customType ? customType.name : (isRoutine ? "کار روتین" : "درس");
+  const variantName = { once: "کار یک‌باره", project: "پروژه" }[editing.variant];
+  const typeName = customType ? customType.name : (variantName || (isRoutine ? "کار روتین" : "درس"));
   $("#item-dialog-title").textContent = (item ? `ویرایش ${typeName}` : `${typeName} جدید`)
     + (!item && firstDate ? ` از ${Jalali.format(firstDate)}` : "");
 
@@ -46,6 +50,7 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
   fields.is_active.checked = item ? item.is_active : true;
   fields.color.value = item ? item.display_color : state.palette[state.items.length % state.palette.length];
   fields.session_count.value = isRoutine ? 10 : 1;
+  buildJalaliInput($('.jalali-input[data-name="once_date"]'), !item && editing.variant === "once" ? firstDate : null);
   fields.session_minutes.value = isRoutine ? 10 : (defaults.session_minutes || 60);
   fields.max_new_sessions_per_day.value = item ? item.max_new_sessions_per_day : (defaults.max_new_sessions_per_day || 1);
   fields.review_ratio.value = item && item.review_ratio ? item.review_ratio : "";
@@ -77,6 +82,7 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
   $("#outline-box").hidden = true;
   fields.session_count.disabled = false;
   updateDialogVisibility();
+  if (template) applyTemplate(template);
   if (item && ["vault", "file"].includes(item.source_type)) {
     fetch(`/api/items/${item.id}/outline`).then((r) => r.json()).then((r) => {
       if (editing && editing.id === item.id) showOutline(r.outline);
@@ -98,9 +104,11 @@ function updateDialogVisibility() {
   $$("[data-unit]", form).forEach((n) => { n.hidden = !n.dataset.unit.split(" ").includes(unit); });
   // کاری که مرور ندارد (پروژه، کار یک‌باره، یا درسی که مرورهایش حذف شده)
   const current = editing.id ? itemById(editing.id) : null;
-  const noReviews = Boolean(current && current.no_reviews);
+  const noReviews = editing.variant !== "study" || Boolean(current && current.no_reviews);
+  $$("[data-variant]", form).forEach((n) => { n.hidden = n.dataset.variant !== editing.variant || Boolean(current); });
+  $$("[data-sessions]", form).forEach((n) => { n.hidden = n.hidden || editing.variant === "once"; });
   $$("[data-reviews]", form).forEach((n) => { n.hidden = n.hidden || noReviews; });
-  const canHaveReviews = Boolean(current) && editing.type === "study" && current.variant === "study";
+  const canHaveReviews = Boolean(current) && editing.type === "study" && editing.variant === "study";
   $("#remove-reviews").hidden = !canHaveReviews || noReviews;
   $("#restore-reviews").hidden = !canHaveReviews || !noReviews;
   const source = fields.source_type.value;
@@ -190,15 +198,19 @@ $("#requires-add").addEventListener("click", () => {
 
 // ---------- الگوها
 
-function renderTemplateSelect() {
-  const templates = state.settings.item_templates || [];
-  $("#template-select").replaceChildren(el("option", { value: "" }, templates.length ? "از روی الگو…" : "الگویی ذخیره نشده"),
-    ...templates.map((t, i) => el("option", { value: i }, t.name)));
+/** نوع فعلی پنجره به زبان الگوها */
+function templateKind() {
+  if (editing.variant !== "study") return editing.variant;
+  return editing.type === "routine" ? "routine" : "study";
 }
 
-$("#template-select").addEventListener("change", (e) => {
-  const template = (state.settings.item_templates || [])[Number(e.target.value)];
-  if (!template || e.target.value === "") return;
+function renderTemplateSelect() {
+  const templates = state.templates.filter((t) => t.kind === templateKind());
+  $("#template-select").replaceChildren(el("option", { value: "" }, templates.length ? "از روی الگو…" : "الگویی ذخیره نشده"),
+    ...templates.map((t) => el("option", { value: t.id }, t.name)));
+}
+
+function applyTemplate(template) {
   const f = template.fields;
   if (f.session_count) fields.session_count.value = f.session_count;
   if (f.session_minutes) fields.session_minutes.value = f.session_minutes;
@@ -208,7 +220,14 @@ $("#template-select").addEventListener("change", (e) => {
   fields.section_unit.value = f.section_unit || "text";
   if (f.category_id !== undefined) fields.category_id.value = f.category_id || "";
   if (f.color) fields.color.value = f.color;
+  const weekdays = f.routine_weekdays || [];
+  $$("#routine-weekdays input").forEach((box) => { box.checked = weekdays.includes(Number(box.value)); });
   updateDialogVisibility();
+}
+
+$("#template-select").addEventListener("change", (e) => {
+  const template = state.templates.find((t) => t.id === e.target.value);
+  if (template) applyTemplate(template);
 });
 
 $("#template-save").addEventListener("click", async () => {
@@ -217,6 +236,7 @@ $("#template-save").addEventListener("click", async () => {
   const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
   const template = {
     name: name.trim(),
+    kind: templateKind(),
     fields: {
       session_count: Number(fields.session_count.value),
       session_minutes: Number(fields.session_minutes.value),
@@ -225,6 +245,7 @@ $("#template-save").addEventListener("click", async () => {
       review_intervals: intervals,
       section_unit: fields.section_unit.value,
       category_id: fields.category_id.value ? Number(fields.category_id.value) : null,
+      routine_weekdays: $$("#routine-weekdays input:checked").map((x) => Number(x.value)),
     },
   };
   await api("PATCH", "/api/settings", { item_templates: [...(state.settings.item_templates || []), template] });
@@ -244,6 +265,7 @@ function collectForm() {
     range_start: fields.range_start.value,
     range_end: fields.range_end.value,
   };
+  if (!editing.id) data.variant = editing.variant;
   if (editing.type === "study") {
     data.max_new_sessions_per_day = Number(fields.max_new_sessions_per_day.value);
     data.review_ratio = fields.review_ratio.value.trim();
@@ -268,9 +290,10 @@ function collectForm() {
     throw new Error("برای منبع فایل، اول Browse کنید و فایل را انتخاب کنید.");
   }
   if (!editing.id) {
-    data.session_count = Number(fields.session_count.value);
+    data.session_count = editing.variant === "once" ? 1 : Number(fields.session_count.value);
     data.session_minutes = Number(fields.session_minutes.value);
     if (editing.firstDate) data.first_date = editing.firstDate;
+    if (editing.variant === "once") data.first_date = readJalaliInput($('.jalali-input[data-name="once_date"]'));
     if (editing.customType) data.custom_type_id = editing.customType.id;
     if (editing.sections) data.sections = editing.sections;
   }
@@ -397,10 +420,10 @@ export function renderSessions(force = false) {
 }
 
 // ---------------------------------------------------------------------------
-// نوع کار تازه (دکمهٔ «+» کنار «+ درس» و «+ کار روتین»)
+// نوع کار تازه (از منوی «+»)
 // ---------------------------------------------------------------------------
 
-function openTypeDialog() {
+export function openTypeDialog() {
   const f = $("#type-form").elements;
   f.name.value = "";
   f.behavior.value = "study";
@@ -418,8 +441,6 @@ $("#type-form").addEventListener("submit", async (e) => {
 
 $("#close-type").addEventListener("click", () => $("#type-dialog").close());
 
-$("#add-type").addEventListener("click", openTypeDialog);
-
 $("#quit-button").addEventListener("click", async () => {
   if (!confirm("برنامه بسته شود؟")) return;
   await api("POST", "/api/quit", {});
@@ -430,14 +451,14 @@ $("#quit-button").addEventListener("click", async () => {
 // افزودن گروهی و جست‌وجو
 // ---------------------------------------------------------------------------
 
-$("#add-bulk").addEventListener("click", () => {
+export function openBulkDialog() {
   const f = $("#bulk-form").elements;
   f.text.value = "";
   f.category_id.replaceChildren(...categoryOptions("", "بدون دسته"));
   f.custom_type_id.replaceChildren(el("option", { value: "" }, "درس"),
     ...state.types.map((t) => el("option", { value: t.id }, t.name)));
   $("#bulk-dialog").showModal();
-});
+}
 
 $("#bulk-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -451,13 +472,3 @@ $("#bulk-form").addEventListener("submit", async (e) => {
 });
 
 $("#close-bulk").addEventListener("click", () => $("#bulk-dialog").close());
-
-
-
-// ---------------------------------------------------------------------------
-// شروع
-// ---------------------------------------------------------------------------
-
-$("#add-study").addEventListener("click", () => openItemDialog(null, "study"));
-
-$("#add-routine").addEventListener("click", () => openItemDialog(null, "routine"));

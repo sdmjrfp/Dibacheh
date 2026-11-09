@@ -88,6 +88,7 @@ def state_data(conn, now, extras):
         "items": items,
         "categories": database.list_categories(conn),
         "types": database.list_types(conn),
+        "templates": templates(settings),
         "palette": database.SOURCE_PALETTE,
         "system": platform_tools.system(),
         "bundled_fonts": sources.BUNDLED_FONTS,
@@ -98,6 +99,15 @@ def state_data(conn, now, extras):
         "day_overrides": inputs["day_overrides"],
         **extras,
     }
+
+
+def templates(settings):
+    """الگوهای منوی «+»: الگوهای آمادهٔ حذف‌نشده و الگوهای خود کاربر."""
+    hidden = set(settings["hidden_templates"])
+    builtin = [{**t, "builtin": True} for t in database.BUILTIN_TEMPLATES if t["id"] not in hidden]
+    own = [{"id": f"own-{i}", "index": i, "kind": t.get("kind", "study"), "name": t["name"], "fields": t["fields"], "builtin": False}
+           for i, t in enumerate(settings["item_templates"])]
+    return builtin + own
 
 
 def waiting_for(item, items, sessions_by_item):

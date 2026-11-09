@@ -1,3 +1,4 @@
+import { openAddMenu } from "./add-menu.js";
 import { $, $$, api, buildJalaliInput, el, fa, getPref, minutesText, readJalaliInput, renderPart, setPref, showMessage, state, typeOf } from "./core.js";
 import { openItemDialog } from "./item-dialog.js";
 import { Motion, dragGhost } from "./motion.js";
@@ -555,7 +556,7 @@ function openTaskMenu(task, iso, anchor) {
       content.push(el("button", { onclick: () => moveTask(task, null) }, "برگشت به چینش خودکار"));
     }
   }
-  if (item.item_type === "study") {
+  if (item.item_type === "study" && !item.no_reviews) {
     const input = el("input", {
       type: "number", min: 1, class: "num",
       value: session.review_minutes_override || "", placeholder: "خودکار",
@@ -630,9 +631,7 @@ function openDayMenu(iso, day, anchor) {
     }, "نمای روزانهٔ این روز"));
   }
   content.push(el("button", { onclick: () => openExportMenu(anchor, "day", iso) }, "⇪ خروجی این روز"));
-  content.push(el("div", { class: "pop-row" },
-    el("button", { onclick: () => { closePopover(); openItemDialog(null, "study", iso); } }, "+ درس جدید از این روز"),
-    el("button", { onclick: () => { closePopover(); openItemDialog(null, "routine", iso); } }, "+ کار روتین از این روز")));
+  content.push(el("button", { onclick: () => { closePopover(); openAddMenu(iso); } }, "+ افزودن از این روز"));
   openPopover(anchor, ...content);
 }
 

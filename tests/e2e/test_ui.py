@@ -22,7 +22,9 @@ def test_no_request_leaves_this_computer(browser, server):
 
 def test_add_course_from_dialog(app):
     page = app.page
-    page.click("#add-study")
+    page.click("#add-button")
+    page.click('[data-add="study"]')
+    page.click("#add-no-template")
     page.fill('#item-form [name="title"]', "الگوریتم")
     page.fill('#item-form [name="session_count"]', "3")
     page.click("#save-item")
@@ -33,11 +35,13 @@ def test_add_course_from_dialog(app):
 
 def test_add_routine_and_custom_type(app):
     page = app.page
-    page.click("#add-type")
+    page.click("#add-button")
+    page.click('[data-add="type"]')
     page.fill('#type-form [name="name"]', "پروژه")
     page.click('#type-form button[type="submit"]')
     app.settle()
-    page.click(".type-button")
+    page.click("#add-button")
+    page.click(".add-tile.typed")
     assert "پروژه" in page.inner_text("#item-dialog-title")
     page.fill('#item-form [name="title"]', "سایت")
     page.click("#save-item")
@@ -114,7 +118,9 @@ def test_tick_then_mark_not_done(app):
 
 def test_undo_and_redo_with_counters(app):
     page = app.page
-    page.click("#add-study")
+    page.click("#add-button")
+    page.click('[data-add="study"]')
+    page.click("#add-no-template")
     page.fill('#item-form [name="title"]', "الف")
     page.click("#save-item")
     app.settle()
@@ -202,7 +208,8 @@ def test_note_shows_on_task_and_search_finds_it(app):
 
 def test_bulk_add(app):
     page = app.page
-    page.click("#add-bulk")
+    page.click("#add-button")
+    page.click('[data-add="bulk"]')
     page.fill('#bulk-form [name="text"]', "آمار، ۲، ۳۰\nتاریخ")
     page.click('#bulk-form button[type="submit"]')
     app.settle()
@@ -222,12 +229,14 @@ def test_dependency_from_dialog(app):
 
 def test_template_save_and_use(app):
     page = app.page
-    page.click("#add-study")
+    page.click("#add-button")
+    page.click('[data-add="study"]')
+    page.click("#add-no-template")
     page.fill('#item-form [name="session_count"]', "7")
     page.click("#template-save")
     app.settle()
     page.fill('#item-form [name="session_count"]', "1")
-    page.select_option("#template-select", index=1)
+    page.select_option("#template-select", label="الگوی آزمایشی")
     assert page.input_value('#item-form [name="session_count"]') == "7"
     page.click("#close-item")
 
@@ -455,7 +464,10 @@ def test_layout_modes(app):
 
 def test_ui_scale_auto_by_window_width_and_manual(app):
     page = app.page
-    size = lambda: page.evaluate("parseFloat(getComputedStyle(document.documentElement).fontSize)")
+
+    def size():
+        return page.evaluate("parseFloat(getComputedStyle(document.documentElement).fontSize)")
+
     page.set_viewport_size({"width": 2400, "height": 1200})
     page.wait_for_timeout(100)
     assert size() == 16
@@ -465,3 +477,76 @@ def test_ui_scale_auto_by_window_width_and_manual(app):
     app.call("PATCH", "/api/settings", {"ui_scale": 150})
     app.reload()
     assert size() == 24
+
+
+def test_add_menu_replaces_the_add_buttons(app):
+    page = app.page
+    assert page.inner_text(".sources h2") == "کارها و منابع"
+    assert page.locator(".sources .panel-head button").count() == 1
+    page.click("#add-button")
+    labels = page.locator("#add-kinds .add-tile strong").all_inner_texts()
+    assert labels == ["درس", "کار روتین", "کار یک‌باره", "پروژه", "چند درس با هم", "نوع تازه"]
+
+
+def test_study_template_fills_the_form(app):
+    page = app.page
+    page.click("#add-button")
+    page.click('[data-add="study"]')
+    page.click('[data-template="study-10"]')
+    fields = page.locator("#item-form")
+    assert fields.locator('[name="session_count"]').input_value() == "10"
+    assert fields.locator('[name="review_intervals"]').input_value() == "1، 3، 6"
+    page.fill('#item-form [name="title"]', "فشرده")
+    page.click("#save-item")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert state["items"][0]["review_intervals"] == [1, 3, 6]
+    assert len(state["items"][0]["sessions"]) == 10
+
+
+def test_once_task_on_chosen_day_has_no_reviews(app):
+    page = app.page
+    page.click("#add-button")
+    page.click('[data-add="once"]')
+    assert page.is_hidden("#item-form [data-sessions]")
+    assert page.is_hidden('#item-form [name="review_ratio"]')
+    page.fill('#item-form [name="title"]', "ثبت‌نام")
+    page.click("#save-item")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    item = state["items"][0]
+    assert (item["variant"], item["no_reviews"], len(item["sessions"])) == ("once", True, 1)
+    assert page.locator(".task.kind-once").count() == 1
+    assert "کار یک‌باره" in page.inner_text(".task.kind-once")
+    page.click(".task.kind-once .tick")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert state["items"][0]["status_list"] == "finished"
+    assert not [t for d in state["plan"]["days"] for t in d["tasks"]]
+
+
+def test_project_runs_sessions_without_reviews_and_has_own_filter(app):
+    page = app.page
+    page.click("#add-button")
+    page.click('[data-add="project"]')
+    page.click('[data-template="project-5"]')
+    page.fill('#item-form [name="title"]', "پایان‌نامه")
+    page.click("#save-item")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    tasks = [t for d in state["plan"]["days"] for t in d["tasks"]]
+    assert len(tasks) == 5 and {t["kind"] for t in tasks} == {"read"}
+    assert page.is_visible(".legend-toggle.kind-project")
+
+
+def test_templates_can_be_deleted_and_restored(app):
+    page = app.page
+    page.click("#settings-button")
+    page.locator("#template-settings li", has_text="درس سه‌ماهه").locator("button").click()
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert "study-90" not in [t["id"] for t in state["templates"]]
+    page.click("#templates-restore")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert "study-90" in [t["id"] for t in state["templates"]]
