@@ -305,7 +305,7 @@ def test_past_week_ignores_current_overdue(client):
     state = add(client, "A", count=2)
     today = date.fromisoformat(state["today"])
     summary = client.get(f"/api/stats?period=week&date={(today - timedelta(days=21)).isoformat()}").get_json()["summary"]
-    assert summary["score"] is None or summary["score"]["on_time"] == 20
+    assert summary["score"] is None or summary["score"]["total"] == 0   # هفتهٔ گذشتهٔ خالی: نمرهٔ بی‌دلیل نمی‌گیرد
 
 
 # ---------------------------------------------------------------------------
