@@ -629,7 +629,7 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
 - جدول‌های تازه: `item_types`، `item_dependencies`
 - تنظیمات تازه: `backup_folder`، `colors`، `color_mode`، `custom_fonts`، `item_templates`
 
-### نسخهٔ 1.4.0 (آبان ۱۴۰۵)
+### نسخهٔ 1.4.1 (آبان ۱۴۰۵)
 
 این تصمیم‌ها جای متن قبلی سند را می‌گیرند:
 
