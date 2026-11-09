@@ -124,6 +124,7 @@ export function renderCalendar() {
   loadFarDays(viewStart, viewEnd);
   const draw = (fn) => renderPart("calendar", [
     calView, calAnchor, viewStart, viewEnd, selectedItemId, state.today, state.settings.colors, state.settings.color_mode,
+    Object.entries(state.day_overrides).filter(([date]) => date >= viewStart && date <= viewEnd),
     state.types, state.history.filter((h) => h.date >= viewStart && h.date <= viewEnd),
     [...context.days.values()].filter((d) => d.date >= viewStart && d.date <= viewEnd),
     [...context.index.values()].map(({ item, session }) => [item.id, item.title, item.display_color, session.section_text, session.note, session.status]),
@@ -154,6 +155,11 @@ function weekView(start, context) {
   return grid;
 }
 
+/** برنامه تا آخرین کار ساخته می‌شود، پس روز تعطیلِ بعد از آن در برنامه نیست و باید از تعطیلی‌ها خوانده شود. */
+function isOff(iso, day) {
+  return day ? day.is_off : state.day_overrides[iso] === 0;
+}
+
 /** ستون کامل یک روز، برای نمای هفتگی و روزانه */
 function dayColumn(iso, context, classes) {
   const day = context.days.get(iso);
@@ -163,9 +169,9 @@ function dayColumn(iso, context, classes) {
       (context.history.get(iso) || []).map((entry) => historyChip(entry, context)),
       day ? day.tasks.map((t) => taskChip(t, iso, context, false)) : []),
   );
-  if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
+  if (iso >= state.today && isOff(iso, day)) column.append(el("p", { class: "muted small" }, "تعطیل"));
+  else if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
   else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, "کاری نمانده"));
-  else if (day && day.is_off) column.append(el("p", { class: "muted small" }, "تعطیل"));
   return column;
 }
 
@@ -207,7 +213,7 @@ function monthView(y, m, context) {
         context.history.has(iso) && el("span", { class: "done-count", title: "کارهای انجام‌شده" },
           `✓ ${fa(context.history.get(iso).length)}`),
         day && !day.is_off && el("span", { class: "muted small" }, `${fa(day.total)}/${fa(day.cap)}`),
-        day && day.is_off && el("span", { class: "muted small" }, "تعطیل")),
+        isOff(iso, day) && el("span", { class: "muted small" }, "تعطیل")),
       ...shown.map((t) => taskChip(t, iso, context, true)),
       tasks.length > shown.length && el("span", { class: "muted small" }, `+${fa(tasks.length - shown.length)} کار دیگر`),
     );
@@ -220,7 +226,7 @@ function dayClasses(iso, day, base) {
   const classes = [base];
   if (iso === state.today) classes.push("today");
   if (iso < state.today) classes.push("past");
-  if (day && day.is_off) classes.push("off");
+  if (isOff(iso, day)) classes.push("off");
   if (day && day.predicted) classes.push("predicted");
   if (selectedItemId && day && day.tasks.some((t) => t.item_id === selectedItemId)) classes.push("has-selected");
   return classes.join(" ");
@@ -495,7 +501,7 @@ function openDayMenu(iso, day, anchor) {
     el("div", { class: "pop-row" }, "سقف این روز:", capInput, "دقیقه",
       el("button", { onclick: () => setCap(Number(capInput.value)) }, "اعمال")),
   ];
-  if (!day || !day.is_off) content.push(el("button", { onclick: () => setCap(0) }, "تعطیل کردن این روز"));
+  if (!isOff(iso, day)) content.push(el("button", { onclick: () => setCap(0) }, "تعطیل کردن این روز"));
   if (override !== undefined) content.push(el("button", { onclick: () => setCap(null) }, "برگشت به سقف عادی"));
 
   // تعطیلی چندروزه: از همین روز تا تاریخ انتخابی

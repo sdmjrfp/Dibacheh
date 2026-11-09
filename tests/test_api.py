@@ -178,3 +178,56 @@ def test_browse_inside_vault(client, monkeypatch, tmp_path):
     monkeypatch.setattr(sources, "browse", lambda *a, **k: str(vault / "n.md"))
     result = client.post("/api/browse", json={"kind": "file"}).get_json()
     assert result == {"source_type": "vault", "source_path_or_url": "n.md", "outline": None}
+
+
+# ---------------------------------------------------------------------------
+# حذف مرورهای یک درس
+# ---------------------------------------------------------------------------
+
+def plan_kinds(state, item_id):
+    return {t["kind"] for d in state["plan"]["days"] for t in d["tasks"] if t["item_id"] == item_id}
+
+
+def test_remove_reviews_removes_them_from_plan_and_finishes_reviewing_sessions(client):
+    state = add(client, "A", count=2)
+    item = item_named(state, "A")
+    client.post("/api/tasks/done", json={"session_id": item["sessions"][0]["id"], "kind": "read", "result": "done"})
+    state = client.delete(f"/api/items/{item['id']}/reviews").get_json()
+    item = item_named(state, "A")
+    assert plan_kinds(state, item["id"]) == {"read"}
+    assert item["sessions"][0]["status"] == "finished"
+    assert item["no_reviews"] is True
+    assert item["progress"]["reviews_total"] == 0
+    # سابقه می‌ماند
+    assert len(state["history"]) == 1
+    # جلسهٔ بعدی با خواندن تمام می‌شود
+    state = client.post("/api/tasks/done", json={"session_id": item["sessions"][1]["id"], "kind": "read", "result": "done"}).get_json()
+    assert item_named(state, "A")["status_list"] == "finished"
+
+
+def test_remove_reviews_can_be_undone_and_restored(client):
+    state = add(client, "A", count=1)
+    item = item_named(state, "A")
+    client.post("/api/tasks/done", json={"session_id": item["sessions"][0]["id"], "kind": "read", "result": "done"})
+    client.delete(f"/api/items/{item['id']}/reviews")
+    state = client.post("/api/undo", json={}).get_json()
+    assert plan_kinds(state, item["id"]) == {"review"}
+    client.delete(f"/api/items/{item['id']}/reviews")
+    state = client.post(f"/api/items/{item['id']}/reviews", json={}).get_json()
+    assert plan_kinds(state, item["id"]) == {"review"}
+    assert item_named(state, "A")["sessions"][0]["status"] == "reviewing"
+
+
+def test_routine_has_no_reviews_to_remove(client):
+    state = add(client, "R", count=2, item_type="routine")
+    response = client.delete(f"/api/items/{item_named(state, 'R')['id']}/reviews")
+    assert response.status_code == 400
+
+
+def test_undoing_tick_of_item_without_reviews_does_not_leave_it_reviewing(client):
+    state = add(client, "A", count=1)
+    item = item_named(state, "A")
+    state = client.post("/api/tasks/done", json={"session_id": item["sessions"][0]["id"], "kind": "read", "result": "done"}).get_json()
+    client.delete(f"/api/items/{item['id']}/reviews")
+    state = client.post("/api/tasks/undone", json={"log_id": state["history"][-1]["id"]}).get_json()
+    assert item_named(state, "A")["sessions"][0]["status"] == "unread"

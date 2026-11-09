@@ -78,6 +78,18 @@ def api_reset_item(item_id):
     return state_response()
 
 
+@bp.route("/api/items/<int:item_id>/reviews", methods=["DELETE"])
+def api_remove_reviews(item_id):
+    item_service.remove_reviews(get_db(), item_id)
+    return state_response()
+
+
+@bp.route("/api/items/<int:item_id>/reviews", methods=["POST"])
+def api_restore_reviews(item_id):
+    item_service.restore_reviews(get_db(), item_id)
+    return state_response()
+
+
 @bp.route("/api/items/<int:item_id>/unpin", methods=["POST"])
 def api_unpin_item(item_id):
     """همهٔ جابه‌جایی‌های دستی یک درس (خواندن و مرور) برداشته می‌شود و برمی‌گردد به چینش خودکار."""

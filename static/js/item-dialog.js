@@ -96,6 +96,13 @@ function updateDialogVisibility() {
   $$("[data-only]", form).forEach((n) => { n.hidden = n.dataset.only !== editing.type; });
   const unit = fields.section_unit.value;
   $$("[data-unit]", form).forEach((n) => { n.hidden = !n.dataset.unit.split(" ").includes(unit); });
+  // کاری که مرور ندارد (پروژه، کار یک‌باره، یا درسی که مرورهایش حذف شده)
+  const current = editing.id ? itemById(editing.id) : null;
+  const noReviews = Boolean(current && current.no_reviews);
+  $$("[data-reviews]", form).forEach((n) => { n.hidden = n.hidden || noReviews; });
+  const canHaveReviews = Boolean(current) && editing.type === "study" && current.variant === "study";
+  $("#remove-reviews").hidden = !canHaveReviews || noReviews;
+  $("#restore-reviews").hidden = !canHaveReviews || !noReviews;
   const source = fields.source_type.value;
   fields.source_url.hidden = source !== "url";
   $("#browse-button").hidden = source !== "file";
@@ -298,6 +305,18 @@ $("#resplit-button").addEventListener("click", () => {
 $("#reset-item").addEventListener("click", () => {
   if (!confirm("همهٔ جلسه‌های این درس به حالت خوانده‌نشده برمی‌گردند و درس به انتهای صف می‌رود. سابقهٔ قبلی می‌ماند. ادامه می‌دهید؟")) return;
   api("POST", `/api/items/${editing.id}/reset`, {});
+});
+
+$("#remove-reviews").addEventListener("click", async () => {
+  const item = itemById(editing.id);
+  if (!confirm(`همهٔ مرورهای «${item.title}» حذف شود؟ جلسه‌ها از این به بعد با خواندن تمام می‌شوند و سابقهٔ کارهای انجام‌شده می‌ماند.`)) return;
+  await api("DELETE", `/api/items/${editing.id}/reviews`);
+  updateDialogVisibility();
+});
+
+$("#restore-reviews").addEventListener("click", async () => {
+  await api("POST", `/api/items/${editing.id}/reviews`, {});
+  updateDialogVisibility();
 });
 
 $("#delete-item").addEventListener("click", async () => {

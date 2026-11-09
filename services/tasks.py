@@ -118,6 +118,9 @@ def mark_undone(conn, log_id):
                     for k, v in before.items()}
     else:
         restored = _replay_session(conn, session, logs[:-1])
+    item = database.get_item(conn, session["item_id"])
+    if restored.get("status") == "reviewing" and item.get("no_reviews"):
+        restored["status"] = "finished"   # مرورهای این درس حذف شده‌اند
     database.update_session(conn, session["id"], **restored)
     database.delete_log(conn, log["id"])
 

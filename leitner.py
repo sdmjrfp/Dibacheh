@@ -37,7 +37,12 @@ def parse_ratio(value):
 
 
 def intervals_for(item, settings):
-    """فاصله‌های لایتنر یک درس: اول فاصلهٔ اختصاصی درس، وگرنه تنظیم کلی."""
+    """فاصله‌های لایتنر یک درس: اول فاصلهٔ اختصاصی درس، وگرنه تنظیم کلی.
+
+    کار بدون مرور فاصله ندارد، پس جلسه‌اش با خواندن تمام می‌شود.
+    """
+    if item.get("no_reviews"):
+        return []
     custom = item.get("review_intervals")
     if custom:
         return list(custom)

@@ -30,6 +30,12 @@ def item_fields(data):
         if data["item_type"] not in ("study", "routine"):
             raise UserError("نوع کار نامعتبر است.")
         fields["item_type"] = data["item_type"]
+    if "variant" in data:
+        if data["variant"] not in ("study", "project", "once"):
+            raise UserError("گونهٔ کار نامعتبر است.")
+        fields["variant"] = data["variant"]
+        if data["variant"] != "study":
+            fields["no_reviews"] = True
     if "category_id" in data:
         fields["category_id"] = data["category_id"] or None
     if "is_active" in data:
@@ -193,6 +199,31 @@ def update_item(conn, item_id, data):
         _save_requires(conn, item_id, data["requires"])
     if {"range_start", "range_end", "section_unit"} & set(fields):
         _apply_auto_split(conn, item_id)
+
+
+def remove_reviews(conn, item_id):
+    """همهٔ مرورهای یک درس حذف می‌شود: مرورهای باقی‌مانده دیگر چیده نمی‌شوند
+    و از این به بعد جلسه‌ها با خواندن تمام می‌شوند. سابقهٔ کارهای انجام‌شده می‌ماند."""
+    item = require_item(conn, item_id)
+    if item["item_type"] != "study":
+        raise UserError("این کار مرور ندارد.")
+    database.update_item(conn, item_id, no_reviews=True)
+    for session in database.list_sessions(conn, item_id):
+        if session["status"] == "reviewing":
+            database.update_session(conn, session["id"], status="finished", next_review_on=None, review_manual_date=None)
+        elif session["review_manual_date"]:
+            database.update_session(conn, session["id"], review_manual_date=None)
+
+
+def restore_reviews(conn, item_id):
+    """مرورها دوباره فعال می‌شوند. جلسه‌ای که همهٔ مرورهایش را نگذرانده، از همان جعبه ادامه می‌دهد."""
+    item = require_item(conn, item_id)
+    database.update_item(conn, item_id, no_reviews=False)
+    intervals = leitner.intervals_for({**item, "no_reviews": False}, database.get_settings(conn))
+    for session in database.list_sessions(conn, item_id):
+        box = session["leitner_box"] or 0
+        if session["status"] == "finished" and session["read_at"] and box < len(intervals):
+            database.update_session(conn, session["id"], status="reviewing", leitner_box=max(box, 1))
 
 
 def split_item(conn, item_id, data):

@@ -22,6 +22,8 @@ UNDO_LABELS = {
     "api_reset_item": "برگرداندن درس",
     "api_reorder": "جابه‌جایی در صف",
     "api_unpin_item": "برگشت درس به چینش خودکار",
+    "api_remove_reviews": "حذف مرورهای درس",
+    "api_restore_reviews": "برگرداندن مرورهای درس",
     "api_update_session": "ویرایش جلسه",
     "api_move_task": "جابه‌جایی کار",
     "api_set_day": "تغییر سقف روز",

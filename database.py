@@ -140,6 +140,13 @@ MIGRATIONS = [
     CREATE INDEX task_log_by_date ON task_log(date);
     CREATE INDEX task_log_by_session ON task_log(session_id, id);
     """,
+    # نسخهٔ 7: کار بدون مرور، و گونهٔ کار
+    #   no_reviews: جلسه با خواندن تمام می‌شود (پروژه، کار یک‌باره، یا درسی که مرورهایش حذف شده)
+    #   variant: study، project یا once. برچسب و رنگ کار را مشخص می‌کند
+    """
+    ALTER TABLE items ADD COLUMN no_reviews INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE items ADD COLUMN variant TEXT NOT NULL DEFAULT 'study';
+    """,
 ]
 
 # رنگ‌های پیش‌فرض منبع‌ها؛ هر منبع تازه رنگ بعدی را می‌گیرد و بعداً قابل تغییر است
@@ -276,6 +283,8 @@ def row_to_dict(row):
         data["is_active"] = bool(data["is_active"])
     if "archived" in data:
         data["archived"] = bool(data["archived"])
+    if "no_reviews" in data:
+        data["no_reviews"] = bool(data["no_reviews"])
     return data
 
 
@@ -513,6 +522,7 @@ ITEM_FIELDS = {
     "is_active", "max_new_sessions_per_day", "review_ratio", "review_intervals",
     "start_date", "routine_weekdays", "target_date",
     "section_unit", "range_start", "range_end", "custom_type_id", "color", "archived",
+    "no_reviews", "variant",
 }
 SESSION_FIELDS = {
     "section_label", "section_start", "section_end", "minutes", "minutes_done", "status", "leitner_box", "read_at",

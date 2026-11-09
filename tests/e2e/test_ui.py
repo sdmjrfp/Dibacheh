@@ -356,3 +356,27 @@ def test_backup_list_and_restore(app):
     app.settle()
     state = app.call("GET", "/api/state")
     assert state["items"] == []
+
+
+def test_vacation_range_shows_when_there_is_no_work(app):
+    """بدون هیچ درسی برنامه فقط امروز را دارد؛ روزهای بعدی بازهٔ تعطیلی هم باید تعطیل دیده شوند."""
+    page = app.page
+    page.click(".cal-day.today .day-head")
+    page.click('#popover button:has-text("تعطیل کردن بازه")')
+    app.settle()
+    page.click("#view-month")
+    app.settle()
+    assert page.locator(".cal-day.off").count() >= 7
+    assert page.locator('.cal-day.off .small:has-text("تعطیل")').count() >= 7
+
+
+def test_remove_reviews_button(app):
+    app.add("اول")
+    page = app.reload().page
+    page.click(".item .actions button.icon")
+    page.click("#remove-reviews")
+    app.settle()
+    assert page.is_hidden("#remove-reviews")
+    assert page.is_visible("#restore-reviews")
+    page.click("#close-item")
+    assert page.locator(".task.kind-review").count() == 0
