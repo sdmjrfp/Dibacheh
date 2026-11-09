@@ -361,7 +361,8 @@ def test_check_without_internet_does_not_fail_the_app(client, monkeypatch):
     monkeypatch.setattr(update.urllib.request, "urlopen", no_network)
     response = client.get("/api/update/check")
     assert response.status_code == 200
-    assert response.get_json() == {"available": False, "failed": True}
+    result = response.get_json()
+    assert result["available"] is False and result["failed"] is True
     update.reset()
 
 

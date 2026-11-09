@@ -20,7 +20,7 @@ on run
 		do shell script "/bin/zsh " & serverScript() & " start"
 	on error errorText number errorNumber
 		if errorNumber is 2 then
-			display dialog "برنامه هنوز نصب نشده است. راهنمای نصب در README.md را ببینید." buttons {"باشد"} default button 1
+			display dialog "برنامه هنوز نصب نشده است. راهنمای نصب در README.fa.md را ببینید." buttons {"باشد"} default button 1
 		else if errorNumber is 3 then
 			display dialog "برنامهٔ دیگری پورت دیباچه را گرفته است. آن برنامه را ببندید و دوباره امتحان کنید. روی پورت 5000، AirPlay Receiver در System Settings معمولاً علت است." buttons {"باشد"} default button 1
 		else

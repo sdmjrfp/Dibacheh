@@ -97,7 +97,7 @@ def check(current, language, fetch=None):
                         _cached = json.load(response)
             except (OSError, ValueError) as error:   # اینترنت قطع، GitHub در دسترس نیست، جواب خراب
                 _log.info("بررسی نسخهٔ تازه انجام نشد: %s", error)
-                return {"available": False, "failed": True}
+                return {"available": False, "failed": True, "reason": str(error)}
     return read_release(_cached, current, language, platform_tools.system(), platform.machine())
 
 

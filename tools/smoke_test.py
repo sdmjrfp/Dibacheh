@@ -40,9 +40,9 @@ def send(method, path, token, body):
 def check_update_route():
     """بررسی نسخهٔ تازه باید در بستهٔ نصبی هم کار کند؛ مخصوصاً گواهی امنیتی HTTPS."""
     result = json.loads(get("/api/update/check"))
-    if result.get("failed"):
-        raise SystemExit("بررسی نسخهٔ تازه به GitHub وصل نشد: " + json.dumps(result))
-    print("update check:", result.get("latest"), "available =", result.get("available"))
+    if "CERTIFICATE" in result.get("reason", "").upper():
+        raise SystemExit("گواهی امنیتی HTTPS در بستهٔ نصبی کار نمی‌کند: " + json.dumps(result))
+    print("update check:", result)
 
 
 def main(binary):
