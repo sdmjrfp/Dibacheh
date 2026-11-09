@@ -699,3 +699,43 @@ Yazı tipi silme
 Ayarları değiştirme
 Geçersiz istek.
 okumanın bitişi
+Kullanıcılar
+Parola
+Giriş
+Parolayı unuttuysanız "+" ile yeni kullanıcı oluşturun ve eski yedeği Ayarlar'da "Dosyadan içe aktar…" ile geri yükleyin. Yedeklerin parolası yoktur.
+Geri
+Fotoğraf seç
+Fotoğrafı sil
+Ya da hazır bir resim:
+Parolayı kaldır
+Parola yalnızca bu bilgisayarın kullanıcılarını ayırır, verileri şifrelemez. Yedeklerin parolası yoktur.
+Kullanıcıyı sil
+Bu dersin tekrarları var
+Ayarlar değişti. Kaydedilsin mi?
+Kaydetme
+Düzenlemeye devam et
+Yapılmadı
+Bu görev daha sonra yapıldı.
+O güne kaydedilir ve gelecek plandan çıkarılır.
+Yapılmayanlardan kaldır
+Yalnızca rapor puanı değişir; plan aynı kalır.
+Tekrarsız
+Profil ayarları
+Yeni kullanıcı
+Boş = değişiklik yok
+Boş = parolasız
+Bu dosya fotoğraf değil.
+"{0}" kullanıcısı silinsin mi? Verileri silinmez, profiles-deleted klasörüne taşınır.
+{0} yapıldı · {1} yapılmadı
+Önce giriş yapın.
+Bu kullanıcı bulunamadı.
+Yanlış parola.
+Kullanıcı adı 1 ile 40 karakter arasında olmalı.
+Bu adla bir kullanıcı var.
+Seçilen resim geçersiz.
+Ana kullanıcı silinemez.
+Kullanıcı 1
+Dibacheh veri veya yedek dosyasını seçin (zip veya sqlite3)
+Bu profili değiştirmek için önce o kullanıcıyla girin.
+Yapılmayan görevi silme
+Gecikmiş görevi yapıldı olarak kaydetme

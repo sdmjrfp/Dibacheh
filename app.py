@@ -35,11 +35,13 @@ import database
 import i18n
 import jalali
 import platform_tools
+import profiles
 import undo
 import webutil
 from errors import NotFoundError, UserError
 from i18n import _
 from routes import core, data, items, settings, tasks, update
+from routes import profiles as profile_routes
 from webutil import get_db, today
 
 # ویندوز گاهی نوع فایل .js را اشتباه می‌دهد و مرورگر module را اجرا نمی‌کند
@@ -51,13 +53,29 @@ app = Flask(__name__, template_folder=str(config.RESOURCE_DIR / "templates"),
 #     DIBACHEH_DB=/tmp/demo.sqlite3 .venv/bin/python app.py
 app.config["DB_PATH"] = os.environ.get("DIBACHEH_DB") or database.DB_PATH
 
-for module in (core, items, tasks, data, settings, update):
+for module in (core, items, tasks, data, settings, update, profile_routes):
     app.register_blueprint(module.bp)
 
 
 # ---------------------------------------------------------------------------
 # امنیت
 # ---------------------------------------------------------------------------
+
+# این‌ها قبل از ورود به حساب هم در دسترس‌اند
+# ساختن کاربر هم باز است: راه چاره برای کسی که رمزش را فراموش کرده همین است
+OPEN_ENDPOINTS = {"static", "core.index", "profiles.api_profiles", "profiles.api_login", "profiles.api_profile_photo",
+                  "profiles.api_create_profile"}
+
+
+@app.before_request
+def require_login():
+    """اگر چند کاربر هست یا کاربر رمز دارد، تا ورود هیچ داده‌ای داده نمی‌شود."""
+    if request.endpoint in OPEN_ENDPOINTS:
+        return None
+    if profiles.current(app.config["DB_PATH"]) is None:
+        return jsonify({"error": _("اول وارد شوید."), "login_required": True}), 401
+    return None
+
 
 @app.before_request
 def use_language():
@@ -115,6 +133,8 @@ def close_db(_error):
 @app.before_request
 def backup_once_a_day():
     """اولین درخواست هر روز، یک backup از دیتابیس می‌گیرد."""
+    if profiles.current(app.config["DB_PATH"]) is None:
+        return
     status = webutil.backup_status
     day = today()
     if status["day"] == day:

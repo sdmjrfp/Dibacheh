@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import app as app_module  # noqa: E402
 import config  # noqa: E402
 import database  # noqa: E402
+import profiles  # noqa: E402
 import undo  # noqa: E402
 import webutil  # noqa: E402
 
@@ -42,6 +43,7 @@ def client(tmp_path):
     database.set_setting(setup, "backup_folder", str(tmp_path / "backups"))
     setup.close()
     app_module.app.config["DB_PATH"] = db_path
+    profiles.reset()
     webutil.backup_status.update(day=None, problem=None)
     undo.stack.clear()
     undo.redo_stack.clear()

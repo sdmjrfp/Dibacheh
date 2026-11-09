@@ -9,6 +9,7 @@ from pathlib import Path
 
 import database
 import platform_tools
+import profiles
 
 # آدرس و پورت سرور.
 # 127.0.0.1 یعنی فقط خود همین کامپیوتر می‌تواند به برنامه وصل شود،
@@ -45,7 +46,7 @@ def backups_dir(settings):
     """پوشهٔ backup. نسخهٔ آزمایشی با دیتابیس جدا، backup خودش را کنار همان دیتابیس می‌گذارد
     تا در backupهای اصلی قاطی نشود."""
     if os.environ.get("DIBACHEH_DB"):
-        return Path(os.environ["DIBACHEH_DB"]).parent / "backups-test"
+        return profiles.current_db(os.environ["DIBACHEH_DB"]).parent / "backups-test"
     return database.backup_folder(settings)
 
 

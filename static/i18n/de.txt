@@ -699,3 +699,43 @@ Schrift entfernen
 Einstellungen ändern
 Ungültige Anfrage.
 dem Lesen von
+Benutzer
+Passwort
+Anmelden
+Wenn Sie das Passwort vergessen haben, erstellen Sie mit „+“ einen neuen Benutzer und stellen Sie das alte Backup in den Einstellungen über „Aus Datei importieren…“ wieder her. Backups haben kein Passwort.
+Zurück
+Foto wählen
+Foto entfernen
+Oder ein fertiges Bild:
+Passwort entfernen
+Das Passwort trennt nur die Benutzer dieses Computers und verschlüsselt keine Daten. Backups haben kein Passwort.
+Benutzer löschen
+Diese Lektion hat Wiederholungen
+Die Einstellungen wurden geändert. Speichern?
+Nicht speichern
+Weiter bearbeiten
+Nicht erledigt
+Diese Aufgabe wurde später erledigt.
+Wird für jenen Tag eingetragen und aus dem künftigen Plan entfernt.
+Aus den nicht erledigten entfernen
+Nur die Berichtsnote ändert sich; der Plan bleibt gleich.
+Ohne Wiederholung
+Profileinstellungen
+Neuer Benutzer
+Leer = keine Änderung
+Leer = kein Passwort
+Diese Datei ist kein Foto.
+Benutzer „{0}“ löschen? Die Daten werden nicht gelöscht, sondern in den Ordner profiles-deleted verschoben.
+Erledigt: {0} · Nicht erledigt: {1}
+Bitte zuerst anmelden.
+Benutzer nicht gefunden.
+Falsches Passwort.
+Der Benutzername muss 1 bis 40 Zeichen haben.
+Es gibt bereits einen Benutzer mit diesem Namen.
+Das gewählte Bild ist ungültig.
+Der Hauptbenutzer kann nicht gelöscht werden.
+Benutzer 1
+Dibacheh-Daten- oder Backup-Datei wählen (zip oder sqlite3)
+Um dieses Profil zu ändern, melden Sie sich zuerst als dieser Benutzer an.
+Nicht erledigte Aufgabe entfernen
+Überfällige Aufgabe als erledigt eintragen

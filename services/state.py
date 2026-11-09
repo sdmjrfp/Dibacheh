@@ -9,6 +9,7 @@ import platform_tools
 import scheduler
 import sources
 from i18n import _
+from services import missed
 
 # برنامه چند روز جلوتر همراه هر جواب به صفحه فرستاده می‌شود. روزهای دورتر با
 # درخواست جدا (/api/plan/range) گرفته می‌شوند.
@@ -53,6 +54,7 @@ def item_progress(item, sessions, settings):
 
 def state_data(conn, now, extras):
     """وضعیت کامل با تاریخ‌های پایتونی. extras: چیزهایی که از لایهٔ وب می‌آید (undo و ...)."""
+    missed.roll_over(conn, now)
     inputs = database.load_plan_inputs(conn)
     settings = inputs["settings"]
     plan = scheduler.build_plan(
@@ -60,6 +62,7 @@ def state_data(conn, now, extras):
         done_today=done_today(conn, now),
     )
     mark_first_reviews(plan)
+    missed.remember_plan(conn, plan, now)
     sessions_by_item = {}
     for s in inputs["sessions"]:
         sessions_by_item.setdefault(s["item_id"], []).append(s)
@@ -99,6 +102,7 @@ def state_data(conn, now, extras):
         "plan": plan,
         "workload": workload(plan, now),
         "history": history(conn, now),
+        "missed": missed.list_missed(conn, now),
         "day_overrides": inputs["day_overrides"],
         **extras,
     }

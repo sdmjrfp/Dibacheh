@@ -699,3 +699,43 @@ Retirer une police
 Changer les paramètres
 Requête non valide.
 la lecture de
+Utilisateurs
+Mot de passe
+Se connecter
+Si vous avez oublié le mot de passe, créez un utilisateur avec « + » et restaurez l'ancienne sauvegarde dans les Paramètres avec « Importer depuis un fichier… ». Les sauvegardes n'ont pas de mot de passe.
+Retour
+Choisir une photo
+Retirer la photo
+Ou une image prête à l'emploi :
+Retirer le mot de passe
+Le mot de passe sépare seulement les utilisateurs de cet ordinateur et ne chiffre pas les données. Les sauvegardes n'ont pas de mot de passe.
+Supprimer l'utilisateur
+Cette leçon a des révisions
+Les paramètres ont changé. Les enregistrer ?
+Ne pas enregistrer
+Continuer à modifier
+Non fait
+Cette tâche a été faite plus tard.
+Elle est notée ce jour-là et retirée du plan futur.
+Retirer des non faites
+Seule la note du rapport change ; le plan reste le même.
+Sans révision
+Paramètres du profil
+Nouvel utilisateur
+Vide = sans changement
+Vide = sans mot de passe
+Ce fichier n'est pas une photo.
+Supprimer l'utilisateur « {0} » ? Ses données ne sont pas effacées, elles vont dans le dossier profiles-deleted.
+Faites : {0} · Non faites : {1}
+Connectez-vous d'abord.
+Utilisateur introuvable.
+Mot de passe incorrect.
+Le nom doit faire 1 à 40 caractères.
+Un utilisateur porte déjà ce nom.
+L'image choisie n'est pas valide.
+L'utilisateur principal ne peut pas être supprimé.
+Utilisateur 1
+Choisissez un fichier de données ou de sauvegarde Dibacheh (zip ou sqlite3)
+Pour modifier ce profil, connectez-vous d'abord avec cet utilisateur.
+Retirer une tâche non faite
+Noter une tâche en retard comme faite

@@ -179,6 +179,7 @@ label.check { display: flex; align-items: center; gap: 0.375rem; margin: 0.25rem
 ol.explain { padding-inline-start: 1.75rem; }
 ol.explain button.link { color: var(--danger); text-decoration: none; font-weight: 700; }
 
+#layout-select { padding: 0.25rem 0.5rem; border-radius: var(--radius); cursor: pointer; }
 .tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .tabs button { border-radius: 62.4375rem; padding: 2px 0.75rem; }
 .tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); }
@@ -222,7 +223,28 @@ ol.explain button.link { color: var(--danger); text-decoration: none; font-weigh
 .release-notes { white-space: pre-wrap; max-height: 45vh; overflow: auto; }
 .whats-new { padding-inline-start: 1.5rem; line-height: 2; }
 .update-bar { height: 0.5rem; margin: 0.5rem 0; }
-#vault-path { direction: ltr; unicode-bidi: isolate; }
+/* کاربران */
+.avatar { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; flex: none; border-radius: 50%; object-fit: cover; font-size: 1rem; line-height: 1; color: #fff; }
+.avatar.large { width: 4.5rem; height: 4.5rem; font-size: 2.3rem; }
+.avatar.add { background: var(--accent-soft); color: var(--text); font-weight: 700; }
+.profile-area { position: relative; }
+#profile-button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.125rem 0.5rem; }
+.profile-name { max-width: 10rem; overflow: hidden; text-overflow: ellipsis; }
+.profile-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 0.25rem); z-index: 30; min-width: 15rem; display: flex; flex-direction: column; gap: 0.125rem; padding: 0.375rem; background: var(--panel); border: 1px solid var(--border); border-radius: 0.625rem; box-shadow: 0 0.5rem 1.875rem rgba(0, 0, 0, 0.18); }
+.profile-row { display: flex; align-items: center; gap: 0.25rem; border-radius: var(--radius); }
+.profile-row.current { background: var(--accent-soft); }
+.profile-pick { flex: 1; display: flex; align-items: center; gap: 0.5rem; text-align: start; }
+.login-screen { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; padding: 1.5rem; background: var(--bg); text-align: center; }
+.login-screen[hidden] { display: none; }
+.login-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+.profile-tile { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; min-width: 9rem; padding: 1rem; }
+.password-box { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; }
+.password-name { display: flex; flex-direction: column; align-items: center; gap: 0.375rem; }
+.profile-picture { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.file-button { padding: 0.25rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+.avatar-grid { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem; }
+.avatar-choice { padding: 0.125rem; border-radius: 50%; border: 2px solid transparent; background: transparent; }
+.avatar-choice.selected { border-color: var(--accent); }
 #undo-button .count, #redo-button .count {
   display: inline-block;
   min-width: 1.4em;
@@ -511,6 +533,7 @@ table.sessions tr.done { color: var(--muted); }
 .load span { display: block; height: 100%; background: var(--accent); }
 .load.over span { background: var(--routine-text); }
 .done-count { color: var(--accent); font-size: 0.8em; }
+.missed-count { color: var(--muted); font-size: 0.8em; }
 
 .tasks { display: flex; flex-direction: column; gap: 0.375rem; }
 .task, .task-pick {
@@ -544,6 +567,16 @@ table.sessions tr.done { color: var(--muted); }
 .day-column .task { font-size: 1.05em; padding: 0.5rem 0.75rem; }
 /* رنگ‌بندی بر اساس منبع: مرور با خط‌چین از خواندن جدا می‌شود */
 :root[data-color-mode="source"] .task.kind-review { border-inline-start-style: dashed; }
+
+/* کار انجام‌نشده: خاکستری و خط‌چین، جدا از بقیهٔ کارها */
+.task.missed {
+  background: repeating-linear-gradient(-45deg, var(--bg) 0 0.375rem, var(--border) 0.375rem 0.5rem);
+  border: 1px dashed var(--muted);
+  border-inline-start: 1px dashed var(--muted);
+  color: var(--muted);
+  cursor: pointer;
+}
+.task.missed .task-title { font-weight: 500; text-decoration: line-through; }
 
 /* کشیدن کار به روز دیگر */
 .task.ghost {
@@ -627,11 +660,18 @@ table.sessions tr.done { color: var(--muted); }
    ===================================================================== */
 .stats-section { margin: 1rem 0 1.375rem; }
 .stats-section h3 { margin: 0 0 0.5rem; font-size: 1em; }
-.score-card { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin: 0.5rem 0 0.75rem; }
-.score-total { display: flex; flex-direction: column; align-items: center; min-width: 7rem; }
-.score-total strong { font-size: 2.2em; line-height: 1.1; color: var(--accent); }
-.score-parts { flex: 1 1 16rem; display: flex; flex-direction: column; gap: 0.25rem; }
-.score-part .progress { grid-column: auto; height: 0.4rem; }
+/* نمرهٔ تعهد. رنگ پس‌زمینه خوب و بد بودن را نشان می‌دهد؛ ۱۰۰ طلایی است */
+.score-card { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.75rem; margin: 0.5rem 0 0.75rem; }
+.score-total { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-width: 11rem; padding: 0.75rem 1rem; border-radius: var(--radius); }
+.score-total strong { font-size: 2.6em; line-height: 1.1; }
+.trophy { font-size: 2.2em; line-height: 1.1; }
+.score-items { flex: 1 1 16rem; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0.375rem; }
+.score-item { display: flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border-radius: var(--radius); }
+.score-gold { background: linear-gradient(135deg, #fde68a, #f59e0b 55%, #fcd34d); color: #422006; box-shadow: 0 0 0 2px #d97706; }
+.score-green { background: #bbf7d0; color: #14532d; }
+.score-yellow { background: #fef08a; color: #422006; }
+.score-orange { background: #fed7aa; color: #7c2d12; }
+.score-red { background: #fecaca; color: #7f1d1d; }
 .stat-row { display: flex; flex-wrap: wrap; gap: 0.625rem; margin: 0.5rem 0 0.75rem; }
 .stat-tile { flex: 1 1 8.125rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem 0.75rem; }
 .stat-value { font-size: 1.25em; font-weight: 700; }
@@ -680,3 +720,6 @@ table.sessions tr.done { color: var(--muted); }
   .week { grid-template-columns: 1fr; }
   .week-day { min-height: auto; }
 }
+
+/* پیام خطا باید روی صفحهٔ ورود هم دیده شود */
+body.logged-out #message { position: fixed; top: 1rem; inset-inline: 0; z-index: 110; width: fit-content; margin: 0 auto; }

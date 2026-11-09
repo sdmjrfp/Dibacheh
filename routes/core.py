@@ -22,6 +22,7 @@ def index():
     """صفحهٔ اصلی داشبورد."""
     settings = database.get_settings(get_db())
     language = settings["language"]
+    i18n.set_language(language)
     return render_template("index.html", csrf_token=config.CSRF_TOKEN, language=language,
                            direction=i18n.LANGUAGES[language][1], calendar=settings["calendar"],
                            first_weekday=settings["first_weekday"])

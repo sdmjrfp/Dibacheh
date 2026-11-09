@@ -1,4 +1,24 @@
 {
+  "1.4.0": {
+    "fa": [
+      "چند کاربر روی یک کامپیوتر، با عکس یا تصویر آماده و رمز دلخواه؛ هر کاربر داده‌های جدا دارد",
+      "کار انجام‌نشده به‌صورت خاکستری در روز خودش می‌ماند و می‌شود آن را حذف کرد یا «انجام شد» زد",
+      "نمرهٔ تعهد در گزارش: یک نمرهٔ کلی و یک نمره برای هر درس و کار، با رنگ و نشان Trophy برای ۱۰۰",
+      "تیک «این درس مرور دارد» در پنجرهٔ درس",
+      "انتخاب چیدمان از منوی بازشو",
+      "بستن تنظیمات با کلیک بیرون پنجره، با پرسش ذخیره اگر چیزی عوض شده باشد",
+      "در راهنمای رنگ برنامه فقط نوع کارهایی که واقعاً هست نشان داده می‌شود"
+    ],
+    "en": [
+      "Several users on one computer, with a photo or ready-made picture and an optional password; each user has separate data",
+      "A task that was not done stays in grey on its day, and you can remove it or mark it done",
+      "Commitment score in reports: one overall score and one per lesson and task, with colors and a trophy for 100",
+      "A \"This lesson has reviews\" checkbox in the lesson window",
+      "Choose the layout from a dropdown",
+      "Close Settings by clicking outside it, with a save question if anything changed",
+      "The plan's color legend shows only the kinds of task that exist"
+    ]
+  },
   "1.3.0": {
     "fa": [
       "منوی «+»: درس، کار روتین، کار یک‌باره، پروژه و الگوهای آماده",

@@ -5,6 +5,7 @@ from flask import Blueprint
 import database
 from errors import UserError
 from i18n import _
+from services import missed
 from services import tasks as task_service
 from webutil import body, get_db, parse_date, state_response, today
 
@@ -26,6 +27,18 @@ def api_task_done():
 @bp.route("/api/tasks/undone", methods=["POST"])
 def api_task_undone():
     task_service.mark_undone(get_db(), body().get("log_id"))
+    return state_response()
+
+
+@bp.route("/api/missed/<int:missed_id>", methods=["DELETE"])
+def api_missed_dismiss(missed_id):
+    missed.dismiss(get_db(), missed_id)
+    return state_response()
+
+
+@bp.route("/api/missed/<int:missed_id>/done", methods=["POST"])
+def api_missed_done(missed_id):
+    missed.mark_done(get_db(), missed_id)
     return state_response()
 
 

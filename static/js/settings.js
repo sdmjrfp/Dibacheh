@@ -70,6 +70,7 @@ function openSettings() {
   renderTemplateSettings();
   renderBackups();
   renderFontSettings(s.font_family);
+  settingsBaseline = settingsSnapshot();
   $("#settings-dialog").showModal();
   updateRatioExplain();
   renderIntervalChart();
@@ -570,4 +571,56 @@ for (const button of $$("[data-browse]", settingsForm)) {
 
 $("#settings-button").addEventListener("click", openSettings);
 
-$("#close-settings").addEventListener("click", () => $("#settings-dialog").close());
+$("#close-settings").addEventListener("click", tryCloseSettings);
+
+// ---------- بستن با کلیک بیرون پنجره یا Esc: اگر چیزی عوض شده، اول می‌پرسد
+
+let settingsBaseline = "";
+
+/** همهٔ مقدارهای فرم، برای فهمیدن اینکه چیزی عوض شده یا نه */
+function settingsSnapshot() {
+  const types = $$("#type-settings li[data-type]").map((row) => [
+    row.dataset.type, row.querySelector('[data-field="name"]').value, row.querySelector('[data-field="color"]').value]);
+  const sources = $$("#source-colors li[data-source]").map((row) => [row.dataset.source, row.querySelector("input").value]);
+  return JSON.stringify([collectSettings(), types, sources]);
+}
+
+function tryCloseSettings() {
+  if (settingsSnapshot() === settingsBaseline) $("#settings-dialog").close();
+  else $("#settings-confirm").showModal();
+}
+
+/** آیا این رویداد بیرون کادر پنجره (روی پس‌زمینهٔ تیره) بوده است؟ */
+function onBackdrop(e) {
+  const dialog = $("#settings-dialog");
+  if (e.target !== dialog) return false;
+  const box = dialog.getBoundingClientRect();
+  return e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom;
+}
+
+// کشیدن نقطهٔ نمودار که بیرون پنجره رها شود، کلیک بیرون حساب نمی‌شود
+let pressedOnBackdrop = false;
+
+$("#settings-dialog").addEventListener("pointerdown", (e) => { pressedOnBackdrop = onBackdrop(e); });
+
+$("#settings-dialog").addEventListener("click", (e) => {
+  if (pressedOnBackdrop && onBackdrop(e)) tryCloseSettings();
+  pressedOnBackdrop = false;
+});
+
+$("#settings-dialog").addEventListener("cancel", (e) => {
+  e.preventDefault();
+  tryCloseSettings();
+});
+
+$("#settings-confirm-save").addEventListener("click", () => {
+  $("#settings-confirm").close();
+  settingsForm.requestSubmit();
+});
+
+$("#settings-confirm-discard").addEventListener("click", () => {
+  $("#settings-confirm").close();
+  $("#settings-dialog").close();
+});
+
+$("#settings-confirm-continue").addEventListener("click", () => $("#settings-confirm").close());

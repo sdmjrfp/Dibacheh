@@ -5,7 +5,7 @@
    انتخاب‌های چیدمان فقط در همین مرورگر به خاطر سپرده می‌شوند.
 */
 
-import { $, $$, getPref, setPref, state } from "./core.js";
+import { $, getPref, setPref, state } from "./core.js";
 
 // پنجره از این پهنا به بالا: این مقیاس. پله‌ای است تا با کمی تغییر پنجره، همه‌چیز تکان نخورد.
 const AUTO_STEPS = [[2200, 1], [1800, 0.92], [1500, 0.85], [1300, 0.8], [0, 0.75]];
@@ -26,16 +26,12 @@ const LAYOUTS = ["side", "stack", "sources", "plan"];
 
 function applyLayout(mode) {
   document.body.dataset.layout = mode;
-  $$("#layout-tabs button").forEach((button) => {
-    button.setAttribute("aria-selected", String(button.dataset.layout === mode));
-  });
+  $("#layout-select").value = mode;
 }
 
-$("#layout-tabs").addEventListener("click", (e) => {
-  const button = e.target.closest("button");
-  if (!button) return;
-  setPref("layout", button.dataset.layout);
-  applyLayout(button.dataset.layout);
+$("#layout-select").addEventListener("change", (e) => {
+  setPref("layout", e.target.value);
+  applyLayout(e.target.value);
   window.dispatchEvent(new Event("resize"));   // پهنای ستون‌ها دوباره اندازه گرفته شود
 });
 

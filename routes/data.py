@@ -2,12 +2,13 @@
 
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, current_app, jsonify, request, send_file
 
 import config
 import database
 import exporter
 import platform_tools
+import profiles
 import reports
 import sources
 from errors import UserError
@@ -110,7 +111,13 @@ def api_restore_backup():
     settings = database.get_settings(conn)
     folder = cloud_backups(settings) if data.get("cloud") else config.backups_dir(settings)
     data_service.restore_backup(conn, folder, data.get("name"), safety_folder=config.backups_dir(settings))
+    keep_own_paths(conn)
     return state_response()
+
+
+def keep_own_paths(conn):
+    main_db = current_app.config["DB_PATH"]
+    profiles.fix_paths_after_import(conn, main_db, profiles.current(main_db))
 
 
 def cloud_backups(settings):
@@ -152,9 +159,10 @@ def api_export_data():
 @bp.route("/api/data/import", methods=["POST"])
 def api_import_data():
     """فایل zip داده‌ها را با Browse می‌گیرد و جای داده‌های فعلی می‌گذارد."""
-    chosen = sources.browse("file", _("فایل داده‌های دیباچه را انتخاب کنید (zip)"))
+    chosen = sources.browse("file", _("فایل داده یا backup دیباچه را انتخاب کنید (zip یا sqlite3)"))
     if chosen is None:
         return jsonify({"cancelled": True})
     conn = get_db()
     data_service.import_data(conn, chosen, config.backups_dir(database.get_settings(conn)))
+    keep_own_paths(conn)
     return state_response()

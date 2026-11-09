@@ -249,7 +249,7 @@ def test_project_and_once_have_no_reviews(client):
 
 def test_once_task_goes_to_chosen_day(client):
     state = client.get("/api/state").get_json()
-    from datetime import date, timedelta
+    from datetime import date
     day = (date.fromisoformat(state["today"]) + timedelta(days=5)).isoformat()
     state = add(client, "O", count=1, variant="once", first_date=day)
     days = [d["date"] for d in state["plan"]["days"] if d["tasks"]]
@@ -280,32 +280,25 @@ def test_own_template_keeps_kind_and_weekdays(client):
 # نمره در گزارش
 # ---------------------------------------------------------------------------
 
-def test_score_parts_and_labels():
+def test_commitment_score_and_bands():
     import reports
-    best = reports.score(600, 7, 600, 7, 5, 0)
-    assert best == {"total": 100, "label": "عالی", "regularity": 40, "volume": 40, "on_time": 20}
-    half = reports.score(300, 3, 600, 6, 1, 1)
-    assert half["total"] == 20 + 20 + 10 and half["label"] == "قابل قبول"
-    assert reports.score(0, 0, 0, 7, 0, 0) is None      # کاری نبوده که نمره بدهد
-    assert reports.score(100, 1, 100, 0, 0, 0) is None  # همهٔ روزها تعطیل بوده
-    assert reports.score(0, 0, 600, 7, 0, 0)["total"] == 0
-    assert reports.score(900, 9, 600, 7, 0, 0)["total"] == 100   # بیشتر از ۱۰۰ نمی‌شود
+    assert reports.commitment(0, 0) is None
+    assert reports.commitment(5, 0)["band"] == "gold" and reports.commitment(5, 0)["total"] == 100
+    assert reports.commitment(999, 1)["total"] == 99     # با یک کار جامانده طلایی نمی‌شود
+    assert reports.commitment(8, 2)["band"] == "green"
+    assert reports.commitment(6, 4)["band"] == "yellow"
+    assert reports.commitment(4, 6)["band"] == "orange"
+    assert reports.commitment(1, 9)["band"] == "red"
+    assert reports.commitment(0, 3)["total"] == 0
 
 
-def test_report_has_score_for_week_and_month_only(client):
+def test_report_has_score_when_there_is_work(client):
     state = add(client, "A", count=2)
+    assert client.get("/api/stats?period=week").get_json()["summary"]["score"] is None
     client.post("/api/tasks/done", json={"session_id": item_named(state, "A")["sessions"][0]["id"], "kind": "read", "result": "done"})
-    for period in ("week", "month"):
-        summary = client.get(f"/api/stats?period={period}").get_json()["summary"]
-        assert 0 < summary["score"]["total"] <= 100
-    assert client.get("/api/stats?period=all").get_json()["summary"]["score"] is None
-
-
-def test_past_week_ignores_current_overdue(client):
-    state = add(client, "A", count=2)
-    today = date.fromisoformat(state["today"])
-    summary = client.get(f"/api/stats?period=week&date={(today - timedelta(days=21)).isoformat()}").get_json()["summary"]
-    assert summary["score"] is None or summary["score"]["total"] == 0   # هفتهٔ گذشتهٔ خالی: نمرهٔ بی‌دلیل نمی‌گیرد
+    for period in ("week", "month", "all"):
+        score = client.get(f"/api/stats?period={period}").get_json()["summary"]["score"]
+        assert score["total"] == 100 and score["items"][0]["title"] == "A"
 
 
 # ---------------------------------------------------------------------------
@@ -449,3 +442,18 @@ def test_cloud_routes_copy_and_restore(client, tmp_path):
 
 def test_cloud_copy_needs_a_folder(client):
     assert client.post("/api/backups/cloud/now", json={}).status_code == 400
+
+
+def test_patch_no_reviews_removes_and_restores_in_one_undo_step(client):
+    state = add(client, "A", count=1)
+    item = item_named(state, "A")
+    state = client.patch(f"/api/items/{item['id']}", json={"no_reviews": True}).get_json()
+    assert plan_kinds(state, item["id"]) == {"read"}
+    assert state["undo"]["count"] == 2
+    state = client.patch(f"/api/items/{item['id']}", json={"no_reviews": False}).get_json()
+    assert plan_kinds(state, item["id"]) == {"read", "review"}
+
+
+def test_create_lesson_without_reviews(client):
+    state = add(client, "A", count=2, no_reviews=True)
+    assert plan_kinds(state, item_named(state, "A")["id"]) == {"read"}

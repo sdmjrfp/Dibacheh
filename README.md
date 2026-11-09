@@ -12,6 +12,7 @@ Dibacheh is an offline study planner. Split each lesson into sessions, get revie
 - Reports with weekly and monthly scores
 - HTML export to read offline on your phone
 - Daily backup, also copied to your OneDrive, Google Drive, Dropbox or iCloud folder
+- Several users on one computer, each with separate data, a photo or ready-made picture and an optional password
 - 13 languages, Solar Hijri and Gregorian calendars, light and dark mode, sizes from 50% to 200%
 
 ## Download

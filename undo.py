@@ -31,6 +31,8 @@ UNDO_LABELS = {
     "api_set_day": "تغییر سقف روز",
     "api_task_done": "ثبت انجام کار",
     "api_task_undone": "انجام‌نشده کردن کار",
+    "api_missed_dismiss": "حذف کار انجام‌نشده",
+    "api_missed_done": "ثبت انجام کار عقب‌افتاده",
     "api_set_day_range": "تعطیلی چندروزه",
     "api_archive_item": "بایگانی درس",
     "api_bulk_add": "افزودن گروهی",

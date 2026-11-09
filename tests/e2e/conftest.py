@@ -37,11 +37,9 @@ def browser():
         instance.close()
 
 
-@pytest.fixture
-def server(tmp_path):
-    """سرور واقعی با دیتابیس و پوشهٔ خروجی موقت."""
-    port = free_port()
-    env = {**os.environ, "DIBACHEH_DB": str(tmp_path / "e2e.sqlite3"), "DIBACHEH_PORT": str(port)}
+def wait_for_server(db, port):
+    """سرور واقعی را با این دیتابیس اجرا می‌کند و منتظر بالا آمدنش می‌ماند."""
+    env = {**os.environ, "DIBACHEH_DB": str(db), "DIBACHEH_PORT": str(port)}
     process = subprocess.Popen([sys.executable, "app.py"], cwd=ROOT, env=env,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     url = f"http://127.0.0.1:{port}"
@@ -55,6 +53,13 @@ def server(tmp_path):
     else:
         process.kill()
         pytest.fail("سرور بالا نیامد")
+    return url, process
+
+
+@pytest.fixture
+def server(tmp_path):
+    """سرور واقعی با دیتابیس و پوشهٔ خروجی موقت."""
+    url, process = wait_for_server(tmp_path / "e2e.sqlite3", free_port())
     yield url
     process.kill()
     process.wait()

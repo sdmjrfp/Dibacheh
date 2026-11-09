@@ -55,6 +55,9 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
   fields.max_new_sessions_per_day.value = item ? item.max_new_sessions_per_day : (defaults.max_new_sessions_per_day || 1);
   fields.review_ratio.value = item && item.review_ratio ? item.review_ratio : "";
   fields.review_intervals.value = item && item.review_intervals ? item.review_intervals.join(t("، ")) : "";
+  fields.review_ratio.disabled = false;
+  fields.review_intervals.disabled = false;
+  fields.has_reviews.checked = !(item && item.no_reviews);
   fields.source_type.value = item ? (item.source_type === "vault" ? "file" : item.source_type) : "none";
   fields.source_url.value = item && item.source_type === "url" ? item.source_path_or_url : "";
   $("#source-path").textContent = item && ["vault", "file"].includes(item.source_type) ? item.source_path_or_url : "";
@@ -104,18 +107,30 @@ function updateDialogVisibility() {
   $$("[data-unit]", form).forEach((n) => { n.hidden = !n.dataset.unit.split(" ").includes(unit); });
   // کاری که مرور ندارد (پروژه، کار یک‌باره، یا درسی که مرورهایش حذف شده)
   const current = editing.id ? itemById(editing.id) : null;
-  const noReviews = editing.variant !== "study" || Boolean(current && current.no_reviews);
+  const noReviews = editing.variant !== "study";
   $$("[data-variant]", form).forEach((n) => { n.hidden = n.dataset.variant !== editing.variant || Boolean(current); });
   $$("[data-sessions]", form).forEach((n) => { n.hidden = n.hidden || editing.variant === "once"; });
   $$("[data-reviews]", form).forEach((n) => { n.hidden = n.hidden || noReviews; });
-  const canHaveReviews = Boolean(current) && editing.type === "study" && editing.variant === "study";
-  $("#remove-reviews").hidden = !canHaveReviews || noReviews;
-  $("#restore-reviews").hidden = !canHaveReviews || !noReviews;
+  updateReviewFields();
   const source = fields.source_type.value;
   fields.source_url.hidden = source !== "url";
   $("#browse-button").hidden = source !== "file";
   $("#source-path").hidden = source !== "file";
 }
+
+/** تیک «مرور دارد»: بدون آن، نسبت و فاصله‌ها غیرفعال است و «بدون مرور» نوشته می‌شود. مقدارها نگه داشته می‌شوند. */
+function updateReviewFields() {
+  const on = fields.has_reviews.checked;
+  for (const [field, hint] of [[fields.review_ratio, "1/3"], [fields.review_intervals, t("1، 3، 7، 30")]]) {
+    if (!on && !field.disabled) field.dataset.kept = field.value;
+    if (on && field.disabled) field.value = field.dataset.kept || "";
+    if (!on) field.value = "";
+    field.disabled = !on;
+    field.placeholder = on ? hint : t("بدون مرور");
+  }
+}
+
+fields.has_reviews.addEventListener("change", updateReviewFields);
 
 fields.section_unit.addEventListener("change", updateDialogVisibility);
 
@@ -268,9 +283,12 @@ function collectForm() {
   if (!editing.id) data.variant = editing.variant;
   if (editing.type === "study") {
     data.max_new_sessions_per_day = Number(fields.max_new_sessions_per_day.value);
-    data.review_ratio = fields.review_ratio.value.trim();
-    const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
-    data.review_intervals = intervals.length ? intervals : null;
+    if (editing.variant === "study") data.no_reviews = !fields.has_reviews.checked;
+    if (fields.has_reviews.checked) {
+      data.review_ratio = fields.review_ratio.value.trim();
+      const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
+      data.review_intervals = intervals.length ? intervals : null;
+    }
     data.target_date = readJalaliInput($('.jalali-input[data-name="target_date"]'));
     data.requires = editing.requires;
   } else {
@@ -328,18 +346,6 @@ $("#resplit-button").addEventListener("click", () => {
 $("#reset-item").addEventListener("click", () => {
   if (!confirm(t("همهٔ جلسه‌های این درس به حالت خوانده‌نشده برمی‌گردند و درس به انتهای صف می‌رود. سابقهٔ قبلی می‌ماند. ادامه می‌دهید؟"))) return;
   api("POST", `/api/items/${editing.id}/reset`, {});
-});
-
-$("#remove-reviews").addEventListener("click", async () => {
-  const item = itemById(editing.id);
-  if (!confirm(t("همهٔ مرورهای «{0}» حذف شود؟ جلسه‌ها از این به بعد با خواندن تمام می‌شوند و سابقهٔ کارهای انجام‌شده می‌ماند.", item.title))) return;
-  await api("DELETE", `/api/items/${editing.id}/reviews`);
-  updateDialogVisibility();
-});
-
-$("#restore-reviews").addEventListener("click", async () => {
-  await api("POST", `/api/items/${editing.id}/reviews`, {});
-  updateDialogVisibility();
 });
 
 $("#delete-item").addEventListener("click", async () => {

@@ -12,6 +12,7 @@ Dibacheh est un planificateur d'études hors ligne. Il découpe chaque leçon en
 - Rapports avec note hebdomadaire et mensuelle
 - Export HTML à lire hors ligne sur le téléphone
 - Sauvegarde quotidienne, aussi copiée dans votre dossier OneDrive, Google Drive, Dropbox ou iCloud
+- Plusieurs utilisateurs sur un ordinateur, avec données séparées, photo ou image prête et mot de passe facultatif
 - 13 langues, calendrier hégirien solaire et grégorien, mode clair et sombre, tailles de 50 % à 200 %
 
 ## Téléchargement

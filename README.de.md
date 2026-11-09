@@ -12,6 +12,7 @@ Dibacheh ist ein Offline-Lernplaner. Er teilt jede Lektion in Einheiten, plant W
 - Berichte mit Wochen- und Monatsnote
 - HTML-Export zum Offline-Lesen auf dem Handy
 - Tägliches Backup, auch in Ihrem OneDrive-, Google-Drive-, Dropbox- oder iCloud-Ordner
+- Mehrere Benutzer auf einem Computer, mit getrennten Daten, Foto oder fertigem Bild und optionalem Passwort
 - 13 Sprachen, Solar-Hidschri- und gregorianischer Kalender, heller und dunkler Modus, Größen von 50 % bis 200 %
 
 ## Download

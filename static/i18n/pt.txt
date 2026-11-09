@@ -699,3 +699,43 @@ Remover letra
 Alterar configurações
 Pedido inválido.
 a leitura de
+Usuários
+Senha
+Entrar
+Se esqueceu a senha, crie um novo usuário com "+" e restaure o backup antigo nas Configurações com "Importar de arquivo…". Backups não têm senha.
+Voltar
+Escolher foto
+Remover foto
+Ou uma imagem pronta:
+Remover senha
+A senha só separa os usuários deste computador e não criptografa os dados. Backups não têm senha.
+Excluir usuário
+Esta lição tem revisões
+As configurações mudaram. Salvar?
+Não salvar
+Continuar editando
+Não feito
+Esta tarefa foi feita depois.
+É registrada naquele dia e sai do plano futuro.
+Remover de não feitas
+Só muda a nota do relatório; o plano continua igual.
+Sem revisões
+Configurações do perfil
+Novo usuário
+Vazio = sem alteração
+Vazio = sem senha
+Este arquivo não é uma foto.
+Excluir o usuário "{0}"? Os dados não são apagados; vão para a pasta profiles-deleted.
+Feitas: {0} · Não feitas: {1}
+Entre primeiro.
+Usuário não encontrado.
+Senha incorreta.
+O nome deve ter de 1 a 40 caracteres.
+Já existe um usuário com este nome.
+A imagem escolhida é inválida.
+O usuário principal não pode ser excluído.
+Usuário 1
+Escolha um arquivo de dados ou backup do Dibacheh (zip ou sqlite3)
+Para alterar este perfil, entre primeiro com esse usuário.
+Remover tarefa não feita
+Registrar tarefa atrasada como feita

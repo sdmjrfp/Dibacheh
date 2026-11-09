@@ -12,6 +12,7 @@ Dibacheh adalah perencana belajar luring. Aplikasi ini membagi tiap pelajaran me
 - Laporan dengan nilai mingguan dan bulanan
 - Ekspor HTML untuk dibaca luring di ponsel
 - Cadangan harian, juga disalin ke folder OneDrive, Google Drive, Dropbox, atau iCloud
+- Beberapa pengguna di satu komputer, dengan data terpisah, foto atau gambar siap pakai, dan kata sandi opsional
 - 13 bahasa, kalender Hijriah Syamsiah dan Masehi, mode terang dan gelap, ukuran 50% sampai 200%
 
 ## Unduh

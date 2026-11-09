@@ -1,5 +1,5 @@
 import { openAddMenu } from "./add-menu.js";
-import { $, $$, api, buildJalaliInput, el, fa, FIRST_WEEKDAY, getPref, isRTL, minutesText, readJalaliInput, renderPart, setPref, showMessage, state, t, typeOf, WEEKDAYS } from "./core.js";
+import { $, $$, api, buildJalaliInput, el, fa, FIRST_WEEKDAY, getPref, isRTL, itemById, minutesText, readJalaliInput, renderPart, setPref, showMessage, state, t, typeOf, WEEKDAYS } from "./core.js";
 import { openItemDialog } from "./item-dialog.js";
 import { Motion, dragGhost } from "./motion.js";
 import { selectedItemId } from "./sources.js";
@@ -78,6 +78,18 @@ function historyByDate() {
   return map;
 }
 
+/** نقشهٔ تاریخ → کارهایی که روز خودشان انجام نشده‌اند */
+function missedByDate() {
+  const map = new Map();
+  for (const entry of state.missed) {
+    const item = itemById(entry.item_id);
+    if (hiddenKinds.has(displayKind(entry.kind, item))) continue;
+    if (!map.has(entry.date)) map.set(entry.date, []);
+    map.get(entry.date).push(entry);
+  }
+  return map;
+}
+
 /** اولین روز هفتهٔ یک تاریخ. شروع هفته از تنظیمات می‌آید: شنبه، یکشنبه یا دوشنبه. */
 export function weekStart(iso) {
   const weekday = (new Date(iso + "T00:00:00Z").getUTCDay() + 6) % 7;  // 0 = دوشنبه، مثل پایتون
@@ -115,10 +127,16 @@ function viewRange() {
 
 /** تیک‌های راهنمای رنگ: هر نوع کار در برنامه نشان داده شود یا نه */
 function renderLegend() {
-  const kinds = ["read", "review", "routine"];
-  for (const variant of ["project", "once"]) {
-    if (state.items.some((item) => item.variant === variant)) kinds.splice(1, 0, variant);
-  }
+  // فقط نوع‌هایی که واقعاً کاری از آن‌ها هست
+  const live = state.items.filter((item) => item.is_active && !item.archived);
+  const studies = live.filter((item) => item.item_type === "study");
+  const kinds = [
+    studies.some((item) => item.variant === "study") && "read",
+    studies.some((item) => item.variant === "project") && "project",
+    studies.some((item) => item.variant === "once") && "once",
+    studies.some((item) => !item.no_reviews) && "review",
+    live.some((item) => item.item_type === "routine") && "routine",
+  ].filter(Boolean);
   renderPart("legend", [kinds, [...hiddenKinds]], () => {
     $("#legend-kinds").replaceChildren(...kinds.map((kind) =>
       el("label", { class: `legend-toggle kind-${kind}` },
@@ -167,7 +185,7 @@ export function renderCalendar() {
   if (selected) note.textContent = t("روزهایی که «{0}» کار دارد پررنگ شده‌اند. برای برداشتن، دوباره روی نام درس کلیک کنید.", selected.title);
 
   const context = {
-    days: planDays(), index: sessionIndex(), history: historyByDate(),
+    days: planDays(), index: sessionIndex(), history: historyByDate(), missed: missedByDate(),
   };
   const box = $("#calendar");
   const [viewStart, viewEnd] = viewRange();
@@ -177,6 +195,7 @@ export function renderCalendar() {
     calView, calAnchor, viewStart, viewEnd, orientation, [...hiddenKinds], selectedItemId, state.today, state.settings.colors, state.settings.color_mode,
     Object.entries(state.day_overrides).filter(([date]) => date >= viewStart && date <= viewEnd),
     state.types, state.history.filter((h) => h.date >= viewStart && h.date <= viewEnd),
+    state.missed.filter((m) => m.date >= viewStart && m.date <= viewEnd),
     [...context.days.values()].filter((d) => d.date >= viewStart && d.date <= viewEnd),
     [...context.index.values()].map(({ item, session }) => [item.id, item.title, item.display_color, session.section_text, session.note, session.status]),
   ], fn);
@@ -247,11 +266,12 @@ function dayColumn(iso, context, classes) {
   const column = el("div", { class: dayClasses(iso, day, classes), "data-date": iso },
     dayHeader(iso, day),
     el("div", { class: "tasks" },
+      (context.missed.get(iso) || []).map((entry) => missedChip(entry, context)),
       (context.history.get(iso) || []).filter((entry) => historyVisible(entry, context)).map((entry) => historyChip(entry, context)),
       visibleTasks(day, context).map((task) => taskChip(task, iso, context, false))),
   );
   if (iso >= state.today && isOff(iso, day)) column.append(el("p", { class: "muted small" }, t("تعطیل")));
-  else if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, t("کاری ثبت نشده")));
+  else if (iso < state.today && !context.history.has(iso) && !context.missed.has(iso)) column.append(el("p", { class: "muted small" }, t("کاری ثبت نشده")));
   else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, t("کاری نمانده")));
   return column;
 }
@@ -292,6 +312,7 @@ function monthView(y, m, context) {
         el("strong", {}, fa(d)),
         context.history.has(iso) && el("span", { class: "done-count", title: t("کارهای انجام‌شده") },
           `✓ ${fa(context.history.get(iso).length)}`),
+        context.missed.has(iso) && el("span", { class: "missed-count", title: t("انجام نشده") }, `✕ ${fa(context.missed.get(iso).length)}`),
         day && !day.is_off && el("span", { class: "muted small" }, `${fa(day.total)}/${fa(day.cap)}`),
         isOff(iso, day) && el("span", { class: "muted small" }, t("تعطیل"))),
       ...shown.map((task) => taskChip(task, iso, context, true)),
@@ -399,6 +420,42 @@ function historyChip(entry, context) {
       el("span", {}, label),
       info && el("span", {}, t("جلسهٔ {0}", fa(entry.sequence))),
       el("span", {}, t("{0} دقیقه", fa(entry.minutes)))));
+}
+
+/** کاری که روز خودش انجام نشده: خاکستری می‌ماند و خود کار به روزهای بعد رفته است */
+function missedChip(entry, context) {
+  const info = context.index.get(entry.session_id);
+  const title = info ? info.item.title : t("درس حذف‌شده");
+  const kind = displayKind(entry.kind, info && info.item);
+  const label = `${KIND_LABEL[kind] || kind}${entry.kind === "review" ? ` ${fa(entry.review_round)}` : ""}`;
+  return el("div", {
+    class: "task missed", "data-flip": `m-${entry.id}`, title: t("انجام نشده"),
+    onclick: (e) => openMissedMenu(entry, title, label, e.currentTarget),
+  },
+    el("div", { class: "task-title" }, "✕ ", title),
+    el("div", { class: "task-meta" },
+      el("span", {}, label),
+      el("span", {}, t("{0} دقیقه", fa(entry.minutes))),
+      el("span", {}, t("انجام نشده"))));
+}
+
+function openMissedMenu(entry, title, label, anchor) {
+  openPopover(anchor,
+    el("div", { class: "pop-title" }, `✕ ${title}`),
+    el("div", { class: "muted small" }, t("{0} · {1} دقیقه · {2}", label, fa(entry.minutes), Jalali.format(entry.date))),
+    entry.resolved
+      ? el("p", { class: "muted small" }, t("این کار بعداً انجام شده است."))
+      : el("button", {
+          class: "primary",
+          onclick: () => { closePopover(); api("POST", `/api/missed/${entry.id}/done`, {}); },
+        }, t("✓ انجام شد{0}", "")),
+    !entry.resolved && el("p", { class: "muted small" }, t("با تاریخ همان روز ثبت می‌شود و از برنامهٔ آینده برداشته می‌شود.")),
+    el("button", {
+      class: "danger",
+      onclick: () => { closePopover(); api("DELETE", `/api/missed/${entry.id}`); },
+    }, t("حذف از انجام‌نشده‌ها")),
+    el("p", { class: "muted small" }, t("فقط نمرهٔ گزارش عوض می‌شود و برنامه تغییری نمی‌کند.")),
+  );
 }
 
 /** منوی کار انجام‌شده: برگرداندن به حالت انجام‌نشده */

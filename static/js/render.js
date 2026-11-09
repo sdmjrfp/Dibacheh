@@ -14,10 +14,6 @@ import { renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./s
 
 export function renderNow() {
   $("#today").textContent = t("امروز: {0} {1}", Jalali.weekday(state.today), Jalali.format(state.today));
-  // فقط نام پوشهٔ والت نشان داده می‌شود؛ آدرس کامل با نگه داشتن ماوس روی آن
-  const vault = state.settings.vault_path;
-  $("#vault-path").textContent = vault ? vault.split("/").filter(Boolean).pop() : t("ثبت نشده");
-  $("#vault-button").title = vault ? t("مسیر والت: {0}\\nبرای تغییر کلیک کنید", vault) : t("انتخاب پوشهٔ والت Obsidian");
   document.documentElement.dataset.theme = state.settings.theme || "light";
   document.documentElement.dataset.colorMode = state.settings.color_mode || "kind";
   // فونت و اندازهٔ فونت از تنظیمات

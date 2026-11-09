@@ -699,3 +699,43 @@ Quitar fuente
 Cambiar ajustes
 Solicitud no válida.
 la lectura de
+Usuarios
+Contraseña
+Entrar
+Si olvidaste la contraseña, crea un usuario nuevo con «+» y restaura la copia anterior en Ajustes con «Importar desde archivo…». Las copias no tienen contraseña.
+Volver
+Elegir foto
+Quitar foto
+O una imagen lista:
+Quitar contraseña
+La contraseña solo separa a los usuarios de este ordenador y no cifra los datos. Las copias no tienen contraseña.
+Eliminar usuario
+Esta lección tiene repasos
+Los ajustes han cambiado. ¿Guardarlos?
+No guardar
+Seguir editando
+No hecho
+Esta tarea se hizo más tarde.
+Se registra en ese día y se quita del plan futuro.
+Quitar de no hechas
+Solo cambia la nota del informe; el plan sigue igual.
+Sin repasos
+Ajustes del perfil
+Usuario nuevo
+Vacío = sin cambios
+Vacío = sin contraseña
+Este archivo no es una foto.
+¿Eliminar al usuario «{0}»? Sus datos no se borran; pasan a la carpeta profiles-deleted.
+Hechas: {0} · No hechas: {1}
+Entra primero.
+Usuario no encontrado.
+Contraseña incorrecta.
+El nombre debe tener de 1 a 40 caracteres.
+Ya existe un usuario con este nombre.
+La imagen elegida no es válida.
+El usuario principal no se puede eliminar.
+Usuario 1
+Elige un archivo de datos o copia de Dibacheh (zip o sqlite3)
+Para cambiar este perfil, entra primero con ese usuario.
+Quitar tarea no hecha
+Registrar tarea atrasada como hecha

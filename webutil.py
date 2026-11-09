@@ -6,6 +6,7 @@ from flask import current_app, g, jsonify, request
 
 import config
 import database
+import profiles
 import scheduler
 import undo
 from errors import UserError
@@ -20,7 +21,7 @@ backup_status = {"day": None, "problem": None, "cloud_problem": None}
 def get_db():
     """اتصال دیتابیس همین درخواست. در پایان درخواست بسته می‌شود."""
     if "db" not in g:
-        g.db = database.connect(current_app.config["DB_PATH"])
+        g.db = database.connect(profiles.current_db(current_app.config["DB_PATH"]))
     return g.db
 
 

@@ -47,7 +47,16 @@ def export_data(conn, folder, day):
 
 
 def import_data(conn, chosen, backups):
-    """فایل zip داده‌ها را با Browse می‌گیرد و جای داده‌های فعلی می‌گذارد."""
+    """فایل zip داده‌ها یا یک فایل backup را می‌گیرد و جای داده‌های فعلی می‌گذارد."""
+    if str(chosen).lower().endswith(".sqlite3"):
+        # برای کسی که رمزش را فراموش کرده: backup کاربر قبلی در کاربر تازه برمی‌گردد
+        try:
+            database.check_database_file(Path(chosen))
+        except ValueError as error:
+            raise UserError(str(error))
+        database.safety_copy(conn, backups, datetime.now())
+        database.replace_database(conn, Path(chosen))
+        return
     try:
         with zipfile.ZipFile(chosen) as archive, tempfile.TemporaryDirectory() as work:
             if "dibacheh.sqlite3" not in archive.namelist():

@@ -379,16 +379,92 @@ def test_vacation_range_shows_when_there_is_no_work(app):
     assert page.locator('.cal-day.off .small:has-text("تعطیل")').count() >= 7
 
 
-def test_remove_reviews_button(app):
+def test_review_checkbox_turns_reviews_off_and_on(app):
     app.add("اول")
     page = app.reload().page
     page.click(".item .actions button.icon")
-    page.click("#remove-reviews")
+    assert page.is_checked('#item-form [name="has_reviews"]')
+    page.uncheck('#item-form [name="has_reviews"]')
+    assert page.is_disabled('#item-form [name="review_ratio"]')
+    assert page.get_attribute('#item-form [name="review_ratio"]', "placeholder") == "بدون مرور"
+    page.click("#save-item")
     app.settle()
-    assert page.is_hidden("#remove-reviews")
-    assert page.is_visible("#restore-reviews")
-    page.click("#close-item")
     assert page.locator(".task.kind-review").count() == 0
+    assert app.call("GET", "/api/state")["items"][0]["no_reviews"] is True
+    page.click(".item .actions button.icon")
+    assert not page.is_checked('#item-form [name="has_reviews"]')
+    page.check('#item-form [name="has_reviews"]')
+    assert page.is_enabled('#item-form [name="review_ratio"]')
+    page.click("#save-item")
+    app.settle()
+    assert app.call("GET", "/api/state")["items"][0]["no_reviews"] is False
+
+
+def test_new_lesson_can_start_without_reviews(app):
+    page = app.page
+    page.click("#add-button")
+    page.click('[data-add="study"]')
+    page.click("#add-no-template")
+    page.fill('#item-form [name="title"]', "بی‌مرور")
+    page.uncheck('#item-form [name="has_reviews"]')
+    page.click("#save-item")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert state["items"][0]["no_reviews"] is True
+    assert {t["kind"] for d in state["plan"]["days"] for t in d["tasks"]} == {"read"}
+
+
+def test_legend_shows_only_kinds_that_exist(app):
+    page = app.page
+    assert page.locator(".legend-toggle").count() == 0
+    app.add("اول")
+    page = app.reload().page
+    assert page.locator(".legend-toggle.kind-read").count() == 1
+    assert page.locator(".legend-toggle.kind-routine").count() == 0
+    app.call("POST", "/api/items", {"title": "ورزش", "item_type": "routine", "session_count": 3, "session_minutes": 10})
+    page = app.reload().page
+    assert page.locator(".legend-toggle.kind-routine").count() == 1
+
+
+def click_outside_settings(page):
+    page.mouse.click(5, 5)
+
+
+def test_settings_closes_on_outside_click_when_unchanged(app):
+    page = app.page
+    page.click("#settings-button")
+    page.wait_for_selector("#settings-dialog[open]")
+    click_outside_settings(page)
+    assert page.is_hidden("#settings-dialog")
+    assert page.is_hidden("#settings-confirm")
+
+
+def test_settings_asks_on_outside_click_when_changed(app):
+    page = app.page
+    page.click("#settings-button")
+    page.fill('#settings-form [name="default_cap_minutes"]', "77")
+    click_outside_settings(page)
+    assert page.is_visible("#settings-confirm")
+    page.click("#settings-confirm-continue")
+    assert page.is_visible("#settings-dialog") and page.is_hidden("#settings-confirm")
+    click_outside_settings(page)
+    page.click("#settings-confirm-discard")
+    assert page.is_hidden("#settings-dialog")
+    assert app.call("GET", "/api/state")["settings"]["default_cap_minutes"] == 120
+    page.click("#settings-button")
+    page.fill('#settings-form [name="default_cap_minutes"]', "77")
+    click_outside_settings(page)
+    page.click("#settings-confirm-save")
+    app.settle()
+    assert page.is_hidden("#settings-dialog")
+    assert app.call("GET", "/api/state")["settings"]["default_cap_minutes"] == 77
+
+
+def test_click_inside_settings_does_not_close(app):
+    page = app.page
+    page.click("#settings-button")
+    page.click("#settings-form h2")
+    assert page.is_visible("#settings-dialog")
 
 
 def test_all_view_shows_plan_until_last_review(app):
@@ -449,13 +525,13 @@ def test_day_header_text_stays_inside_narrow_column(app):
 def test_layout_modes(app):
     page = app.page
     assert page.is_visible(".sources") and page.is_visible(".calendar")
-    page.click('#layout-tabs [data-layout="plan"]')
+    page.select_option("#layout-select", "plan")
     assert page.is_hidden(".sources") and page.is_visible(".calendar")
     width = page.locator(".calendar").bounding_box()["width"]
     assert width > 1400
-    page.click('#layout-tabs [data-layout="sources"]')
+    page.select_option("#layout-select", "sources")
     assert page.is_visible(".sources") and page.is_hidden(".calendar")
-    page.click('#layout-tabs [data-layout="stack"]')
+    page.select_option("#layout-select", "stack")
     assert page.locator(".calendar").bounding_box()["y"] != page.locator(".sources").bounding_box()["y"]
     page.reload()
     page.wait_for_selector("#today:not(:empty)")
@@ -642,11 +718,205 @@ def test_update_button_and_dialog_with_a_fake_release(app):
     page.click("#close-update")
 
 
-def test_score_card_appears_in_weekly_report(app):
-    state = app.add("اول")
-    sid = state["items"][0]["sessions"][0]["id"]
-    app.call("POST", "/api/tasks/done", {"session_id": sid, "kind": "read"})
+def add_missed_row(tmp_path, app, kind="read"):
+    """یک کار انجام‌نشدهٔ دیروز، مستقیم در دیتابیس همین آزمون."""
+    import sqlite3
+    from datetime import date, timedelta
+    state = app.add("جامانده")
+    session = state["items"][-1]["sessions"][0]["id"]
+    yesterday = (date.fromisoformat(state["today"]) - timedelta(days=1)).isoformat()
+    conn = sqlite3.connect(tmp_path / "e2e.sqlite3")
+    conn.execute("INSERT INTO missed_tasks (date, session_id, kind, review_round, minutes) VALUES (?, ?, ?, 0, 60)",
+                 (yesterday, session, kind))
+    conn.commit()
+    conn.close()
+    return yesterday
+
+
+def test_missed_task_shows_and_can_be_dismissed(app, tmp_path):
+    yesterday = add_missed_row(tmp_path, app)
+    page = app.reload().page
+    page.click("#view-all")
+    page.click("#view-day")
+    page.click("#cal-prev")
+    app.settle()
+    assert page.locator(f'[data-date="{yesterday}"] .task.missed').count() == 1
+    page.click(".task.missed")
+    page.click('#popover button.danger')
+    app.settle()
+    assert page.locator(".task.missed").count() == 0
+    assert app.call("GET", "/api/state")["missed"] == []
+
+
+def test_missed_task_mark_done_updates_plan_and_can_be_undone(app, tmp_path):
+    add_missed_row(tmp_path, app)
+    page = app.reload().page
+    page.click("#view-day")
+    page.click("#cal-prev")
+    app.settle()
+    page.click(".task.missed")
+    page.click("#popover button.primary")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert state["missed"] == []
+    assert state["items"][0]["sessions"][0]["status"] == "reviewing"
+    assert page.locator(".task.done").count() == 1
+    page.click("#undo-button")
+    app.settle()
+    state = app.call("GET", "/api/state")
+    assert len(state["missed"]) == 1 and state["items"][0]["sessions"][0]["status"] == "unread"
+
+
+def test_score_colors_and_trophy(app, tmp_path):
+    state = app.add("کامل")
+    app.call("POST", "/api/tasks/done", {"session_id": state["items"][0]["sessions"][0]["id"], "kind": "read"})
     page = app.open().page
     page.click("#stats-button")
     page.wait_for_selector(".score-card")
-    assert page.locator(".score-part").count() == 3
+    assert page.locator(".score-total.score-gold .trophy").count() == 1
+    assert page.locator(".score-item.score-gold").count() == 1
+    page.click("#close-stats")
+    add_missed_row(tmp_path, app)
+    page = app.open().page
+    page.click("#stats-button")
+    page.click('#report-tabs button:has-text("کلی")')
+    page.wait_for_selector(".score-item:nth-child(2)")
+    assert page.locator(".score-total.score-gold").count() == 0
+    assert page.locator(".score-item").count() == 2
+
+
+def test_profile_button_replaces_vault_and_shows_menu(app):
+    page = app.page
+    assert page.locator("#vault-button").count() == 0
+    assert page.is_visible("#profile-button .avatar")
+    page.click("#profile-button")
+    assert page.is_visible("#profile-add")
+    assert page.locator(".profile-row.current .profile-edit").count() == 1
+    page.mouse.click(600, 500)
+    assert page.is_hidden("#profile-menu")
+
+
+def create_user(page, name, password=""):
+    page.click("#profile-button")
+    page.click("#profile-add")
+    page.fill('#profile-form [name="name"]', name)
+    page.click('[data-avatar="a4"]')
+    if password:
+        page.fill('#profile-form [name="password"]', password)
+    with page.expect_navigation():
+        page.click('#profile-form button[type="submit"]')
+    page.wait_for_selector("#today:not(:empty)")
+
+
+def test_create_and_switch_users_without_restart(app):
+    app.add("مال کاربر اول")
+    page = app.reload().page
+    create_user(page, "علی")
+    assert page.inner_text(".profile-name") == "علی"
+    assert page.locator(".item").count() == 0
+    page.click("#profile-button")
+    page.locator(".profile-row", has_text="کاربر ۱").locator(".profile-pick").click()
+    page.wait_for_selector(".item .title")
+    assert page.inner_text(".item .title") == "مال کاربر اول"
+
+
+def test_switching_to_password_user_asks_for_it(app):
+    page = app.page
+    create_user(page, "رمزدار", password="abc")
+    page.click("#profile-button")
+    page.locator(".profile-row", has_text="کاربر ۱").locator(".profile-pick").click()
+    page.wait_for_selector("#today:not(:empty)")
+    page.wait_for_load_state("load")
+    page.click("#profile-button")
+    page.locator(".profile-row", has_text="رمزدار").locator(".profile-pick").click()
+    page.wait_for_selector("#password-input")
+    page.fill("#password-input", "غلط")
+    page.click('#password-box button[type="submit"]')
+    page.wait_for_selector("#message:not([hidden])")
+    assert page.is_visible("#login-screen")
+    page.click("#login-cancel")
+    assert page.is_hidden("#login-screen")
+    page.click("#profile-button")
+    page.locator(".profile-row", has_text="رمزدار").locator(".profile-pick").click()
+    page.fill("#password-input", "abc")
+    with page.expect_navigation():
+        page.click('#password-box button[type="submit"]')
+    page.wait_for_selector("#today:not(:empty)")
+    assert page.inner_text(".profile-name") == "رمزدار"
+
+
+def test_edit_profile_name_avatar_and_photo(app, tmp_path):
+    from PIL import Image
+    photo = tmp_path / "me.png"
+    Image.new("RGB", (400, 300), "red").save(photo)
+    page = app.page
+    page.click("#profile-button")
+    page.click(".profile-edit")
+    page.fill('#profile-form [name="name"]', "مجتبی")
+    page.set_input_files("#profile-photo-input", str(photo))
+    page.wait_for_selector("#profile-preview img")
+    page.click('#profile-form button[type="submit"]')
+    app.settle()
+    assert page.inner_text(".profile-name") == "مجتبی"
+    assert page.locator("#profile-button img.avatar").count() == 1
+    assert page.evaluate("document.querySelector('#profile-button img').naturalWidth") == 256
+
+
+def test_login_screen_appears_after_restart_with_two_users(browser, tmp_path):
+    """برنامه دوباره اجرا می‌شود: کسی وارد نیست و عکس و نام کاربران نشان داده می‌شود."""
+    import json
+
+    from conftest import free_port, wait_for_server
+    db = tmp_path / "two.sqlite3"
+    import database
+    database.connect(db).close()
+    (tmp_path / "other").mkdir()
+    database.connect(tmp_path / "other" / "dibacheh.sqlite3").close()
+    (tmp_path / "profiles.json").write_text(json.dumps({"profiles": [
+        {"id": "main", "name": "اول", "folder": "", "avatar": "a1", "has_photo": False, "salt": "", "hash": ""},
+        {"id": "abc", "name": "دوم", "folder": "other", "avatar": "a2", "has_photo": False, "salt": "", "hash": ""}]}), encoding="utf-8")
+    url, process = wait_for_server(db, free_port())
+    try:
+        page = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="fa-IR").new_page()
+        page.goto(url)
+        page.wait_for_selector("#login-screen:not([hidden])")
+        assert page.locator(".profile-tile").count() == 2
+        assert page.locator(".item").count() == 0
+        with page.expect_navigation():
+            page.click('[data-profile="abc"]')
+        page.wait_for_selector("#today:not(:empty)")
+        assert page.is_hidden("#login-screen")
+        assert page.inner_text(".profile-name") == "دوم"
+        page.context.close()
+    finally:
+        process.kill()
+        process.wait()
+
+
+def test_forgot_password_new_user_from_login_screen(browser, tmp_path):
+    import hashlib
+    import json
+
+    from conftest import free_port, wait_for_server
+    db = tmp_path / "one.sqlite3"
+    import database
+    database.connect(db).close()
+    salt = "00" * 16
+    digest = hashlib.pbkdf2_hmac("sha256", b"gone", bytes.fromhex(salt), 100_000).hex()
+    (tmp_path / "profiles.json").write_text(json.dumps({"profiles": [
+        {"id": "main", "name": "رمزدار", "folder": "", "avatar": "a1", "has_photo": False, "salt": salt, "hash": digest}]}), encoding="utf-8")
+    url, process = wait_for_server(db, free_port())
+    try:
+        page = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="fa-IR").new_page()
+        page.goto(url)
+        page.wait_for_selector("#password-input")
+        page.click("#login-add")
+        page.fill('#profile-form [name="name"]', "تازه")
+        with page.expect_navigation():
+            page.click('#profile-form button[type="submit"]')
+        page.wait_for_selector("#today:not(:empty)")
+        assert page.inner_text(".profile-name") == "تازه"
+        page.context.close()
+    finally:
+        process.kill()
+        process.wait()

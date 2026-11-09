@@ -65,17 +65,19 @@ function periodInfo(w) {
   return { title: t("از {0} تا امروز", Jalali.format(w.start)), nextLabel: t("کار باقی‌مانده") };
 }
 
-/** نمرهٔ این بازه، با سهم هر بخش */
+/** نمرهٔ تعهد: یک نمرهٔ بزرگ کلی و یک نمرهٔ کوچک برای هر درس یا کار */
 function scoreCard(score) {
-  const part = (label, value, max) => el("div", { class: "score-part" },
-    el("span", { class: "small" }, t("{0}: {1} از {2}", label, fa(value), fa(max))),
-    el("div", { class: "progress" }, el("span", { style: `width:${Math.round((100 * value) / max)}%` })));
   return el("div", { class: "score-card" },
-    el("div", { class: "score-total" }, el("strong", {}, fa(score.total)), el("span", { class: "muted small" }, t("از {0}", fa(100))), el("span", {}, score.label)),
-    el("div", { class: "score-parts" },
-      part(t("منظم بودن"), score.regularity, 40),
-      part(t("حجم کار"), score.volume, 40),
-      part(t("مرور سر وقت"), score.on_time, 20)));
+    el("div", { class: `score-total score-${score.band}` },
+      score.total === 100 && el("span", { class: "trophy", "aria-hidden": "true" }, "🏆"),
+      el("strong", {}, fa(score.total)),
+      el("span", {}, score.label),
+      el("span", { class: "small" }, t("{0} انجام‌شده · {1} انجام‌نشده", fa(score.done), fa(score.missed)))),
+    el("div", { class: "score-items" }, score.items.map((item) =>
+      el("div", { class: `score-item score-${item.band}`, title: t("{0} انجام‌شده · {1} انجام‌نشده", fa(item.done), fa(item.missed)) },
+        item.total === 100 && el("span", { "aria-hidden": "true" }, "🏆"),
+        el("strong", {}, fa(item.total)),
+        el("span", { class: "small" }, item.title)))));
 }
 
 function summarySection(w) {

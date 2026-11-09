@@ -12,6 +12,7 @@ Dibacheh é um planejador de estudos off-line. Divide cada lição em sessões, 
 - Relatórios com nota semanal e mensal
 - Exportação HTML para ler off-line no celular
 - Backup diário, também na sua pasta do OneDrive, Google Drive, Dropbox ou iCloud
+- Vários usuários em um computador, com dados separados, foto ou imagem pronta e senha opcional
 - 13 idiomas, calendário solar hegírico e gregoriano, modo claro e escuro, tamanhos de 50% a 200%
 
 ## Download

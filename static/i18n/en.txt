@@ -699,3 +699,43 @@ Remove font
 Change settings
 Invalid request.
 the reading of
+Users
+Password
+Log in
+If you forgot the password, create a new user with "+" and restore the old backup in Settings with "Import from file…". Backups have no password.
+Back
+Choose photo
+Remove photo
+Or a ready-made picture:
+Remove password
+The password only separates the users of this computer and does not encrypt data. Backups have no password.
+Delete user
+This lesson has reviews
+Settings have changed. Save them?
+Don't save
+Keep editing
+Not done
+This task was done later.
+It is logged on that day and removed from the future plan.
+Remove from not done
+Only the report score changes; the plan stays the same.
+No reviews
+Profile settings
+New user
+Empty = no change
+Empty = no password
+This file is not a photo.
+Delete user "{0}"? Their data is not erased; it moves to the profiles-deleted folder.
+{0} done · {1} not done
+Log in first.
+This user was not found.
+Wrong password.
+User name must be 1 to 40 characters.
+A user with this name exists.
+The chosen picture is invalid.
+The main user cannot be deleted.
+User 1
+Choose a Dibacheh data or backup file (zip or sqlite3)
+To change this profile, log in as that user first.
+Remove not-done task
+Log an overdue task as done

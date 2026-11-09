@@ -11,9 +11,8 @@ import "./splitter.js";
 import "./stats.js";
 
 import { $, api, setRenderer, showMessage, t } from "./core.js";
+import { loadProfiles, renderProfileButton, showLogin } from "./profiles.js";
 import { renderNow } from "./render.js";
-
-$("#vault-button").addEventListener("click", () => api("POST", "/api/browse", { kind: "vault" }));
 
 $("#undo-button").addEventListener("click", async () => {
   const result = await api("POST", "/api/undo", {});
@@ -26,4 +25,12 @@ $("#redo-button").addEventListener("click", async () => {
 });
 
 setRenderer(renderNow);
-api("GET", "/api/state");
+
+// اگر ورود لازم باشد، تا وارد نشود هیچ داده‌ای خوانده نمی‌شود
+const profileInfo = await loadProfiles();
+if (profileInfo.login_required) {
+  showLogin();
+} else {
+  renderProfileButton();
+  api("GET", "/api/state");
+}

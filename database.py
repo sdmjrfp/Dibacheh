@@ -150,6 +150,27 @@ MIGRATIONS = [
     ALTER TABLE items ADD COLUMN no_reviews INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE items ADD COLUMN variant TEXT NOT NULL DEFAULT 'study';
     """,
+    # نسخهٔ 8: کپی برنامهٔ روزهای آینده، و کارهایی که روز خودشان انجام نشده‌اند
+    """
+    CREATE TABLE planned_tasks (
+        date          TEXT NOT NULL,
+        session_id    INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        kind          TEXT NOT NULL,
+        review_round  INTEGER NOT NULL DEFAULT 0,
+        minutes       INTEGER NOT NULL,
+        PRIMARY KEY (date, session_id, kind, review_round)
+    );
+    CREATE TABLE missed_tasks (
+        id            INTEGER PRIMARY KEY,
+        date          TEXT NOT NULL,
+        session_id    INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        kind          TEXT NOT NULL,
+        review_round  INTEGER NOT NULL DEFAULT 0,
+        minutes       INTEGER NOT NULL,
+        UNIQUE (date, session_id, kind, review_round)
+    );
+    CREATE INDEX missed_tasks_by_date ON missed_tasks(date);
+    """,
 ]
 
 # رنگ‌های پیش‌فرض منبع‌ها؛ هر منبع تازه رنگ بعدی را می‌گیرد و بعداً قابل تغییر است

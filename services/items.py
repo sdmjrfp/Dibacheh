@@ -155,9 +155,12 @@ def _apply_sections(conn, item_id, unit, sections):
 
 def create_item(conn, data, day):
     defaults = database.get_settings(conn)["new_item_defaults"]
+    no_reviews = bool(data.get("no_reviews"))
     count = positive_int(data.get("session_count", 1), _("تعداد جلسه"))
     minutes = positive_int(data.get("session_minutes", defaults["session_minutes"]), _("زمان جلسه"))
     fields = item_fields(data)
+    if no_reviews:
+        fields["no_reviews"] = True
     if "title" not in fields:
         raise UserError(_("عنوان درس خالی است."))
     title = fields.pop("title")
@@ -193,9 +196,12 @@ def create_item(conn, data, day):
 
 
 def update_item(conn, item_id, data):
-    require_item(conn, item_id)
+    item = require_item(conn, item_id)
     fields = item_fields(data)
     database.update_item(conn, item_id, **fields)
+    # تیک «این درس مرور دارد»
+    if "no_reviews" in data and bool(data["no_reviews"]) != item["no_reviews"]:
+        (remove_reviews if data["no_reviews"] else restore_reviews)(conn, item_id)
     if "requires" in data:
         _save_requires(conn, item_id, data["requires"])
     if {"range_start", "range_end", "section_unit"} & set(fields):

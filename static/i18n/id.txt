@@ -699,3 +699,43 @@ Hapus huruf
 Ubah pengaturan
 Permintaan tidak valid.
 pembacaan
+Pengguna
+Kata sandi
+Masuk
+Jika lupa kata sandi, buat pengguna baru dengan "+" dan pulihkan cadangan lama di Pengaturan dengan "Impor dari berkas…". Cadangan tidak berkata sandi.
+Kembali
+Pilih foto
+Hapus foto
+Atau gambar siap pakai:
+Hapus kata sandi
+Kata sandi hanya memisahkan pengguna komputer ini dan tidak mengenkripsi data. Cadangan tidak berkata sandi.
+Hapus pengguna
+Pelajaran ini punya ulasan
+Pengaturan berubah. Simpan?
+Jangan simpan
+Lanjut mengedit
+Belum dikerjakan
+Tugas ini dikerjakan kemudian.
+Dicatat pada hari itu dan dihapus dari rencana mendatang.
+Hapus dari yang belum dikerjakan
+Hanya nilai laporan yang berubah; rencana tetap sama.
+Tanpa ulasan
+Pengaturan profil
+Pengguna baru
+Kosong = tidak berubah
+Kosong = tanpa kata sandi
+Berkas ini bukan foto.
+Hapus pengguna "{0}"? Datanya tidak dihapus, melainkan pindah ke folder profiles-deleted.
+{0} selesai · {1} belum
+Masuk dulu.
+Pengguna tidak ditemukan.
+Kata sandi salah.
+Nama pengguna harus 1 sampai 40 karakter.
+Sudah ada pengguna dengan nama ini.
+Gambar yang dipilih tidak valid.
+Pengguna utama tidak bisa dihapus.
+Pengguna 1
+Pilih berkas data atau cadangan Dibacheh (zip atau sqlite3)
+Untuk mengubah profil ini, masuk dulu sebagai pengguna itu.
+Hapus tugas yang belum dikerjakan
+Catat tugas terlambat sebagai selesai

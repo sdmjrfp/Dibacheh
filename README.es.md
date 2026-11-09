@@ -12,6 +12,7 @@ Dibacheh es un planificador de estudio sin conexión. Divide cada lección en se
 - Informes con nota semanal y mensual
 - Exportación HTML para leer sin conexión en el móvil
 - Copia diaria, también en tu carpeta de OneDrive, Google Drive, Dropbox o iCloud
+- Varios usuarios en un ordenador, con datos separados, foto o imagen lista y contraseña opcional
 - 13 idiomas, calendario solar hégira y gregoriano, modo claro y oscuro, tamaños del 50 % al 200 %
 
 ## Descarga

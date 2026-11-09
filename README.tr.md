@@ -12,6 +12,7 @@ Dibacheh çevrimdışı bir çalışma planlayıcısıdır. Her dersi oturumlara
 - Haftalık ve aylık puanlı raporlar
 - Telefonda çevrimdışı okumak için HTML dışa aktarımı
 - Günlük yedek, ayrıca OneDrive, Google Drive, Dropbox veya iCloud klasörünüze kopyalanır
+- Bir bilgisayarda birkaç kullanıcı: ayrı veriler, fotoğraf veya hazır resim ve isteğe bağlı parola
 - 13 dil, Hicri Şemsi ve Miladi takvim, açık ve koyu mod, %50 ile %200 arası boyut
 
 ## İndirme
