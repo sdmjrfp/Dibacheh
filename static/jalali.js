@@ -117,9 +117,9 @@
     return utcToIso(new Date(isoToUTC(iso).getTime() + days * 86400000));
   }
 
-  /** عدد با رقم زبان فعلی: فقط فارسی رقم جدا دارد */
+  /** عدد یا متن عددی مثل «1.3.0»، با رقم زبان فعلی: فقط فارسی رقم جدا دارد */
   function faNumber(n) {
-    return locale === "fa" ? Number(n).toLocaleString("fa-IR", { useGrouping: false }) : String(n);
+    return locale === "fa" ? String(n).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[digit]) : String(n);
   }
 
   Object.assign(api, {

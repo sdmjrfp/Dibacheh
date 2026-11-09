@@ -288,7 +288,7 @@ def test_score_parts_and_labels():
     assert half["total"] == 20 + 20 + 10 and half["label"] == "قابل قبول"
     assert reports.score(0, 0, 0, 7, 0, 0) is None      # کاری نبوده که نمره بدهد
     assert reports.score(100, 1, 100, 0, 0, 0) is None  # همهٔ روزها تعطیل بوده
-    assert reports.score(0, 0, 600, 7, 0, 0)["total"] == 20
+    assert reports.score(0, 0, 600, 7, 0, 0)["total"] == 0
     assert reports.score(900, 9, 600, 7, 0, 0)["total"] == 100   # بیشتر از ۱۰۰ نمی‌شود
 
 

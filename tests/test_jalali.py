@@ -94,3 +94,17 @@ def test_python_jalali_helpers():
     assert jalali.iso_name(date(2025, 3, 20)) == "1403-12-30"
     assert jalali.month_bounds(date(2026, 11, 5)) == (date(2026, 10, 23), date(2026, 11, 21))
     assert jalali.week_start(date(2026, 11, 5)) == date(2026, 10, 31)
+
+
+def test_digits_of_numbers_and_version_text():
+    assert run_js('[Jalali.faNumber(1405), Jalali.faNumber("1.3.0"), Jalali.faNumber("12.5")]') == ["۱۴۰۵", "۱.۳.۰", "۱۲.۵"]
+
+
+def test_gregorian_mode_in_browser():
+    expr = """(() => {
+      Jalali.configure({calendar: "gregorian", locale: "en"});
+      return [Jalali.toJalali("2026-11-05"), Jalali.fromJalali(2026, 2, 30), Jalali.fromJalali(2024, 2, 29),
+              Jalali.monthLength(2024, 2), Jalali.monthLength(2026, 2), Jalali.isLeap(2024), Jalali.MONTHS[0],
+              Jalali.weekdayName(0), Jalali.faNumber(5), Jalali.format("2026-11-05")];
+    })()"""
+    assert run_js(expr) == [{"y": 2026, "m": 11, "d": 5}, None, "2024-02-29", 29, 28, True, "January", "Monday", "5", "November 5, 2026"]

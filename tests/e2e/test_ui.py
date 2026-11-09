@@ -606,3 +606,47 @@ def test_no_persian_text_left_on_page_in_english(app):
       return found;
     })()""")
     assert left == []
+
+
+def test_whats_new_shows_once_after_update(app):
+    app.add("اول")
+    app.call("PATCH", "/api/settings", {"last_seen_version": "1.0.0"})
+    page = app.open().page
+    page.wait_for_selector("#whats-new-dialog[open]")
+    assert "ناعدد" not in page.inner_text("#whats-new-title")
+    assert re.search(r"[۰-۹]\.[۰-۹]\.[۰-۹]", page.inner_text("#whats-new-title"))
+    assert page.locator("#whats-new-list li").count() > 3
+    page.click("#close-whats-new")
+    app.settle()
+    page = app.open().page
+    app.settle()
+    assert page.is_hidden("#whats-new-dialog")
+
+
+def test_version_label_and_no_update_button_when_up_to_date(app):
+    page = app.page
+    assert re.fullmatch(r"v\d+\.\d+\.\d+", page.inner_text("#app-version"))
+    assert page.is_hidden("#update-button")
+
+
+def test_update_button_and_dialog_with_a_fake_release(app):
+    page = app.page
+    release = {"available": True, "latest": "9.9.9", "notes": "خلاصهٔ تغییرات", "asset": {"name": "a.dmg", "url": "x", "size": 2097152}}
+    page.route("**/api/update/check*", lambda route: route.fulfill(json=release))
+    app.open()
+    page.wait_for_selector("#update-button:not([hidden])", timeout=5000)
+    assert "۹.۹.۹" in page.inner_text("#update-button")
+    page.click("#update-button")
+    assert page.inner_text("#update-notes") == "خلاصهٔ تغییرات"
+    assert page.is_visible("#update-download")
+    page.click("#close-update")
+
+
+def test_score_card_appears_in_weekly_report(app):
+    state = app.add("اول")
+    sid = state["items"][0]["sessions"][0]["id"]
+    app.call("POST", "/api/tasks/done", {"session_id": sid, "kind": "read"})
+    page = app.open().page
+    page.click("#stats-button")
+    page.wait_for_selector(".score-card")
+    assert page.locator(".score-part").count() == 3

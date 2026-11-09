@@ -86,7 +86,10 @@ def score(minutes_done, active_days, planned_minutes, work_days, reviews_done, o
         return None
     regularity = min(1, active_days / work_days)
     volume = 1 if planned_minutes <= 0 else min(1, minutes_done / planned_minutes)
-    on_time = 1 if reviews_done + overdue == 0 else reviews_done / (reviews_done + overdue)
+    if reviews_done + overdue == 0:
+        on_time = 1 if minutes_done > 0 else 0   # وقتی هیچ کاری نشده، نمرهٔ سر وقت بودن هم نیست
+    else:
+        on_time = reviews_done / (reviews_done + overdue)
     parts = {"regularity": round(40 * regularity), "volume": round(40 * volume), "on_time": round(20 * on_time)}
     total = sum(parts.values())
     return {"total": total, "label": _(next(text for floor, text in SCORE_LABELS if total >= floor)), **parts}
