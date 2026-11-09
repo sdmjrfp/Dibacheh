@@ -880,7 +880,7 @@ def test_login_screen_appears_after_restart_with_two_users(browser, tmp_path):
         page = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="fa-IR").new_page()
         page.goto(url)
         page.wait_for_selector("#login-screen:not([hidden])")
-        assert page.locator(".profile-tile").count() == 2
+        assert page.locator(".profile-tile[data-profile]").count() == 2
         assert page.locator(".item").count() == 0
         with page.expect_navigation():
             page.click('[data-profile="abc"]')
