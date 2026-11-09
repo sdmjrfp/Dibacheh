@@ -1,6 +1,6 @@
 """مسیرهای کاربران: ورود، عوض کردن کاربر، ساختن و تغییر پروفایل."""
 
-from flask import Blueprint, abort, current_app, jsonify, send_file
+from flask import Blueprint, Response, abort, current_app, g, jsonify
 
 import database
 import profiles
@@ -66,6 +66,10 @@ def api_update_profile(profile_id):
 @bp.route("/api/profiles/<profile_id>", methods=["DELETE"])
 def api_delete_profile(profile_id):
     _active_only(profile_id)
+    # ویندوز فایل باز را جابه‌جا نمی‌کند، پس دیتابیس همین کاربر اول باید بسته شود
+    conn = g.pop("db", None)
+    if conn is not None:
+        conn.close()
     profiles.delete(_main_db(), profile_id)
     _after_switch()
     return jsonify(profiles.public(_main_db()))
@@ -76,4 +80,5 @@ def api_profile_photo(profile_id):
     path = profiles.photo_path(_main_db(), profile_id)
     if path is None:
         abort(404)
-    return send_file(path, mimetype="image/jpeg", max_age=0)
+    # فایل همین‌جا خوانده و بسته می‌شود تا در ویندوز عوض کردن یا حذف عکس گیر نکند
+    return Response(path.read_bytes(), mimetype="image/jpeg", headers={"Cache-Control": "no-cache"})
