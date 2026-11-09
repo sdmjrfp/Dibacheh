@@ -37,6 +37,14 @@ def send(method, path, token, body):
         return json.load(response)
 
 
+def check_update_route():
+    """بررسی نسخهٔ تازه باید در بستهٔ نصبی هم کار کند؛ مخصوصاً گواهی امنیتی HTTPS."""
+    result = json.loads(get("/api/update/check"))
+    if result.get("failed"):
+        raise SystemExit("بررسی نسخهٔ تازه به GitHub وصل نشد: " + json.dumps(result))
+    print("update check:", result.get("latest"), "available =", result.get("available"))
+
+
 def main(binary):
     work = Path(tempfile.mkdtemp())
     doc = pdfium.PdfDocument.new()
@@ -64,6 +72,7 @@ def main(binary):
         else:
             sys.exit("برنامه بالا نیامد")
         token = re.search(r'csrf-token" content="([^"]+)"', page).group(1)
+        check_update_route()
         assert get("/static/style.css") and get("/static/vendor/fonts/samim/Samim.woff2")
         send("PATCH", "/api/settings", token, {"export_folder": str(work / "out"), "font_family": "Samim"})
         send("POST", "/api/items", token, {

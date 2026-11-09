@@ -42,6 +42,9 @@ function openSettings() {
   sf.theme.value = s.theme;
   sf.font_size.value = s.font_size;
   sf.font_bold.checked = Boolean(s.font_bold);
+  sf.check_updates.checked = s.check_updates;
+  sf.cloud_backup_folder.value = s.cloud_backup_folder;
+  renderCloudBackups();
   sf.ui_scale.value = String(s.ui_scale);
   sf.vault_path.value = s.vault_path || "";
   sf.export_folder.value = s.export_folder || "";
@@ -327,17 +330,40 @@ $("#templates-restore").addEventListener("click", async () => {
   renderTemplateSettings();
 });
 
+/** پوشه‌های ابری پیداشده روی این کامپیوتر، با یک کلیک انتخاب می‌شوند */
+async function renderCloudBackups() {
+  const { folders, copies } = await (await fetch("/api/backups/cloud")).json();
+  $("#cloud-found").replaceChildren(...folders.map((folder) =>
+    el("button", {
+      type: "button", title: folder.path,
+      onclick: () => { sf.cloud_backup_folder.value = folder.path; },
+    }, folder.name)));
+  if (!folders.length) $("#cloud-found").append(el("span", { class: "muted small" }, "پوشهٔ ابری‌ای روی این کامپیوتر پیدا نشد. برنامهٔ OneDrive، Google Drive، Dropbox یا iCloud را نصب کنید، یا پوشه را با Browse انتخاب کنید."));
+  $("#cloud-status").textContent = copies.length ? `آخرین کپی: ${Jalali.format(copies[0].modified)} · ${fa(copies.length)} نسخه` : "";
+  cloudCopies = copies;
+  renderBackups();
+}
+
+let cloudCopies = [];
+
+$("#cloud-now").addEventListener("click", async () => {
+  await api("PATCH", "/api/settings", { cloud_backup_folder: sf.cloud_backup_folder.value.trim() });
+  const result = await api("POST", "/api/backups/cloud/now", {});
+  showMessage(result.copied ? "backup در پوشهٔ ابری کپی شد." : "آخرین backup از قبل در پوشهٔ ابری هست.", false);
+  renderCloudBackups();
+});
+
 async function renderBackups() {
-  const backups = await (await fetch("/api/backups")).json();
+  const backups = (await (await fetch("/api/backups")).json()).concat(cloudCopies.map((copy) => ({ ...copy, cloud: true })));
   $("#backup-list").replaceChildren(...backups.map((b) =>
     el("li", {},
-      el("span", {}, `${Jalali.format(b.modified)}${b.safety ? " (کپی قبل از برگرداندن)" : ""}`),
+      el("span", {}, `${Jalali.format(b.modified)}${b.safety ? " (کپی قبل از برگرداندن)" : ""}${b.cloud ? " ☁ پوشهٔ ابری" : ""}`),
       el("span", { class: "muted small" }, `${fa(Math.max(1, Math.round(b.size / 1024)))} کیلوبایت`),
       el("button", {
         type: "button",
         onclick: async () => {
           if (!confirm(`داده‌های برنامه به نسخهٔ ${Jalali.format(b.modified)} برگردد؟ یک کپی از وضعیت فعلی نگه داشته می‌شود.`)) return;
-          await api("POST", "/api/backups/restore", { name: b.name });
+          await api("POST", "/api/backups/restore", { name: b.name, cloud: Boolean(b.cloud) });
           $("#settings-dialog").close();
           showMessage("backup برگردانده شد.", false);
         },
@@ -477,6 +503,8 @@ function collectSettings() {
     theme: sf.theme.value,
     font_size: Number(sf.font_size.value),
     font_bold: sf.font_bold.checked,
+    check_updates: sf.check_updates.checked,
+    cloud_backup_folder: sf.cloud_backup_folder.value.trim(),
     ui_scale: sf.ui_scale.value === "auto" ? "auto" : Number(sf.ui_scale.value),
     font_family: sf.font_family.value.trim(),
     vault_path: sf.vault_path.value.trim(),

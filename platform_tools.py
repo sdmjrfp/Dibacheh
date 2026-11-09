@@ -141,3 +141,35 @@ def choose(kind="file", prompt="یک فایل انتخاب کنید"):
     if kind == "folder" and len(path) > 1:
         path = path.rstrip("/")
     return path or None
+
+
+def cloud_folders(home=None):
+    """پوشه‌های همگام‌شده با فضای ابری که روی این کامپیوتر پیدا می‌شوند: [{"name", "path"}]."""
+    home = Path(home) if home else Path.home()
+    found = []
+
+    def add(name, path):
+        if path.is_dir() and str(path) not in {f["path"] for f in found}:
+            found.append({"name": name, "path": str(path)})
+
+    # پوشهٔ جدید Mac: هر حساب یک پوشه دارد، مثل OneDrive-Personal یا GoogleDrive-name@gmail.com
+    storage = home / "Library" / "CloudStorage"
+    if storage.is_dir():
+        for folder in sorted(storage.iterdir()):
+            if folder.name.startswith("OneDrive"):
+                add("OneDrive", folder)
+            elif folder.name.startswith("GoogleDrive"):
+                add("Google Drive", folder / "My Drive")
+            elif folder.name.startswith("Dropbox"):
+                add("Dropbox", folder)
+    add("iCloud Drive", home / "Library" / "Mobile Documents" / "com~apple~CloudDocs")
+    add("iCloud Drive", home / "iCloudDrive")
+    for variable in ("OneDrive", "OneDriveConsumer", "OneDriveCommercial"):
+        if os.environ.get(variable):
+            add("OneDrive", Path(os.environ[variable]))
+    add("OneDrive", home / "OneDrive")
+    add("Google Drive", home / "Google Drive")
+    add("Google Drive", home / "My Drive")
+    add("Google Drive", home / "GoogleDrive")
+    add("Dropbox", home / "Dropbox")
+    return found

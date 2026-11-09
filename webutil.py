@@ -13,7 +13,7 @@ from services import state as state_service
 from services.parsing import parse_date, positive_int  # noqa: F401 (برای مسیرها)
 
 # وضعیت backup روزانه در همین اجرای برنامه، تا هر درخواست دوباره چک نکند
-backup_status = {"day": None, "problem": None}
+backup_status = {"day": None, "problem": None, "cloud_problem": None}
 
 
 def get_db():
@@ -49,7 +49,10 @@ def body():
 
 def state_data():
     """وضعیت کامل با تاریخ‌های پایتونی (برای خروجی HTML)."""
-    extras = {"undo": undo.info(), "backup_problem": backup_status["problem"], "can_quit": config.CAN_QUIT}
+    extras = {
+        "undo": undo.info(), "backup_problem": backup_status["problem"], "cloud_problem": backup_status["cloud_problem"],
+        "can_quit": config.CAN_QUIT, "version": config.VERSION, "from_source": not config.FROZEN,
+    }
     return state_service.state_data(get_db(), today(), extras)
 
 

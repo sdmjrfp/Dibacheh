@@ -13,7 +13,7 @@ from errors import UserError
 FONT_SUFFIXES = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2"}
 
 
-def restore_backup(conn, folder, name):
+def restore_backup(conn, folder, name, safety_folder=None):
     """یک backup را برمی‌گرداند. قبلش یک کپی جدا از وضعیت فعلی گرفته می‌شود."""
     if name not in {b["name"] for b in database.list_backups(folder)}:
         raise UserError("این backup پیدا نشد.")
@@ -21,7 +21,7 @@ def restore_backup(conn, folder, name):
         database.check_database_file(folder / name)
     except ValueError as error:
         raise UserError(str(error))
-    database.safety_copy(conn, folder, datetime.now())
+    database.safety_copy(conn, safety_folder or folder, datetime.now())
     database.replace_database(conn, folder / name)
 
 

@@ -4,3 +4,4 @@ pillow==13.0.0
 pypdfium2==5.14.0
 pytest==9.2.0
 waitress==3.0.2
+certifi==2026.10.23

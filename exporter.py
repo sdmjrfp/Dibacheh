@@ -125,8 +125,9 @@ def export_report(report, state, folder):
         for c in report["courses"])
     overdue = "".join(f"<li>{esc(o['title'])}: {fa(o['count'])} کار</li>" for o in report["overdue"])
     body = (
-        f'<section class="day"><h2>خلاصه</h2>'
-        f"<p>{fa(report['done_count'])} کار در {fa(report['active_days'])} روز، جمعاً {fa(total)} دقیقه: "
+        '<section class="day"><h2>خلاصه</h2>'
+        + (f"<p><strong>نمره: {fa(report['score']['total'])} از {fa(100)} ({esc(report['score']['label'])})</strong></p>" if report.get("score") else "")
+        + f"<p>{fa(report['done_count'])} کار در {fa(report['active_days'])} روز، جمعاً {fa(total)} دقیقه: "
         f"خواندن {fa(t['read'])}، مرور {fa(t['review'])}، روتین {fa(t['routine'])}.</p>"
         f"<p>{next_label}: {fa(report['next_minutes'])} دقیقه.</p></section>"
         f'<section class="day"><h2>به تفکیک درس (دقیقه)</h2>'

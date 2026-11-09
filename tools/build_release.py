@@ -52,6 +52,8 @@ def pyinstaller(*options):
     run(sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", *options,
         "--distpath", OUT / "dist", "--workpath", OUT / "work", "--specpath", OUT / "work",
         "--add-data", f"{ROOT / 'templates'}{SEP}templates", "--add-data", f"{ROOT / 'static'}{SEP}static",
+        "--add-data", f"{ROOT / 'VERSION'}{SEP}.",
+        "--hidden-import", "certifi",
         "--collect-all", "pypdfium2", "--collect-all", "pypdfium2_raw",
         "--hidden-import", "PIL.Image", "--hidden-import", "markdown.extensions.tables",
         "--hidden-import", "markdown.extensions.fenced_code", "--hidden-import", "markdown.extensions.sane_lists",

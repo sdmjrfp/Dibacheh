@@ -9,6 +9,8 @@ Dibacheh includes the following software, each under its own license.
 | Markdown (Python-Markdown) | BSD-3-Clause |
 | pypdfium2 and PDFium | BSD-3-Clause / Apache-2.0 |
 | Pillow | MIT-CMU (HPND) |
+| certifi | MPL-2.0 |
+| waitress | ZPL-2.1 |
 | Vazirmatn, Samim, Shabnam, Sahel, Parastoo, Gandom (Saber Rastikerdar) | SIL Open Font License 1.1 |
 | Estedad (Amin Abedi) | SIL Open Font License 1.1 |
 | Tanha (Saber Rastikerdar, based on DejaVu/Bitstream Vera) | Bitstream Vera License; changes in the public domain |

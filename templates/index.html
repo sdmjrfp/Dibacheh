@@ -10,7 +10,8 @@
 </head>
 <body>
   <header class="topbar">
-    <h1>دیباچه</h1>
+    <h1>دیباچه <small id="app-version" class="version"></small></h1>
+    <button id="update-button" class="link update-link" hidden></button>
     <span id="today" class="muted"></span>
     <span class="spacer"></span>
     <div id="layout-tabs" class="tabs" role="tablist" aria-label="چیدمان">
@@ -87,6 +88,37 @@
       <div id="calendar"></div>
     </section>
   </main>
+
+  <!-- نسخهٔ تازه: اول خلاصهٔ تغییرات، بعد دانلود -->
+  <dialog id="update-dialog" class="dialog">
+    <h2 id="update-title"></h2>
+    <div id="update-notes" class="explain release-notes"></div>
+    <p id="update-source-note" class="muted small" hidden>این برنامه از سورس اجرا می‌شود. برای به‌روز کردن همین نسخه، <code>git pull</code> بزنید. فایل زیر نسخهٔ نصبی است.</p>
+    <p id="update-size" class="muted small"></p>
+    <div id="update-progress" class="progress update-bar" hidden><span></span></div>
+    <p id="update-progress-text" class="small"></p>
+    <div id="update-done" hidden>
+      <p>دانلود شد. برنامه را ببندید و فایل را نصب کنید. داده‌هایتان سر جایشان می‌مانند.</p>
+      <p id="update-done-path" class="path" dir="ltr"></p>
+      <div class="pop-row">
+        <button type="button" id="update-open" class="primary">باز کردن فایل نصب</button>
+        <button type="button" id="update-reveal">نمایش فایل</button>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="update-download" class="primary">دانلود</button>
+      <button type="button" id="close-update">بستن</button>
+    </div>
+  </dialog>
+
+  <!-- اولین اجرا بعد از به‌روزرسانی -->
+  <dialog id="whats-new-dialog" class="dialog">
+    <h2 id="whats-new-title"></h2>
+    <ul id="whats-new-list" class="whats-new"></ul>
+    <div class="dialog-actions">
+      <button type="button" id="close-whats-new" class="primary">متوجه شدم</button>
+    </div>
+  </dialog>
 
   <!-- منوی «+»: چه چیزی اضافه شود -->
   <dialog id="add-dialog" class="dialog wide">
@@ -408,9 +440,29 @@
       </fieldset>
 
       <fieldset>
+        <legend>backup آنلاین</legend>
+        <p class="muted small">یک کپی از backup هر روز در پوشهٔ OneDrive، Google Drive، Dropbox یا iCloud گذاشته می‌شود و برنامهٔ همان سرویس آن را به حساب شما می‌برد. دیباچه خودش به اینترنت وصل نمی‌شود و رمزی نمی‌خواهد. این فایل همهٔ داده‌های برنامه را دارد و در حساب ابری شما نگه داشته می‌شود.</p>
+        <div id="cloud-found" class="pop-row"></div>
+        <div class="path-setting">
+          <span>پوشهٔ همگام‌شده</span><input name="cloud_backup_folder" dir="ltr" placeholder="خالی = خاموش">
+          <button type="button" data-browse="cloud_backup_folder">Browse…</button>
+        </div>
+        <div class="pop-row">
+          <button type="button" id="cloud-now">کپی همین حالا</button>
+          <span id="cloud-status" class="muted small"></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
         <legend>برگرداندن backup</legend>
         <p class="muted small">قبل از برگرداندن، یک کپی از وضعیت فعلی گرفته می‌شود.</p>
         <ul id="backup-list" class="type-settings backup-list"></ul>
+      </fieldset>
+
+      <fieldset>
+        <legend>نسخهٔ تازه</legend>
+        <label class="check"><input type="checkbox" name="check_updates"> هر بار که برنامه باز می‌شود، در پس‌زمینه بررسی شود نسخهٔ تازه‌ای در GitHub آمده یا نه</label>
+        <p class="muted small">فقط شمارهٔ نسخه خوانده می‌شود و هیچ داده‌ای از شما فرستاده نمی‌شود. اگر اینترنت قطع باشد، اتفاقی نمی‌افتد.</p>
       </fieldset>
 
       <fieldset>

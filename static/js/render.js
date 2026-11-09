@@ -4,6 +4,7 @@ import { renderCalendar } from "./calendar.js";
 import { $, el, fa, showMessage, state } from "./core.js";
 import { editing, renderSessions } from "./item-dialog.js";
 import { applyScale } from "./layout.js";
+import { renderVersion } from "./update.js";
 import { renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./sources.js";
 
 // ---------------------------------------------------------------------------
@@ -34,6 +35,8 @@ export function renderNow() {
   renderWorkload();
   for (const warning of state.plan.warnings) showMessage(warning);
   if (state.backup_problem) showMessage(state.backup_problem);
+  if (state.cloud_problem) showMessage(state.cloud_problem);
+  renderVersion();
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
   $("#quit-button").hidden = !state.can_quit;
   // دکمه‌های برگرداندن و بازگرداندن، با تعداد مرحله‌ها

@@ -1,12 +1,15 @@
 """تست‌های بخش منابع درسی از راه API، مثل کاری که صفحه انجام می‌دهد."""
 
-from datetime import date
+from datetime import date, timedelta
+
+import pytest
 
 import app as app_module
 import config
 import database
 import platform_tools
 import sources
+from errors import UserError
 
 
 def add(client, title="A", count=3, minutes=60, **extra):
@@ -271,3 +274,177 @@ def test_own_template_keeps_kind_and_weekdays(client):
     own = next(t for t in state["templates"] if t["name"] == "T")
     assert own["kind"] == "routine"
     assert own["fields"]["routine_weekdays"] == [1, 2]
+
+
+# ---------------------------------------------------------------------------
+# نمره در گزارش
+# ---------------------------------------------------------------------------
+
+def test_score_parts_and_labels():
+    import reports
+    best = reports.score(600, 7, 600, 7, 5, 0)
+    assert best == {"total": 100, "label": "عالی", "regularity": 40, "volume": 40, "on_time": 20}
+    half = reports.score(300, 3, 600, 6, 1, 1)
+    assert half["total"] == 20 + 20 + 10 and half["label"] == "قابل قبول"
+    assert reports.score(0, 0, 0, 7, 0, 0) is None      # کاری نبوده که نمره بدهد
+    assert reports.score(100, 1, 100, 0, 0, 0) is None  # همهٔ روزها تعطیل بوده
+    assert reports.score(0, 0, 600, 7, 0, 0)["total"] == 20
+    assert reports.score(900, 9, 600, 7, 0, 0)["total"] == 100   # بیشتر از ۱۰۰ نمی‌شود
+
+
+def test_report_has_score_for_week_and_month_only(client):
+    state = add(client, "A", count=2)
+    client.post("/api/tasks/done", json={"session_id": item_named(state, "A")["sessions"][0]["id"], "kind": "read", "result": "done"})
+    for period in ("week", "month"):
+        summary = client.get(f"/api/stats?period={period}").get_json()["summary"]
+        assert 0 < summary["score"]["total"] <= 100
+    assert client.get("/api/stats?period=all").get_json()["summary"]["score"] is None
+
+
+def test_past_week_ignores_current_overdue(client):
+    state = add(client, "A", count=2)
+    today = date.fromisoformat(state["today"])
+    summary = client.get(f"/api/stats?period=week&date={(today - timedelta(days=21)).isoformat()}").get_json()["summary"]
+    assert summary["score"] is None or summary["score"]["on_time"] == 20
+
+
+# ---------------------------------------------------------------------------
+# نسخهٔ تازه
+# ---------------------------------------------------------------------------
+
+RELEASE = {"tag_name": "v9.0.0", "draft": False, "prerelease": False,
+           "body": "<!-- lang:fa -->\nفارسی\n<!-- lang:en -->\nEnglish",
+           "assets": [{"name": f"Dibacheh-9.0.0{s}", "size": 3,
+                       "browser_download_url": f"https://github.com/sdmjrfp/Dibacheh/releases/download/v9.0.0/Dibacheh-9.0.0{s}"}
+                      for s in ("-AppleSilicon.dmg", "-Intel.dmg", "-Windows-Setup.exe", "-Linux-x86_64.AppImage")]}
+
+
+def test_version_comparison():
+    from services import update
+    assert update.is_newer("1.10.0", "1.9.9")
+    assert not update.is_newer("1.2.0", "1.2.0")
+    assert not update.is_newer("bad", "1.2.0")
+
+
+def test_notes_follow_language_and_fall_back():
+    from services import update
+    assert update.notes_for(RELEASE["body"], "fa") == "فارسی"
+    assert update.notes_for(RELEASE["body"], "de") == "English"
+    assert update.notes_for("ساده", "de") == "ساده"
+
+
+@pytest.mark.parametrize("system, machine, suffix", [
+    ("mac", "arm64", "-AppleSilicon.dmg"), ("mac", "x86_64", "-Intel.dmg"),
+    ("windows", "AMD64", "-Windows-Setup.exe"), ("linux", "x86_64", "-Linux-x86_64.AppImage"),
+])
+def test_right_file_for_each_system(system, machine, suffix):
+    from services import update
+    result = update.read_release(RELEASE, "1.0.0", "fa", system, machine)
+    assert result["available"] and result["asset"]["name"].endswith(suffix)
+
+
+def test_foreign_download_address_and_old_release_are_ignored():
+    from services import update
+    foreign = {**RELEASE, "assets": [{"name": "Dibacheh-9.0.0-Intel.dmg", "browser_download_url": "https://evil.example/x.dmg"}]}
+    assert not update.read_release(foreign, "1.0.0", "fa", "mac", "x86_64")["available"]
+    assert not update.read_release(RELEASE, "9.0.0", "fa", "mac", "arm64")["available"]
+    assert not update.read_release({**RELEASE, "draft": True}, "1.0.0", "fa", "mac", "arm64")["available"]
+    with pytest.raises(UserError):
+        update.start_download({"url": "https://evil.example/x.dmg", "name": "x.dmg"})
+
+
+def test_check_without_internet_does_not_fail_the_app(client, monkeypatch):
+    from services import update
+    update.reset()
+    def no_network(*args, **kwargs):
+        raise OSError("قطع")
+    monkeypatch.setattr(update.urllib.request, "urlopen", no_network)
+    response = client.get("/api/update/check")
+    assert response.status_code == 200
+    assert response.get_json() == {"available": False, "failed": True}
+    update.reset()
+
+
+def test_check_can_be_turned_off(client):
+    client.patch("/api/settings", json={"check_updates": False})
+    assert client.get("/api/update/check").get_json()["disabled"] is True
+
+
+def test_download_writes_file_and_rejects_wrong_size(tmp_path, monkeypatch):
+    import io
+    import time
+
+    from services import update
+    update.reset()
+    monkeypatch.setattr(update.urllib.request, "urlopen", lambda *a, **k: io.BytesIO(b"abc"))
+    asset = {"url": update.DOWNLOAD_PREFIX + "v9/a.dmg", "name": "a.dmg", "size": 3}
+    update.start_download(asset, tmp_path)
+    while update.progress["state"] == "downloading":
+        time.sleep(0.01)
+    assert update.progress["state"] == "done" and (tmp_path / "a.dmg").read_bytes() == b"abc"
+    update.start_download({**asset, "name": "b.dmg", "size": 99}, tmp_path)
+    while update.progress["state"] == "downloading":
+        time.sleep(0.01)
+    assert update.progress["state"] == "failed"
+    assert not (tmp_path / "b.dmg").exists() and not (tmp_path / "b.dmg.part").exists()
+    update.reset()
+
+
+def test_state_reports_version_and_seen_is_saved(client):
+    import config
+    state = client.get("/api/state").get_json()
+    assert state["version"] == config.VERSION
+    client.post("/api/update/seen", json={})
+    assert client.get("/api/state").get_json()["settings"]["last_seen_version"] == config.VERSION
+
+
+# ---------------------------------------------------------------------------
+# backup آنلاین
+# ---------------------------------------------------------------------------
+
+def test_cloud_backup_copy_keeps_retention_and_skips_same(tmp_path):
+    local, cloud = tmp_path / "local", tmp_path / "cloud"
+    local.mkdir()
+    cloud.mkdir()
+    for day in ("2026-11-01", "2026-11-02", "2026-11-03"):
+        (local / f"dibacheh-{day}.sqlite3").write_bytes(b"x")
+        assert database.copy_backup_to_cloud(local, cloud, 2) is not None
+    copies = sorted(p.name for p in (cloud / database.CLOUD_SUBFOLDER).iterdir())
+    assert copies == ["dibacheh-2026-11-02.sqlite3", "dibacheh-2026-11-03.sqlite3"]
+    assert database.copy_backup_to_cloud(local, cloud, 2) is None
+
+
+def test_cloud_backup_missing_folder_is_reported(tmp_path):
+    local = tmp_path / "local"
+    local.mkdir()
+    (local / "dibacheh-2026-11-01.sqlite3").write_bytes(b"x")
+    with pytest.raises(OSError):
+        database.copy_backup_to_cloud(local, tmp_path / "نیست", 5)
+
+
+def test_cloud_folders_are_detected(tmp_path, monkeypatch):
+    import platform_tools
+    for name in ("OneDrive", "OneDriveConsumer", "OneDriveCommercial"):
+        monkeypatch.delenv(name, raising=False)
+    (tmp_path / "Library/CloudStorage/OneDrive-Personal").mkdir(parents=True)
+    (tmp_path / "Library/CloudStorage/GoogleDrive-a@b.com/My Drive").mkdir(parents=True)
+    (tmp_path / "Dropbox").mkdir()
+    names = [f["name"] for f in platform_tools.cloud_folders(tmp_path)]
+    assert names == ["Google Drive", "OneDrive", "Dropbox"]
+
+
+def test_cloud_routes_copy_and_restore(client, tmp_path):
+    cloud = tmp_path / "ابر من"
+    cloud.mkdir()
+    add(client, "نگه‌داشتنی")
+    client.patch("/api/settings", json={"cloud_backup_folder": str(cloud)})
+    assert client.get("/api/backups").get_json()    # backup امروز ساخته شده
+    assert client.post("/api/backups/cloud/now", json={}).status_code == 200
+    copies = client.get("/api/backups/cloud").get_json()["copies"]
+    assert len(copies) == 1
+    state = client.post("/api/backups/restore", json={"name": copies[0]["name"], "cloud": True}).get_json()
+    assert "items" in state
+
+
+def test_cloud_copy_needs_a_folder(client):
+    assert client.post("/api/backups/cloud/now", json={}).status_code == 400

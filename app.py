@@ -36,7 +36,7 @@ import platform_tools
 import undo
 import webutil
 from errors import NotFoundError, UserError
-from routes import core, data, items, settings, tasks
+from routes import core, data, items, settings, tasks, update
 from webutil import get_db, today
 
 # ویندوز گاهی نوع فایل .js را اشتباه می‌دهد و مرورگر module را اجرا نمی‌کند
@@ -48,7 +48,7 @@ app = Flask(__name__, template_folder=str(config.RESOURCE_DIR / "templates"),
 #     DIBACHEH_DB=/tmp/demo.sqlite3 .venv/bin/python app.py
 app.config["DB_PATH"] = os.environ.get("DIBACHEH_DB") or database.DB_PATH
 
-for module in (core, items, tasks, data, settings):
+for module in (core, items, tasks, data, settings, update):
     app.register_blueprint(module.bp)
 
 
@@ -116,6 +116,19 @@ def backup_once_a_day():
     else:
         status["problem"] = None
     status["day"] = day
+    if settings_now["cloud_backup_folder"]:
+        # پوشهٔ ابری می‌تواند کند باشد، پس برنامه منتظرش نمی‌ماند
+        threading.Thread(target=copy_to_cloud, args=(config.backups_dir(settings_now), settings_now), daemon=True).start()
+
+
+def copy_to_cloud(folder, settings_now):
+    status = webutil.backup_status
+    try:
+        database.copy_backup_to_cloud(folder, settings_now["cloud_backup_folder"], settings_now["backup_retention"])
+        status["cloud_problem"] = None
+    except OSError as error:
+        app.logger.warning("کپی backup در پوشهٔ ابری نشد: %s", error)
+        status["cloud_problem"] = f"backup امروز در پوشهٔ ابری کپی نشد: {error}"
 
 
 @app.before_request

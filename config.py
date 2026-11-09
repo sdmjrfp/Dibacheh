@@ -31,6 +31,16 @@ CSRF_TOKEN = secrets.token_urlsafe(32)
 RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
 
+def _read_version():
+    try:
+        return (RESOURCE_DIR / "VERSION").read_text(encoding="utf-8").strip()
+    except OSError:
+        return "0.0.0"
+
+
+VERSION = _read_version()
+
+
 def backups_dir(settings):
     """پوشهٔ backup. نسخهٔ آزمایشی با دیتابیس جدا، backup خودش را کنار همان دیتابیس می‌گذارد
     تا در backupهای اصلی قاطی نشود."""

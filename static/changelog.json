@@ -1,0 +1,26 @@
+{
+  "1.3.0": {
+    "fa": [
+      "منوی «+»: درس، کار روتین، کار یک‌باره، پروژه و الگوهای آماده",
+      "نمای «کلی» برنامه، جهت عمودی یا افقی، فیلتر هر نوع کار، و اندازهٔ کار متناسب با زمانش",
+      "چیدمان کنار هم، زیر هم، یا فقط یکی به‌صورت بزرگ",
+      "تنظیم خودکار اندازه برای Full HD و HD، و اندازهٔ دستی از ۵۰٪ تا ۲۰۰٪",
+      "حذف همهٔ مرورهای یک درس",
+      "نمره در گزارش هفتگی و ماهانه",
+      "کپی backup در پوشهٔ OneDrive، Google Drive، Dropbox یا iCloud",
+      "۱۳ زبان و تقویم میلادی",
+      "خبر نسخهٔ تازه و دانلود آن از داخل برنامه"
+    ],
+    "en": [
+      "\"+\" menu: lesson, routine, one-off task, project and ready-made templates",
+      "\"All\" plan view, vertical or horizontal layout, a filter for each kind of task, and tasks sized by their time",
+      "Side by side, stacked, or a single large panel",
+      "Automatic sizing for Full HD and HD, plus manual size from 50% to 200%",
+      "Remove all reviews of a lesson",
+      "A score in weekly and monthly reports",
+      "Copy backups to your OneDrive, Google Drive, Dropbox or iCloud folder",
+      "13 languages and the Gregorian calendar",
+      "New-version notice and download from inside the app"
+    ]
+  }
+}

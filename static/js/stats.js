@@ -65,6 +65,19 @@ function periodInfo(w) {
   return { title: `از ${Jalali.format(w.start)} تا امروز`, nextLabel: "کار باقی‌مانده" };
 }
 
+/** نمرهٔ این بازه، با سهم هر بخش */
+function scoreCard(score) {
+  const part = (label, value, max) => el("div", { class: "score-part" },
+    el("span", { class: "small" }, `${label}: ${fa(value)} از ${fa(max)}`),
+    el("div", { class: "progress" }, el("span", { style: `width:${Math.round((100 * value) / max)}%` })));
+  return el("div", { class: "score-card" },
+    el("div", { class: "score-total" }, el("strong", {}, fa(score.total)), el("span", { class: "muted small" }, `از ${fa(100)}`), el("span", {}, score.label)),
+    el("div", { class: "score-parts" },
+      part("منظم بودن", score.regularity, 40),
+      part("حجم کار", score.volume, 40),
+      part("مرور سر وقت", score.on_time, 20)));
+}
+
 function summarySection(w) {
   const t = w.totals;
   const total = t.read + t.review + t.routine;
@@ -84,6 +97,7 @@ function summarySection(w) {
           showMessage(`گزارش ذخیره شد: ${result.name}`, false);
         },
       }, "⇪ خروجی گزارش")),
+    w.score && scoreCard(w.score),
     el("div", { class: "stat-row" },
       statTile(minutesText(total), "زمان مطالعه"),
       statTile(fa(w.done_count), "کار انجام‌شده"),

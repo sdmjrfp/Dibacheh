@@ -105,8 +105,40 @@ def api_backups():
 def api_restore_backup():
     """یک backup را برمی‌گرداند. قبلش یک کپی جدا از وضعیت فعلی گرفته می‌شود."""
     conn = get_db()
-    data_service.restore_backup(conn, config.backups_dir(database.get_settings(conn)), body().get("name"))
+    data = body()
+    settings = database.get_settings(conn)
+    folder = cloud_backups(settings) if data.get("cloud") else config.backups_dir(settings)
+    data_service.restore_backup(conn, folder, data.get("name"), safety_folder=config.backups_dir(settings))
     return state_response()
+
+
+def cloud_backups(settings):
+    if not settings["cloud_backup_folder"]:
+        raise UserError("پوشهٔ ابری انتخاب نشده است.")
+    return Path(settings["cloud_backup_folder"]).expanduser() / database.CLOUD_SUBFOLDER
+
+
+@bp.route("/api/backups/cloud")
+def api_cloud_backups():
+    """پوشه‌های ابری پیداشده، و نسخه‌هایی که در پوشهٔ انتخاب‌شده هست."""
+    settings = database.get_settings(get_db())
+    copies = []
+    if settings["cloud_backup_folder"]:
+        folder = cloud_backups(settings)
+        copies = database.list_backups(folder) if folder.is_dir() else []
+    return jsonify(json_ready({"folders": platform_tools.cloud_folders(), "selected": settings["cloud_backup_folder"], "copies": copies}))
+
+
+@bp.route("/api/backups/cloud/now", methods=["POST"])
+def api_cloud_backup_now():
+    settings = database.get_settings(get_db())
+    if not settings["cloud_backup_folder"]:
+        raise UserError("پوشهٔ ابری انتخاب نشده است.")
+    try:
+        path = database.copy_backup_to_cloud(config.backups_dir(settings), settings["cloud_backup_folder"], settings["backup_retention"])
+    except OSError as error:
+        raise UserError(f"کپی نشد: {error}")
+    return jsonify({"copied": bool(path)})
 
 
 @bp.route("/api/data/export", methods=["POST"])

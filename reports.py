@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 
 import jalali
+import scheduler
 
 
 def _log_rows(conn, since):
@@ -66,6 +67,48 @@ def stats(conn, items, categories, now, days=371):
             "categories": categories_out, "totals": totals}
 
 
+# پله‌های نمره: از این نمره به بالا، این عنوان
+SCORE_LABELS = [(90, "عالی"), (75, "خیلی خوب"), (60, "خوب"), (40, "قابل قبول"), (0, "نیاز به تلاش بیشتر")]
+
+
+def score(minutes_done, active_days, planned_minutes, work_days, reviews_done, overdue):
+    """نمرهٔ ۰ تا ۱۰۰ برای یک هفته یا ماه. خروجی None یعنی چیزی برای نمره دادن نیست.
+
+    سه بخش دارد:
+      منظم بودن (۴۰): در چند روز از روزهای کاری این بازه کار کرده‌اید
+      حجم کار (۴۰): چند درصد از کاری که می‌شد انجام داد، انجام شده
+      مرور سر وقت (۲۰): چند درصد از مرورها عقب نیفتاده است
+    """
+    if work_days <= 0:
+        return None
+    if planned_minutes <= 0 and minutes_done <= 0:
+        return None
+    regularity = min(1, active_days / work_days)
+    volume = 1 if planned_minutes <= 0 else min(1, minutes_done / planned_minutes)
+    on_time = 1 if reviews_done + overdue == 0 else reviews_done / (reviews_done + overdue)
+    parts = {"regularity": round(40 * regularity), "volume": round(40 * volume), "on_time": round(20 * on_time)}
+    total = sum(parts.values())
+    return {"total": total, "label": next(text for floor, text in SCORE_LABELS if total >= floor), **parts}
+
+
+def period_score(state, start, end, totals, active_days, reviews_done, overdue):
+    """نمرهٔ یک بازه. روزهای آینده حساب نمی‌شوند و امروز هم فقط اگر کاری در آن ثبت شده باشد."""
+    today = state["today"]
+    settings = state["settings"]
+    overrides = state["day_overrides"]
+    done = sum(totals.values())
+    days = [start + timedelta(days=i) for i in range((min(end, today) - start).days + 1)]
+    if today in days and today.isoformat() not in active_days:
+        days.remove(today)
+    work_days = [d for d in days if scheduler.day_cap(d, settings, overrides) > 0]
+    # سقف روزها سقف کاری است که می‌شد کرد؛ ولی اگر همهٔ کارها تمام شده، کار کمتر عیب نیست
+    capacity = sum(scheduler.day_cap(d, settings, overrides) for d in work_days)
+    left = sum(d["total"] for d in state["plan"]["days"])
+    planned = min(capacity, done + left)
+    # روز فعال در تعطیلی هم حساب می‌شود، ولی از تعداد روزهای کاری بیشتر نمی‌شود
+    return score(done, len(active_days), planned, len(work_days), reviews_done, overdue)
+
+
 def period_bounds(period, day):
     """اولین و آخرین روز یک بازه. period: week، month یا all."""
     if period == "week":
@@ -84,6 +127,7 @@ def summary(conn, state, period, day):
     done_count = 0
     active_days = set()
     first_day = None
+    reviews_done = 0
     for row in _log_rows(conn, start):
         current = row["date"]
         if current > end.isoformat():
@@ -94,6 +138,8 @@ def summary(conn, state, period, day):
         totals[row["task_type"]] += row["minutes"]
         done_count += 1
         active_days.add(current)
+        if row["task_type"] == "review":
+            reviews_done += 1
 
     # عقب‌افتاده‌ها: مرورهایی که موعدشان گذشته و هنوز انجام نشده‌اند
     titles = {item["id"]: item["title"] for item in state["items"]}
@@ -108,8 +154,11 @@ def summary(conn, state, period, day):
     else:
         next_start, next_end = period_bounds(period, period_bounds(period, state["today"])[1] + timedelta(days=1))
         next_minutes = sum(d["total"] for d in state["plan"]["days"] if next_start <= d["date"] <= next_end)
+    # عقب‌افتادگی فعلی فقط روی نمرهٔ بازهٔ جاری اثر دارد، نه هفته‌های گذشته
+    current_overdue = sum(overdue.values()) if start <= state["today"] <= end else 0
     return {
         "period": period,
+        "score": None if period == "all" else period_score(state, start, end, totals, active_days, reviews_done, current_overdue),
         "start": date.fromisoformat(first_day) if period == "all" and first_day else start,
         "end": end,
         "length": (end - start).days + 1,

@@ -9,6 +9,7 @@
 
 import json
 import re
+import shutil
 import sqlite3
 import threading
 from contextlib import contextmanager
@@ -202,6 +203,11 @@ DEFAULT_SETTINGS = {
     "item_templates": [],
     # شمارهٔ الگوهای آماده‌ای که کاربر حذف کرده
     "hidden_templates": [],
+    # نسخهٔ تازه: بررسی خودکار در پس‌زمینه، و آخرین نسخه‌ای که تغییراتش به کاربر نشان داده شده
+    "check_updates": True,
+    "last_seen_version": "",
+    # پوشهٔ همگام‌شده با فضای ابری (OneDrive و ...). خالی = خاموش
+    "cloud_backup_folder": "",
 }
 
 FONTS_DIR = DATA_DIR / "fonts"
@@ -414,8 +420,10 @@ def clean_setting(key, value):
         return name
     if key == "font_size":
         return _int_in(value, 10, 32, "اندازهٔ فونت")
-    if key == "font_bold":
+    if key in ("font_bold", "check_updates"):
         return bool(value)
+    if key == "last_seen_version":
+        return str(value or "")[:20]
     if key == "ui_scale":
         return "auto" if value == "auto" else _int_in(value, 50, 200, "اندازهٔ رابط")
     if key == "backup_retention":
@@ -843,6 +851,35 @@ def daily_backup(conn, folder, retention, today):
     # فقط backupهای خود برنامه شمرده و پاک می‌شوند
     backups = sorted(folder.glob("dibacheh-????-??-??.sqlite3"))
     for old in backups[:-retention] if retention > 0 else []:
+        old.unlink()
+    return target
+
+
+CLOUD_SUBFOLDER = "Dibacheh Backups"
+
+
+def copy_backup_to_cloud(local_folder, cloud_folder, retention):
+    """جدیدترین backup را در پوشهٔ همگام‌شده کپی می‌کند. برنامهٔ همان سرویس آن را به اینترنت می‌برد.
+
+    خروجی: آدرس کپی، یا None اگر همین نسخه از قبل آنجا بود.
+    """
+    backups = sorted(Path(local_folder).glob("dibacheh-????-??-??.sqlite3"))
+    if not backups:
+        return None
+    root = Path(cloud_folder).expanduser()
+    if not root.is_dir():
+        raise OSError(f"پوشه پیدا نشد: {root}")
+    folder = root / CLOUD_SUBFOLDER
+    folder.mkdir(exist_ok=True)
+    target = folder / backups[-1].name
+    if target.exists() and target.stat().st_size == backups[-1].stat().st_size:
+        return None
+    # اول با نام موقت، تا برنامهٔ همگام‌سازی فایل نیمه‌کاره را بالا نبرد
+    tmp = folder / (target.name + ".tmp")
+    shutil.copyfile(backups[-1], tmp)
+    tmp.replace(target)
+    copies = sorted(folder.glob("dibacheh-????-??-??.sqlite3"))
+    for old in copies[:-retention] if retention > 0 else []:
         old.unlink()
     return target
 
