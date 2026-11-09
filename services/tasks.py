@@ -6,6 +6,7 @@ from datetime import date, timedelta
 import database
 import leitner
 from errors import UserError
+from i18n import _
 from services.parsing import parse_date, positive_int
 
 
@@ -18,23 +19,23 @@ def move_task(conn, data, day):
     """
     session = database.get_session(conn, data.get("session_id"))
     if session is None:
-        raise UserError("جلسه پیدا نشد.")
+        raise UserError(_("جلسه پیدا نشد."))
     target = parse_date(data.get("date"))
     if target is not None and target < day:
-        raise UserError("کار را نمی‌شود به روزهای گذشته برد.")
+        raise UserError(_("کار را نمی‌شود به روزهای گذشته برد."))
     kind = data.get("kind")
     if kind == "read":
         if session["status"] not in ("unread", "reading"):
-            raise UserError("این جلسه خوانده شده است.")
+            raise UserError(_("این جلسه خوانده شده است."))
         database.update_session(conn, session["id"], read_manual_date=target)
     elif kind == "review":
         if session["status"] != "reviewing":
-            raise UserError("این جلسه هنوز خوانده نشده؛ خواندنش را جابه‌جا کنید تا مرورها هم با آن بروند.")
+            raise UserError(_("این جلسه هنوز خوانده نشده؛ خواندنش را جابه‌جا کنید تا مرورها هم با آن بروند."))
         if target is not None and session["read_at"] and target <= session["read_at"]:
-            raise UserError("مرور باید بعد از روز خواندن همان جلسه باشد.")
+            raise UserError(_("مرور باید بعد از روز خواندن همان جلسه باشد."))
         database.update_session(conn, session["id"], review_manual_date=target)
     else:
-        raise UserError("نوع کار نامعتبر است.")
+        raise UserError(_("نوع کار نامعتبر است."))
 
 
 def mark_done(conn, data, day):
@@ -48,7 +49,7 @@ def mark_done(conn, data, day):
     """
     session = database.get_session(conn, data.get("session_id"))
     if session is None:
-        raise UserError("جلسه پیدا نشد.")
+        raise UserError(_("جلسه پیدا نشد."))
     item = database.get_item(conn, session["item_id"])
     settings = database.get_settings(conn)
     intervals = leitner.intervals_for(item, settings)
@@ -57,16 +58,16 @@ def mark_done(conn, data, day):
 
     if kind == "routine":
         if item["item_type"] != "routine" or session["status"] == "finished":
-            raise UserError("این کار روتین قبلاً ثبت شده است.")
+            raise UserError(_("این کار روتین قبلاً ثبت شده است."))
         database.update_session(conn, session["id"], status="finished", minutes_done=session["minutes"])
         database.add_log(conn, session["id"], day, "routine", session["minutes"], "done", before=session)
 
     elif kind == "read":
         if session["status"] not in ("unread", "reading"):
-            raise UserError("این جلسه قبلاً خوانده شده است.")
+            raise UserError(_("این جلسه قبلاً خوانده شده است."))
         already = session["minutes_done"] or 0
         if result == "partial":
-            minutes = positive_int(data.get("minutes"), "دقیقهٔ خوانده‌شده")
+            minutes = positive_int(data.get("minutes"), _("دقیقهٔ خوانده‌شده"))
             if already + minutes < session["minutes"]:
                 # بقیهٔ جلسه از فردا چیده می‌شود، نه دوباره امروز
                 database.update_session(conn, session["id"], status="reading",
@@ -76,25 +77,25 @@ def mark_done(conn, data, day):
                 return
             # اگر با این مقدار کل جلسه خوانده شد، مثل «انجام شد» ثبت می‌شود
         elif result != "done":
-            raise UserError("نتیجهٔ نامعتبر.")
+            raise UserError(_("نتیجهٔ نامعتبر."))
         updated = leitner.finish_reading(session, day, intervals)
         _save_session(conn, updated)
         database.add_log(conn, session["id"], day, "read", session["minutes"] - already, "done", before=session)
 
     elif kind == "review":
         if session["status"] != "reviewing":
-            raise UserError("این جلسه مرور منتظر ندارد.")
+            raise UserError(_("این جلسه مرور منتظر ندارد."))
         minutes = leitner.review_minutes(session, item, settings)
         if result == "needs_more":
             updated = leitner.needs_more_review(session, day, intervals)
         elif result == "done":
             updated = leitner.record_review(session, day, intervals)
         else:
-            raise UserError("نتیجهٔ نامعتبر.")
+            raise UserError(_("نتیجهٔ نامعتبر."))
         _save_session(conn, updated)
         database.add_log(conn, session["id"], day, "review", minutes, result, before=session)
     else:
-        raise UserError("نوع کار نامعتبر است.")
+        raise UserError(_("نوع کار نامعتبر است."))
 
 
 def mark_undone(conn, log_id):
@@ -105,13 +106,13 @@ def mark_undone(conn, log_id):
     """
     log = database.get_log(conn, log_id)
     if log is None:
-        raise UserError("این کار در سابقه پیدا نشد.")
+        raise UserError(_("این کار در سابقه پیدا نشد."))
     logs = database.list_log(conn, log["session_id"])
     if logs[-1]["id"] != log["id"]:
-        raise UserError("اول کار بعدیِ همین جلسه را انجام‌نشده کنید.")
+        raise UserError(_("اول کار بعدیِ همین جلسه را انجام‌نشده کنید."))
     session = database.get_session(conn, log["session_id"])
     if session["status"] == "unread" and not session["minutes_done"]:
-        raise UserError("این درس بعد از این کار به خوانده‌نشده برگردانده شده است.")
+        raise UserError(_("این درس بعد از این کار به خوانده‌نشده برگردانده شده است."))
     if log.get("before_state"):
         before = json.loads(log["before_state"])
         restored = {k: (date.fromisoformat(v) if v and k in database.DATE_COLUMNS else v)

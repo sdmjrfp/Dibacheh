@@ -3,10 +3,12 @@
 from datetime import timedelta
 
 import database
+import i18n
 import leitner
 import platform_tools
 import scheduler
 import sources
+from i18n import _
 
 # برنامه چند روز جلوتر همراه هر جواب به صفحه فرستاده می‌شود. روزهای دورتر با
 # درخواست جدا (/api/plan/range) گرفته می‌شوند.
@@ -91,7 +93,8 @@ def state_data(conn, now, extras):
         "templates": templates(settings),
         "palette": database.SOURCE_PALETTE,
         "system": platform_tools.system(),
-        "bundled_fonts": sources.BUNDLED_FONTS,
+        "bundled_fonts": [{**f, "label": _(f["label"])} for f in sources.BUNDLED_FONTS],
+        "languages": {code: name for code, (name, _direction) in i18n.LANGUAGES.items()},
         "settings": settings,
         "plan": plan,
         "workload": workload(plan, now),
@@ -104,7 +107,7 @@ def state_data(conn, now, extras):
 def templates(settings):
     """الگوهای منوی «+»: الگوهای آمادهٔ حذف‌نشده و الگوهای خود کاربر."""
     hidden = set(settings["hidden_templates"])
-    builtin = [{**t, "builtin": True} for t in database.BUILTIN_TEMPLATES if t["id"] not in hidden]
+    builtin = [{**t, "name": _(t["name"]), "builtin": True} for t in database.BUILTIN_TEMPLATES if t["id"] not in hidden]
     own = [{"id": f"own-{i}", "index": i, "kind": t.get("kind", "study"), "name": t["name"], "fields": t["fields"], "builtin": False}
            for i, t in enumerate(settings["item_templates"])]
     return builtin + own

@@ -9,6 +9,10 @@ export default [
       sourceType: "module",
       globals: { ...globals.browser, Jalali: "readonly" },
     },
-    rules: { "no-unused-vars": ["error", { caughtErrors: "none" }] },
+    rules: {
+      "no-unused-vars": ["error", { caughtErrors: "none" }],
+      // هیچ متغیری نباید نام تابع ترجمه را بپوشاند
+      "no-shadow": ["error", { allow: ["root", "fields", "label"] }],
+    },
   },
 ];

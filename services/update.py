@@ -16,6 +16,7 @@ from pathlib import Path
 
 import platform_tools
 from errors import UserError
+from i18n import _
 
 LATEST_URL = "https://api.github.com/repos/sdmjrfp/Dibacheh/releases/latest"
 DOWNLOAD_PREFIX = "https://github.com/sdmjrfp/Dibacheh/releases/download/"
@@ -121,7 +122,7 @@ def _download(url, target, size):
                 progress["received"] += len(chunk)
         # فایل ناقص نباید با نام نهایی بماند
         if size and part.stat().st_size != size:
-            raise OSError("حجم فایل دانلودشده درست نیست.")
+            raise OSError(_("حجم فایل دانلودشده درست نیست."))
         part.replace(target)
         progress.update(state="done", path=str(target))
     except OSError as error:
@@ -134,7 +135,7 @@ def start_download(asset, folder=None):
     """دانلود را در پس‌زمینه شروع می‌کند. پیشرفت در progress است."""
     url = str(asset.get("url", ""))
     if not url.startswith(DOWNLOAD_PREFIX):
-        raise UserError("آدرس دانلود نامعتبر است.")
+        raise UserError(_("آدرس دانلود نامعتبر است."))
     if progress["state"] == "downloading":
         return
     folder = Path(folder) if folder else downloads_folder()

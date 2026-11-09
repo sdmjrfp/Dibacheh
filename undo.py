@@ -9,6 +9,8 @@ import sqlite3
 import zlib
 from collections import deque
 
+from i18n import _
+
 UNDO_LIMIT = 20
 stack = deque(maxlen=UNDO_LIMIT)  # هر عضو: (متن تغییر، کپی دیتابیس). قدیمی‌ترین خودش کنار می‌رود
 redo_stack = []                   # تغییرهای برگردانده‌شده؛ با هر تغییر تازه خالی می‌شود
@@ -64,5 +66,5 @@ def restore(conn, data):
 
 def info():
     """وضعیت دکمه‌های برگرداندن و بازگرداندن، برای صفحه."""
-    return {"count": len(stack), "label": stack[-1][0] if stack else None,
-            "redo_count": len(redo_stack), "redo_label": redo_stack[-1][0] if redo_stack else None}
+    return {"count": len(stack), "label": _(stack[-1][0]) if stack else None,
+            "redo_count": len(redo_stack), "redo_label": _(redo_stack[-1][0]) if redo_stack else None}

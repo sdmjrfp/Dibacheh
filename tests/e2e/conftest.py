@@ -129,6 +129,9 @@ def app(browser, server):
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" and "400" not in m.text else None)
     page.on("dialog", lambda dialog: dialog.accept(dialog.default_value or "الگوی آزمایشی"))
-    yield App(page, server).open()
+    app_page = App(page, server).open()
+    app_page.call("PATCH", "/api/settings", {"setup_done": True})
+    app_page.open()
+    yield app_page
     context.close()
     assert errors == [], f"خطا در مرورگر: {json.dumps(errors, ensure_ascii=False)}"

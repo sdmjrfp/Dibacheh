@@ -1,9 +1,10 @@
 /* کشیدن کل صفحه. */
 
 import { renderCalendar } from "./calendar.js";
-import { $, el, fa, showMessage, state } from "./core.js";
+import { $, el, fa, showMessage, state, t } from "./core.js";
 import { editing, renderSessions } from "./item-dialog.js";
 import { applyScale } from "./layout.js";
+import { showSetupIfNeeded } from "./setup.js";
 import { renderVersion } from "./update.js";
 import { renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./sources.js";
 
@@ -12,16 +13,16 @@ import { renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./s
 // ---------------------------------------------------------------------------
 
 export function renderNow() {
-  $("#today").textContent = `امروز: ${Jalali.weekday(state.today)} ${Jalali.format(state.today)}`;
+  $("#today").textContent = t("امروز: {0} {1}", Jalali.weekday(state.today), Jalali.format(state.today));
   // فقط نام پوشهٔ والت نشان داده می‌شود؛ آدرس کامل با نگه داشتن ماوس روی آن
   const vault = state.settings.vault_path;
-  $("#vault-path").textContent = vault ? vault.split("/").filter(Boolean).pop() : "ثبت نشده";
-  $("#vault-button").title = vault ? `مسیر والت: ${vault}\nبرای تغییر کلیک کنید` : "انتخاب پوشهٔ والت Obsidian";
+  $("#vault-path").textContent = vault ? vault.split("/").filter(Boolean).pop() : t("ثبت نشده");
+  $("#vault-button").title = vault ? t("مسیر والت: {0}\\nبرای تغییر کلیک کنید", vault) : t("انتخاب پوشهٔ والت Obsidian");
   document.documentElement.dataset.theme = state.settings.theme || "light";
   document.documentElement.dataset.colorMode = state.settings.color_mode || "kind";
   // فونت و اندازهٔ فونت از تنظیمات
   const root = document.documentElement.style;
-  root.setProperty("--font", `"${state.settings.font_family || "Vazirmatn"}", "Vazirmatn", system-ui, Tahoma, sans-serif`);
+  root.setProperty("--font", `"${state.settings.font_family || "Vazirmatn"}", "Vazirmatn", "Noto Sans", "Noto Sans Devanagari", system-ui, "PingFang SC", "Hiragino Sans", "Microsoft YaHei", "Yu Gothic", "Noto Sans CJK SC", Tahoma, sans-serif`);
   root.setProperty("--font-size", `${state.settings.font_size || 16}px`);
   root.setProperty("--font-weight", state.settings.font_bold ? "600" : "400");
   applyScale();
@@ -37,6 +38,7 @@ export function renderNow() {
   if (state.backup_problem) showMessage(state.backup_problem);
   if (state.cloud_problem) showMessage(state.cloud_problem);
   renderVersion();
+  showSetupIfNeeded();
   if (editing && editing.id && $("#item-dialog").open) renderSessions();
   $("#quit-button").hidden = !state.can_quit;
   // دکمه‌های برگرداندن و بازگرداندن، با تعداد مرحله‌ها
@@ -47,9 +49,9 @@ export function renderNow() {
   undo.querySelector(".count").textContent = state.undo.count ? fa(state.undo.count) : "";
   redo.querySelector(".count").textContent = state.undo.redo_count ? fa(state.undo.redo_count) : "";
   undo.title = state.undo.count
-    ? `برگرداندن «${state.undo.label}» · ${fa(state.undo.count)} مرحله قابل برگشت` : "تغییری برای برگرداندن نیست";
+    ? t("برگرداندن «{0}» · {1} مرحله قابل برگشت", state.undo.label, fa(state.undo.count)) : t("تغییری برای برگرداندن نیست");
   redo.title = state.undo.redo_count
-    ? `بازگرداندن «${state.undo.redo_label}» · ${fa(state.undo.redo_count)} مرحله برگشته‌اید` : "مرحله‌ای برگشته نیست";
+    ? t("بازگرداندن «{0}» · {1} مرحله برگشته‌اید", state.undo.redo_label, fa(state.undo.redo_count)) : t("مرحله‌ای برگشته نیست");
   renderCalendar();
 }
 
@@ -60,7 +62,7 @@ function renderCustomFonts() {
     style = el("style", { id: "custom-font-faces" });
     document.head.append(style);
   }
-  const bundled = state.bundled_fonts.flatMap((f) => [
+  const bundled = state.bundled_fonts.filter((f) => f.regular).flatMap((f) => [
     `@font-face { font-family: "${f.family}"; font-weight: 400; src: url("/static/vendor/fonts/${f.regular}") format("woff2"); }`,
     f.bold ? `@font-face { font-family: "${f.family}"; font-weight: 700; src: url("/static/vendor/fonts/${f.bold}") format("woff2"); }` : "",
   ]);

@@ -20,8 +20,10 @@ from pathlib import Path
 
 import markdown
 
+import i18n
 import jalali
 import sources
+from i18n import _
 
 PROJECT_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 FONT_FILE = PROJECT_DIR / "static" / "vendor" / "vazirmatn" / "Vazirmatn-Variable.woff2"
@@ -47,13 +49,13 @@ esc = html.escape
 def export_range(scope, day):
     """اولین و آخرین روز خروجی و نام فایل. scope: day، week یا month."""
     if scope == "day":
-        return day, day, f"برنامهٔ روز {jalali.iso_name(day)}.html"
+        return day, day, _("برنامهٔ روز {0}.html", jalali.iso_name(day))
     if scope == "week":
         start = jalali.week_start(day)
-        return start, start + timedelta(days=6), f"برنامهٔ هفته از {jalali.iso_name(start)}.html"
+        return start, start + timedelta(days=6), _("برنامهٔ هفته از {0}.html", jalali.iso_name(start))
     if scope == "month":
         first, last = jalali.month_bounds(day)
-        return first, last, f"برنامهٔ ماه {jalali.iso_name(first)[:7]}.html"
+        return first, last, _("برنامهٔ ماه {0}.html", jalali.iso_name(first)[:7])
     raise ValueError("scope نامعتبر")
 
 
@@ -87,14 +89,14 @@ def render(state, scope, start, end, with_content, vault_path):
         done.setdefault(entry["date"], []).append(entry)
     today = state["today"]
 
-    titles = {"day": "برنامهٔ روز", "week": "برنامهٔ هفته", "month": "برنامهٔ ماه"}
+    titles = {"day": _("برنامهٔ روز"), "week": _("برنامهٔ هفته"), "month": _("برنامهٔ ماه")}
     if scope == "day":
         heading = f"{titles[scope]}: {jalali.format_date(start, weekday=True)}"
     elif scope == "week":
-        heading = f"{titles[scope]}: {jalali.format_date(start)} تا {jalali.format_date(end)}"
+        heading = _("{0}: {1} تا {2}", titles[scope], jalali.format_date(start), jalali.format_date(end))
     else:
-        y, m, _ = jalali.to_jalali(start)
-        heading = f"{titles[scope]}: {jalali.MONTHS[m - 1]} {jalali.fa(y)}"
+        y, m, _d = jalali.to_calendar(start)
+        heading = f"{titles[scope]}: {jalali.month_name(m)} {jalali.fa(y)}"
 
     body = []
     day = start
@@ -103,12 +105,13 @@ def render(state, scope, start, end, with_content, vault_path):
                              with_content, vault_path, show_title=scope != "day"))
         day += timedelta(days=1)
 
-    note = f"ساخته‌شده در {jalali.format_date(today)}."
+    note = _("ساخته‌شده در {0}.", jalali.format_date(today))
     if end > today:
-        note += " برنامهٔ روزهای آینده پیش‌بینی است و با هر تغییر در برنامه عوض می‌شود."
-    note += " تیک‌های این صفحه فقط برای خودتان است و به برنامه برنمی‌گردد."
+        note += " " + _("برنامهٔ روزهای آینده پیش‌بینی است و با هر تغییر در برنامه عوض می‌شود.")
+    note += " " + _("تیک‌های این صفحه فقط برای خودتان است و به برنامه برنمی‌گردد.")
     return PAGE.format(title=esc(heading), heading=esc(heading), note=esc(note),
-                       font=_font_data(), extra_font=_custom_font_css(state.get("settings", {})),
+                       font=_font_data(), extra_font=_language_font_css() + _custom_font_css(state.get("settings", {})),
+                       lang=i18n.current(), direction=i18n.LANGUAGES[i18n.current()][1],
                        **_colors(state.get("settings", {})),
                        body="\n".join(body))
 
@@ -119,36 +122,36 @@ def export_report(report, state, folder):
     t = report["totals"]
     total = t["read"] + t["review"] + t["routine"]
     fa = jalali.fa
-    next_label = {"week": "برنامهٔ هفتهٔ بعد", "month": "برنامهٔ ماه بعد", "all": "کار باقی‌مانده"}[report["period"]]
+    next_label = _({"week": "برنامهٔ هفتهٔ بعد", "month": "برنامهٔ ماه بعد", "all": "کار باقی‌مانده"}[report["period"]])
     rows = "".join(
         f"<tr><td>{esc(c['title'])}</td><td>{fa(c['read'])}</td><td>{fa(c['review'])}</td><td>{fa(c['routine'])}</td></tr>"
         for c in report["courses"])
-    overdue = "".join(f"<li>{esc(o['title'])}: {fa(o['count'])} کار</li>" for o in report["overdue"])
+    overdue = "".join(f"<li>{esc(o['title'])}: {_('{0} کار', fa(o['count']))}</li>" for o in report["overdue"])
     body = (
-        '<section class="day"><h2>خلاصه</h2>'
-        + (f"<p><strong>نمره: {fa(report['score']['total'])} از {fa(100)} ({esc(report['score']['label'])})</strong></p>" if report.get("score") else "")
-        + f"<p>{fa(report['done_count'])} کار در {fa(report['active_days'])} روز، جمعاً {fa(total)} دقیقه: "
-        f"خواندن {fa(t['read'])}، مرور {fa(t['review'])}، روتین {fa(t['routine'])}.</p>"
-        f"<p>{next_label}: {fa(report['next_minutes'])} دقیقه.</p></section>"
-        f'<section class="day"><h2>به تفکیک درس (دقیقه)</h2>'
-        + (f'<table class="report"><tr><th>درس</th><th>خواندن</th><th>مرور</th><th>روتین</th></tr>{rows}</table>'
-           if rows else '<p class="muted">کاری ثبت نشده.</p>')
+        f'<section class="day"><h2>{_("خلاصه")}</h2>'
+        + (f"<p><strong>{_('نمره: {0} از {1} ({2})', fa(report['score']['total']), fa(100), esc(report['score']['label']))}</strong></p>" if report.get("score") else "")
+        + "<p>" + _("{0} کار در {1} روز، جمعاً {2} دقیقه: خواندن {3}، مرور {4}، روتین {5}.", fa(report['done_count']), fa(report['active_days']), fa(total), fa(t['read']), fa(t['review']), fa(t['routine'])) + "</p>"
+        + "<p>" + _("{0}: {1} دقیقه.", next_label, fa(report['next_minutes'])) + "</p></section>"
+        + f'<section class="day"><h2>{_("به تفکیک درس (دقیقه)")}</h2>'
+        + (f'<table class="report"><tr><th>{_("درس")}</th><th>{_("خواندن")}</th><th>{_("مرور")}</th><th>{_("روتین")}</th></tr>{rows}</table>'
+           if rows else f'<p class="muted">{_("کاری ثبت نشده.")}</p>')
         + "</section>"
-        + f'<section class="day"><h2>عقب‌افتاده</h2>{"<ul>" + overdue + "</ul>" if overdue else "<p class=muted>هیچ.</p>"}</section>')
-    y, m, _ = jalali.to_jalali(start)
+        + f'<section class="day"><h2>{_("عقب‌افتاده")}</h2>{"<ul>" + overdue + "</ul>" if overdue else "<p class=muted>" + _("هیچ.") + "</p>"}</section>')
+    y, m, _d = jalali.to_calendar(start)
     heading = {
-        "week": f"گزارش هفته: {jalali.format_date(start)} تا {jalali.format_date(end)}",
-        "month": f"گزارش ماه: {jalali.MONTHS[m - 1]} {fa(y)}",
-        "all": f"گزارش کلی تا {jalali.format_date(end)}",
+        "week": _("گزارش هفته: {0} تا {1}", jalali.format_date(start), jalali.format_date(end)),
+        "month": _("گزارش ماه: {0} {1}", jalali.month_name(m), fa(y)),
+        "all": _("گزارش کلی تا {0}", jalali.format_date(end)),
     }[report["period"]]
     page = PAGE.format(title=esc(heading), heading=esc(heading),
-                       note=esc(f"ساخته‌شده در {jalali.format_date(state['today'])}."),
-                       font=_font_data(), extra_font=_custom_font_css(state.get("settings", {})),
+                       note=esc(_("ساخته‌شده در {0}.", jalali.format_date(state['today']))),
+                       font=_font_data(), extra_font=_language_font_css() + _custom_font_css(state.get("settings", {})),
+                       lang=i18n.current(), direction=i18n.LANGUAGES[i18n.current()][1],
                        **_colors(state.get("settings", {})), body=body)
     folder = Path(folder).expanduser()
     folder.mkdir(parents=True, exist_ok=True)
-    name = {"week": f"گزارش هفته از {jalali.iso_name(start)}", "month": f"گزارش ماه {jalali.iso_name(start)[:7]}",
-            "all": f"گزارش کلی {jalali.iso_name(end)}"}[report["period"]]
+    name = {"week": _("گزارش هفته از {0}", jalali.iso_name(start)), "month": _("گزارش ماه {0}", jalali.iso_name(start)[:7]),
+            "all": _("گزارش کلی {0}", jalali.iso_name(end))}[report["period"]]
     path = folder / f"{name}.html"
     path.write_text(page, encoding="utf-8")
     return path
@@ -159,36 +162,36 @@ def day_html(day, plan_day, done_entries, sessions, today, with_content, vault_p
     if show_title:
         parts.append(f'<h2>{esc(jalali.format_date(day, weekday=True))}</h2>')
     if plan_day and plan_day["is_off"]:
-        parts.append('<p class="muted">تعطیل</p>')
+        parts.append(f'<p class="muted">{_("تعطیل")}</p>')
     for entry in done_entries:
         info = sessions.get(entry["session_id"])
-        title = info[0]["title"] if info else "درس حذف‌شده"
+        title = info[0]["title"] if info else _("درس حذف‌شده")
         parts.append(
             f'<div class="task done kind-{esc(entry["task_type"])}">✓ {esc(title)} · '
-            f'{esc(KIND_LABEL.get(entry["task_type"], ""))} · {jalali.fa(entry["minutes"])} دقیقه</div>')
+            f'{esc(_(KIND_LABEL.get(entry["task_type"], "")))} · {_("{0} دقیقه", jalali.fa(entry["minutes"]))}</div>')
     tasks = plan_day["tasks"] if plan_day and day >= today else []
     for n, task in enumerate(tasks):
         info = sessions.get(task["session_id"])
         if info:
             parts.append(task_html(task, info[0], info[1], with_content, vault_path, f"{day}-{n}"))
     if not tasks and not done_entries and not (plan_day and plan_day["is_off"]):
-        parts.append('<p class="muted">کاری نیست.</p>')
+        parts.append(f'<p class="muted">{_("کاری نیست.")}</p>')
     if plan_day and tasks:
         total = sum(t["minutes"] for t in tasks)
         parts.insert(1 if show_title else 0,
-                     f'<p class="muted">جمع: {jalali.fa(total)} دقیقه</p>')
+                     f'<p class="muted">{_("جمع: {0} دقیقه", jalali.fa(total))}</p>')
     return f'<section class="day">{"".join(parts)}</section>'
 
 
 def task_html(task, item, session, with_content, vault_path, key):
-    label = KIND_LABEL[task["kind"]]
+    label = _(KIND_LABEL[task["kind"]])
     if task["kind"] == "review":
         label += f" {jalali.fa(task['review_round'])}"
     section = sources.section_text(item, session)
-    meta = [label, f"جلسهٔ {jalali.fa(session['sequence'])}"]
+    meta = [label, _("جلسهٔ {0}", jalali.fa(session['sequence']))]
     if section:
         meta.append(section)
-    meta.append(f"{jalali.fa(task['minutes'])} دقیقه")
+    meta.append(_("{0} دقیقه", jalali.fa(task['minutes'])))
     head = (f'<label class="task-head"><input type="checkbox" id="t{esc(key)}"> '
             f'<strong>{esc(item["title"])}</strong>'
             f'<span class="meta">{esc(" · ".join(meta))}</span></label>')
@@ -216,10 +219,10 @@ def content_html(item, session, vault_path):
         return ""
     if kind == "url":
         url = item.get("source_path_or_url") or ""
-        return f'<div class="content"><p>لینک: <span dir="ltr" class="url">{esc(url)}</span></p></div>'
+        return f'<div class="content"><p>{_("لینک:")} <span dir="ltr" class="url">{esc(url)}</span></p></div>'
     location = sources.source_location(item, vault_path)
     if location is None or not location.exists():
-        return '<div class="content"><p class="muted">منبع پیدا نشد (شاید جابه‌جا شده است).</p></div>'
+        return f'<div class="content"><p class="muted">{_("منبع پیدا نشد (شاید جابه‌جا شده است).")}</p></div>'
     suffix = location.suffix.lower()
     try:
         if suffix == ".md":
@@ -229,8 +232,8 @@ def content_html(item, session, vault_path):
         if suffix in IMAGE_TYPES:
             return f'<div class="content"><img src="{_data_uri(location)}" alt=""></div>'
     except Exception as error:  # یک منبع خراب نباید کل خروجی را خراب کند
-        return f'<div class="content"><p class="muted">خواندن منبع ممکن نشد: {esc(str(error))}</p></div>'
-    what = "ویدیو" if suffix in VIDEO_TYPES else "فایل"
+        return f'<div class="content"><p class="muted">{_("خواندن منبع ممکن نشد: {0}", esc(str(error)))}</p></div>'
+    what = _("ویدیو") if suffix in VIDEO_TYPES else _("فایل")
     return (f'<div class="content"><p>{what}: {esc(location.name)}<br>'
             f'<span dir="ltr" class="url">{esc(str(location))}</span></p></div>')
 
@@ -240,7 +243,7 @@ def pdf_html(path, item, session):
     import pypdfium2 as pdfium  # فقط وقتی لازم است بار می‌شود
 
     if item.get("section_unit") != "page" or not session.get("section_start"):
-        return '<p class="muted">بازهٔ صفحهٔ این جلسه مشخص نشده است.</p>'
+        return f'<p class="muted">{_("بازهٔ صفحهٔ این جلسه مشخص نشده است.")}</p>'
     first = int(session["section_start"])
     last = int(session.get("section_end") or first)
     doc = pdfium.PdfDocument(str(path))
@@ -253,8 +256,8 @@ def pdf_html(path, item, session):
             buffer = io.BytesIO()
             image.save(buffer, "JPEG", quality=PDF_JPEG_QUALITY, optimize=True)
             data = base64.b64encode(buffer.getvalue()).decode()
-            parts.append(f'<figure><img src="data:image/jpeg;base64,{data}" alt="صفحهٔ {number}">'
-                         f'<figcaption>صفحهٔ {jalali.fa(number)}</figcaption></figure>')
+            parts.append(f'<figure><img src="data:image/jpeg;base64,{data}" alt="{_("صفحهٔ {0}", number)}">'
+                         f'<figcaption>{_("صفحهٔ {0}", jalali.fa(number))}</figcaption></figure>')
     finally:
         doc.close()
     return "".join(parts)
@@ -383,6 +386,24 @@ def _custom_font_css(settings):
     return ""
 
 
+# فونت هر زبان: عربی و فارسی با Vazirmatn، چینی و ژاپنی با فونت خود سیستم
+LANGUAGE_FONTS = {"ru": ("latin", "cyrillic"), "hi": ("latin", "devanagari"), "tr": ("latin", "latin-ext")}
+
+
+def _language_font_css():
+    """خروجی روی گوشی هم باید بدون اینترنت درست دیده شود، پس فونت زبان داخل فایل می‌رود."""
+    code = i18n.current()
+    if code in ("fa", "ar", "zh", "ja"):
+        return ""
+    faces = []
+    for subset in LANGUAGE_FONTS.get(code, ("latin", "latin-ext")):
+        family = "Noto Sans Devanagari" if subset == "devanagari" else "Noto Sans"
+        path = FONT_FILE.parent.parent / "noto" / f"{subset}.woff2"
+        data = base64.b64encode(path.read_bytes()).decode()
+        faces.append(f'@font-face {{ font-family: "{family}"; font-weight: 100 900; src: url(data:font/woff2;base64,{data}) format("woff2"); }}')
+    return "\n".join(faces) + '\nbody { font-family: "Noto Sans", "Noto Sans Devanagari", "Vazirmatn", system-ui, sans-serif; }\n'
+
+
 def _colors(settings):
     colors = {"read": "#e5484d", "review": "#3b82f6", "routine": "#f5b400", **settings.get("colors", {})}
     return {f"c_{k}": esc(v) for k, v in colors.items()}
@@ -399,7 +420,7 @@ def _font_data():
 # ---------------------------------------------------------------------------
 
 PAGE = """<!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="{lang}" dir="{direction}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

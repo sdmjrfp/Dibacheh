@@ -32,10 +32,13 @@ from werkzeug.exceptions import HTTPException
 
 import config
 import database
+import i18n
+import jalali
 import platform_tools
 import undo
 import webutil
 from errors import NotFoundError, UserError
+from i18n import _
 from routes import core, data, items, settings, tasks, update
 from webutil import get_db, today
 
@@ -55,6 +58,16 @@ for module in (core, items, tasks, data, settings, update):
 # ---------------------------------------------------------------------------
 # امنیت
 # ---------------------------------------------------------------------------
+
+@app.before_request
+def use_language():
+    """زبان و تقویم این درخواست، از تنظیمات."""
+    if request.endpoint == "static":
+        return
+    settings_now = database.get_settings(get_db())
+    i18n.set_language(settings_now["language"])
+    jalali.configure(settings_now["calendar"], settings_now["first_weekday"])
+
 
 @app.before_request
 def check_security():
@@ -79,7 +92,7 @@ def handle_unexpected_error(error):
     if isinstance(error, HTTPException):
         return error
     app.logger.exception("خطا در %s %s", request.method, request.path)
-    return jsonify({"error": "خطای پیش‌بینی‌نشده‌ای پیش آمد. جزئیات در «گزارش خطا» در تنظیمات هست."}), 500
+    return jsonify({"error": _("خطای پیش‌بینی‌نشده‌ای پیش آمد. جزئیات در «گزارش خطا» در تنظیمات هست.")}), 500
 
 
 @app.errorhandler(UserError)
@@ -89,7 +102,7 @@ def handle_user_error(error):
 
 @app.errorhandler(NotFoundError)
 def handle_not_found(_error):
-    return jsonify({"error": "پیدا نشد."}), 404
+    return jsonify({"error": _("پیدا نشد.")}), 404
 
 
 @app.teardown_appcontext
@@ -112,7 +125,7 @@ def backup_once_a_day():
         database.daily_backup(conn, config.backups_dir(settings_now), settings_now["backup_retention"], day)
     except database.BackupError as error:
         app.logger.error("backup سالم نبود: %s", error)
-        status["problem"] = f"backup امروز سالم نبود و ذخیره نشد: {error}"
+        status["problem"] = _("backup امروز سالم نبود و ذخیره نشد: {0}", error)
     else:
         status["problem"] = None
     status["day"] = day
@@ -128,7 +141,7 @@ def copy_to_cloud(folder, settings_now):
         status["cloud_problem"] = None
     except OSError as error:
         app.logger.warning("کپی backup در پوشهٔ ابری نشد: %s", error)
-        status["cloud_problem"] = f"backup امروز در پوشهٔ ابری کپی نشد: {error}"
+        status["cloud_problem"] = _("backup امروز در پوشهٔ ابری کپی نشد: {0}", error)
 
 
 @app.before_request

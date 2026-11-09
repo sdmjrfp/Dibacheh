@@ -1,4 +1,4 @@
-"""تبدیل تاریخ میلادی به شمسی در پایتون (برای خروجی HTML).
+"""تاریخ در پایتون (برای خروجی HTML و گزارش)، با تقویم شمسی یا میلادی.
 
 صفحهٔ اصلی برنامه از تقویم شمسی خود مرورگر استفاده می‌کند (static/jalali.js).
 خروجی HTML در پایتون ساخته می‌شود، پس اینجا همان تبدیل با الگوریتم شناخته‌شدهٔ
@@ -6,11 +6,22 @@ jalaali (بر اساس جدول «سال‌های شکست» تقویم) نوش�
 تست tests/test_jalali.py بررسی می‌کند که این دو برای همهٔ روزهای سال ۱۳۰۰ تا ۱۵۰۰ یکی باشند.
 """
 
+from contextvars import ContextVar
 from datetime import date, timedelta
+
+import i18n
+from i18n import _
 
 MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
           "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"]
 WEEKDAYS = ["دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه"]
+
+GREGORIAN_MONTHS = ["ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن",
+                    "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"]
+
+# تقویم و اولین روز هفته برای همین درخواست (0 = دوشنبه، 5 = شنبه)
+_calendar = ContextVar("calendar", default="persian")
+_first_weekday = ContextVar("first_weekday", default=5)
 
 _BREAKS = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210,
            1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178]
@@ -68,34 +79,51 @@ def to_jalali(day):
     return jy, 7 + k // 30, k % 30 + 1
 
 
+def configure(calendar, first_weekday):
+    _calendar.set(calendar)
+    _first_weekday.set(first_weekday)
+
+
+def to_calendar(day):
+    """تاریخ در تقویم انتخاب‌شده: (سال، ماه، روز)"""
+    if _calendar.get() == "gregorian":
+        return day.year, day.month, day.day
+    return to_jalali(day)
+
+
+def month_name(month):
+    names = GREGORIAN_MONTHS if _calendar.get() == "gregorian" else MONTHS
+    return _(names[month - 1])
+
+
 def fa(value):
-    """عدد یا متن با رقم فارسی"""
-    return str(value).translate(_FA_DIGITS)
+    """عدد یا متن با رقم زبان فعلی: فقط فارسی رقم جدا دارد"""
+    return str(value).translate(_FA_DIGITS) if i18n.current() == "fa" else str(value)
 
 
 def format_date(day, weekday=False):
     """«پنجشنبه ۱۴ آبان ۱۴۰۵»"""
-    y, m, d = to_jalali(day)
-    text = f"{fa(d)} {MONTHS[m - 1]} {fa(y)}"
-    return f"{WEEKDAYS[day.weekday()]} {text}" if weekday else text
+    y, m, d = to_calendar(day)
+    text = f"{fa(d)} {month_name(m)} {fa(y)}"
+    return f"{_(WEEKDAYS[day.weekday()])} {text}" if weekday else text
 
 
 def iso_name(day):
     """«1405-08-14» برای نام فایل"""
-    y, m, d = to_jalali(day)
+    y, m, d = to_calendar(day)
     return f"{y}-{m:02d}-{d:02d}"
 
 
 def month_bounds(day):
-    """اولین و آخرین روز (میلادی) ماه شمسی‌ای که day در آن است."""
-    y, m, d = to_jalali(day)
+    """اولین و آخرین روز (میلادی) ماهی که day در آن است."""
+    _y, m, d = to_calendar(day)
     first = day - timedelta(days=d - 1)
     last = first
-    while to_jalali(last + timedelta(days=1))[1] == m:
+    while to_calendar(last + timedelta(days=1))[1] == m:
         last += timedelta(days=1)
     return first, last
 
 
 def week_start(day):
-    """شنبهٔ هفتهٔ day"""
-    return day - timedelta(days=(day.weekday() - 5) % 7)
+    """اولین روز هفتهٔ day، طبق تنظیمات (پیش‌فرض: شنبه)"""
+    return day - timedelta(days=(day.weekday() - _first_weekday.get()) % 7)

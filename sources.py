@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import quote, urlparse
 
 import platform_tools
+from i18n import _
 
 # ---------------------------------------------------------------------------
 # Browse با پنجرهٔ انتخاب فایل خود سیستم
@@ -56,12 +57,12 @@ def check_source(item, vault_path):
     if kind == "none":
         return None
     if kind == "url":
-        return None if is_web_url(item.get("source_path_or_url")) else "لینک معتبر نیست."
+        return None if is_web_url(item.get("source_path_or_url")) else _("لینک معتبر نیست.")
     if kind == "vault" and not vault_path:
-        return "مسیر والت Obsidian در تنظیمات ثبت نشده است."
+        return _("مسیر والت Obsidian در تنظیمات ثبت نشده است.")
     location = source_location(item, vault_path)
     if location is None or not location.exists():
-        return "فایل پیدا نشد. شاید تغییر نام داده یا جابه‌جا شده است. دوباره Browse کنید."
+        return _("فایل پیدا نشد. شاید تغییر نام داده یا جابه‌جا شده است. دوباره Browse کنید.")
     return None
 
 
@@ -90,7 +91,7 @@ def open_source(item, vault_path):
         return problem
     command = open_command(item, vault_path)
     if command is None:
-        return "این کار منبعی برای باز کردن ندارد."
+        return _("این کار منبعی برای باز کردن ندارد.")
     platform_tools.launch(command)
     return None
 
@@ -194,20 +195,20 @@ def check_ranges(item, sessions):
     try:
         ranges = [(s["sequence"], convert(s["section_start"]), convert(s["section_end"])) for s in ordered]
     except (TypeError, ValueError):
-        return ["بازهٔ بعضی جلسه‌ها خالی یا نامعتبر است."]
+        return [_("بازهٔ بعضی جلسه‌ها خالی یا نامعتبر است.")]
     for seq, a, b in ranges:
         if b < a:
-            problems.append(f"جلسهٔ {seq}: پایان قبل از شروع است.")
-    for (seq1, _, end1), (seq2, start2, _) in zip(ranges, ranges[1:], strict=False):
+            problems.append(_("جلسهٔ {0}: پایان قبل از شروع است.", seq))
+    for (seq1, _start1, end1), (seq2, start2, _end2) in zip(ranges, ranges[1:], strict=False):
         if start2 > end1 + gap:
-            problems.append(f"بین جلسهٔ {seq1} و {seq2} فاصله افتاده است.")
+            problems.append(_("بین جلسهٔ {0} و {1} فاصله افتاده است.", seq1, seq2))
         elif start2 < end1 + gap:
-            problems.append(f"جلسهٔ {seq1} و {seq2} روی هم افتاده‌اند.")
+            problems.append(_("جلسهٔ {0} و {1} روی هم افتاده‌اند.", seq1, seq2))
     if item.get("range_start") not in (None, "") and item.get("range_end") not in (None, ""):
         if ranges[0][1] != convert(item["range_start"]):
-            problems.append("جلسهٔ اول از شروع بازهٔ درس شروع نمی‌شود.")
+            problems.append(_("جلسهٔ اول از شروع بازهٔ درس شروع نمی‌شود."))
         if ranges[-1][2] != convert(item["range_end"]):
-            problems.append("جلسهٔ آخر به پایان بازهٔ درس نمی‌رسد.")
+            problems.append(_("جلسهٔ آخر به پایان بازهٔ درس نمی‌رسد."))
     return problems
 
 
@@ -216,11 +217,11 @@ def section_text(item, session):
     unit = item.get("section_unit")
     a, b = session.get("section_start"), session.get("section_end")
     if unit == "page" and a:
-        return f"صفحهٔ {a} تا {b}" if b and b != a else f"صفحهٔ {a}"
+        return _("صفحهٔ {0} تا {1}", a, b) if b and b != a else _("صفحهٔ {0}", a)
     if unit == "time" and a:
-        return f"از {a} تا {b}"
+        return _("از {0} تا {1}", a, b)
     if unit == "heading" and a:
-        return f"از «{a}» تا «{b}»" if b and b != a else f"«{a}»"
+        return _("از «{0}» تا «{1}»", a, b) if b and b != a else f"«{a}»"
     return session.get("section_label") or ""
 
 
@@ -244,6 +245,8 @@ BUNDLED_FONTS = [
     {"family": "Parastoo", "label": "پرستو", "regular": "parastoo/Parastoo.woff2", "bold": "parastoo/Parastoo-Bold.woff2"},
     {"family": "Gandom", "label": "گندم", "regular": "gandom/Gandom.woff2", "bold": None},
     {"family": "Tanha", "label": "تنها", "regular": "tanha/Tanha.woff2", "bold": None},
+    # زبان‌های دیگر؛ در style.css بار می‌شود
+    {"family": "Noto Sans", "label": "Noto Sans", "regular": None, "bold": None},
 ]
 
 

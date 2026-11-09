@@ -4,6 +4,7 @@ from flask import Blueprint
 
 import database
 from errors import UserError
+from i18n import _
 from services import tasks as task_service
 from webutil import body, get_db, parse_date, state_response, today
 
@@ -34,9 +35,9 @@ def api_set_day_range():
     data = body()
     start, end = parse_date(data.get("start")), parse_date(data.get("end"))
     if start is None or end is None or end < start:
-        raise UserError("بازهٔ تاریخ نامعتبر است.")
+        raise UserError(_("بازهٔ تاریخ نامعتبر است."))
     if (end - start).days > 366:
-        raise UserError("بازه نمی‌تواند بیشتر از یک سال باشد.")
+        raise UserError(_("بازه نمی‌تواند بیشتر از یک سال باشد."))
     database.set_day_range(get_db(), start, end, data.get("cap_minutes", 0))
     return state_response()
 
@@ -50,8 +51,8 @@ def api_set_day(day):
         try:
             value = int(value)
         except (TypeError, ValueError):
-            raise UserError("سقف روز باید عدد باشد.")
+            raise UserError(_("سقف روز باید عدد باشد."))
         if value < 0:
-            raise UserError("سقف روز نمی‌تواند منفی باشد.")
+            raise UserError(_("سقف روز نمی‌تواند منفی باشد."))
     database.set_day_override(get_db(), target, value)
     return state_response()

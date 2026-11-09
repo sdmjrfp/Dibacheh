@@ -1,6 +1,6 @@
 /* ستون کارها و منابع: تب‌ها، فهرست درس‌ها، صف و نشانگر حجم کار. */
 
-import { $, api, el, fa, itemById, minutesText, render, renderPart, showMessage, state, typeOf } from "./core.js";
+import { $, api, el, fa, itemById, minutesText, render, renderPart, showMessage, state, t, typeOf } from "./core.js";
 import { openItemDialog } from "./item-dialog.js";
 import { sortable } from "./motion.js";
 
@@ -13,12 +13,12 @@ export let searchText = "";
 export let selectedItemId = null;
 
 const STATUS_LISTS = [
-  ["all", "همه"],
-  ["unread", "خوانده‌نشده"],
-  ["reading", "در حال خواندن"],
-  ["read", "خوانده‌شده"],
-  ["finished", "تمام‌شده"],
-  ["archived", "بایگانی"],
+  ["all", t("همه")],
+  ["unread", t("خوانده‌نشده")],
+  ["reading", t("در حال خواندن")],
+  ["read", t("خوانده‌شده")],
+  ["finished", t("تمام‌شده")],
+  ["archived", t("بایگانی")],
 ];
 
 /** نشانگر حجم کار منتظر: خواندن و مرور باقی‌مانده، تاریخ پایان و میانگین روزانه. */
@@ -33,26 +33,26 @@ export function renderWorkload() {
   const readShare = Math.round((100 * w.read_minutes) / total);
   box.className = "workload";
   box.replaceChildren(
-    el("strong", {}, `حجم کار منتظر: ${minutesText(total)}`),
-    el("div", { class: "bars", title: "رنگ خواندن و رنگ مرور، به نسبت حجم هرکدام" },
+    el("strong", {}, t("حجم کار منتظر: {0}", minutesText(total))),
+    el("div", { class: "bars", title: t("رنگ خواندن و رنگ مرور، به نسبت حجم هرکدام") },
       el("span", { class: "r", style: `width:${readShare}%` }),
       el("span", { class: "v", style: `width:${100 - readShare}%` })),
-    el("div", {}, `خواندن ${minutesText(w.read_minutes)} · مرور ${minutesText(w.review_minutes)}`),
-    w.end_date && el("div", {}, `پایان پیش‌بینی‌شدهٔ همه‌چیز: ${Jalali.format(w.end_date)}`),
+    el("div", {}, t("خواندن {0} · مرور {1}", minutesText(w.read_minutes), minutesText(w.review_minutes))),
+    w.end_date && el("div", {}, t("پایان پیش‌بینی‌شدهٔ همه‌چیز: {0}", Jalali.format(w.end_date))),
     el("div", { class: "muted" },
-      `۳۰ روز آینده، به‌طور میانگین هر روز ${fa(w.avg_review_next_30)} دقیقه مرور و ${fa(w.avg_read_next_30)} دقیقه مطلب جدید`),
+      t("۳۰ روز آینده، به‌طور میانگین هر روز {0} دقیقه مرور و {1} دقیقه مطلب جدید", fa(w.avg_review_next_30), fa(w.avg_read_next_30))),
   );
 }
 
 /** متن جلو یا عقب بودن از تاریخ هدف */
 function targetText(label, info) {
   if (!info) return null;
-  if (info.done) return el("span", { class: "target ahead" }, `${label}: تمام شده ✓`);
+  if (info.done) return el("span", { class: "target ahead" }, t("{0}: تمام شده ✓", label));
   if (info.days === null) return null;
-  if (info.days === 0) return el("span", { class: "target ahead" }, `${label}: درست سر هدف`);
+  if (info.days === 0) return el("span", { class: "target ahead" }, t("{0}: درست سر هدف", label));
   const ahead = info.days > 0;
   return el("span", { class: `target ${ahead ? "ahead" : "behind"}` },
-    `${label}: ${fa(Math.abs(info.days))} روز ${ahead ? "زودتر از" : "دیرتر از"} هدف`);
+    t("{0}: {1} روز {2} هدف", label, fa(Math.abs(info.days)), ahead ? t("زودتر از") : t("دیرتر از")));
 }
 
 export function renderTabs() {
@@ -106,15 +106,15 @@ export function renderCategoryTabs() {
   };
   const counts = new Map();
   for (const item of state.items) counts.set(item.category_id, (counts.get(item.category_id) || 0) + 1);
-  const all = tab("", "همه", state.items.length);
+  const all = tab("", t("همه"), state.items.length);
   all.dataset.fixed = "";
   const tabs = state.categories.map((c) => {
     const node = tab(c.id, c.name, counts.get(c.id) || 0);
-    node.title = "دوبار کلیک: تغییر نام · کشیدن: جابه‌جایی";
+    node.title = t("دوبار کلیک: تغییر نام · کشیدن: جابه‌جایی");
     node.append(el("button", {
-      class: "x", title: "حذف دسته",
+      class: "x", title: t("حذف دسته"),
       onclick: () => {
-        if (confirm(`دستهٔ «${c.name}» حذف شود؟ درس‌هایش می‌مانند و بدون دسته می‌شوند.`)) {
+        if (confirm(t("دستهٔ «{0}» حذف شود؟ درس‌هایش می‌مانند و بدون دسته می‌شوند.", c.name))) {
           if (String(filterCategory) === String(c.id)) filterCategory = "";
           api("DELETE", `/api/categories/${c.id}`);
         }
@@ -128,7 +128,7 @@ export function renderCategoryTabs() {
         if (name) await api("POST", "/api/categories", { name });
         else render();
       }))
-    : el("button", { class: "cat-tab plus", "data-fixed": "", title: "دستهٔ جدید",
+    : el("button", { class: "cat-tab plus", "data-fixed": "", title: t("دستهٔ جدید"),
         onclick: () => { addingCategory = true; render(); $("#category-tabs input").focus(); } }, "+");
   box.replaceChildren(all, ...tabs, plus);
 }
@@ -136,7 +136,7 @@ export function renderCategoryTabs() {
 /** ورودی نام دسته: Enter = ثبت، Esc = لغو */
 function categoryNameInput(value, done) {
   let finished = false;
-  const input = el("input", { value, placeholder: "نام دسته", size: 10 });
+  const input = el("input", { value, placeholder: t("نام دسته"), size: 10 });
   typingCategoryName = true;
   const end = (name) => {
     if (finished) return;
@@ -188,14 +188,14 @@ export function renderItems() {
       list.replaceChildren(...visible.map(itemCard));
     } else {
       list.replaceChildren(el("li", { class: "muted" }, state.items.length
-        ? "درسی با این فیلتر نیست." : "هنوز چیزی اضافه نشده. با دکمهٔ «+» شروع کنید."));
+        ? t("درسی با این فیلتر نیست.") : t("هنوز چیزی اضافه نشده. با دکمهٔ «+» شروع کنید.")));
     }
   });
 }
 
 /** حرف‌های عربی و فارسی یکی می‌شوند تا «ي» و «ی» در جست‌وجو فرق نکنند */
 function normalize(text) {
-  return String(text || "").toLowerCase().replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/\u200c/g, " ");
+  return String(text || "").toLowerCase().replace(/ي/g, t("ی")).replace(/ك/g, t("ک")).replace(/\u200c/g, " ");
 }
 
 /** جست‌وجو در نام درس، منبع، بخش جلسه‌ها و یادداشت‌ها */
@@ -215,38 +215,38 @@ function itemCard(item) {
   const meta = [];
   if (category) meta.push(el("span", { class: "chip" }, category.name));
   if (custom) meta.push(el("span", { class: "chip typed", style: `--c:${custom.color}` }, custom.name));
-  else if (item.item_type === "routine") meta.push(el("span", { class: "chip routine" }, "روتین"));
-  else if (item.variant === "project") meta.push(el("span", { class: "chip typed kind-project" }, "پروژه"));
-  else if (item.variant === "once") meta.push(el("span", { class: "chip typed kind-once" }, "کار یک‌باره"));
-  meta.push(el("span", {}, `${fa(item.sessions.length)} جلسه`));
-  meta.push(el("span", {}, `${item.variant === "study" ? "خواندن" : "پیشرفت"} ${fa(p.read_percent)}٪`));
-  if (p.reviews_total) meta.push(el("span", {}, `مرور ${fa(p.reviews_done)} از ${fa(p.reviews_total)}`));
+  else if (item.item_type === "routine") meta.push(el("span", { class: "chip routine" }, t("روتین")));
+  else if (item.variant === "project") meta.push(el("span", { class: "chip typed kind-project" }, t("پروژه")));
+  else if (item.variant === "once") meta.push(el("span", { class: "chip typed kind-once" }, t("کار یک‌باره")));
+  meta.push(el("span", {}, t("{0} جلسه", fa(item.sessions.length))));
+  meta.push(el("span", {}, t("{0} {1}٪", item.variant === "study" ? t("خواندن") : t("پیشرفت"), fa(p.read_percent))));
+  if (p.reviews_total) meta.push(el("span", {}, t("مرور {0} از {1}", fa(p.reviews_done), fa(p.reviews_total))));
   if (!item.is_active) {
-    meta.push(el("span", {}, "غیرفعال: روی تقویم نیست"));
+    meta.push(el("span", {}, t("غیرفعال: روی تقویم نیست")));
   } else {
-    if (item.finish.read_end) meta.push(el("span", {}, `${item.variant === "study" ? "پایان خواندن" : "پایان"}: ${Jalali.formatShort(item.finish.read_end)}`));
-    if (item.finish.review_end) meta.push(el("span", {}, `پایان مرور: ${Jalali.format(item.finish.review_end)}`));
+    if (item.finish.read_end) meta.push(el("span", {}, `${item.variant === "study" ? t("پایان خواندن") : t("پایان")}: ${Jalali.formatShort(item.finish.read_end)}`));
+    if (item.finish.review_end) meta.push(el("span", {}, t("پایان مرور: {0}", Jalali.format(item.finish.review_end))));
   }
   for (const req of item.requires) {
     const other = itemById(req.id);
     if (!other) continue;
     const waiting = item.waiting_for.includes(other.title);
-    const when = req.until === "finished" ? "پایان مرورهای" : "پایان خواندن";
-    meta.push(el("span", { class: waiting ? "waiting" : "" }, `${waiting ? "🔒 منتظر" : "✓ بعد از"} ${when} «${other.title}»`));
+    const when = req.until === "finished" ? t("پایان مرورهای") : t("پایان خواندن");
+    meta.push(el("span", { class: waiting ? "waiting" : "" }, `${waiting ? t("🔒 منتظر") : t("✓ بعد از")} ${when} «${other.title}»`));
   }
   if (item.pinned) {
-    meta.push(el("span", { class: "pinned", title: "این جلسه‌ها روی روز خاصی مانده‌اند و اولویت صف رویشان اثر ندارد" },
-      `📌 ${fa(item.pinned)} جلسه دستی جابه‌جا شده`,
+    meta.push(el("span", { class: "pinned", title: t("این جلسه‌ها روی روز خاصی مانده‌اند و اولویت صف رویشان اثر ندارد") },
+      t("📌 {0} جلسه دستی جابه‌جا شده", fa(item.pinned)),
       el("button", {
-        class: "link", title: "همهٔ جابه‌جایی‌های دستی این درس برداشته شود",
+        class: "link", title: t("همهٔ جابه‌جایی‌های دستی این درس برداشته شود"),
         onclick: () => api("POST", `/api/items/${item.id}/unpin`, {}),
-      }, "برگشت به چینش خودکار")));
+      }, t("برگشت به چینش خودکار"))));
   }
   if (item.target_date) {
-    meta.push(el("span", {}, `هدف: ${Jalali.format(item.target_date)}`));
+    meta.push(el("span", {}, t("هدف: {0}", Jalali.format(item.target_date))));
     if (item.target) {
-      meta.push(targetText("خواندن", item.target.read));
-      meta.push(targetText("مرور", item.target.review));
+      meta.push(targetText(t("خواندن"), item.target.read));
+      meta.push(targetText(t("مرور"), item.target.review));
     }
   }
 
@@ -254,9 +254,9 @@ function itemCard(item) {
     class: `item${item.is_active ? "" : " inactive"}${item.id === selectedItemId ? " selected" : ""}`,
     "data-id": item.id, "data-flip": `item-${item.id}`,
   },
-    el("span", { class: "handle", title: "برای جابه‌جایی بکشید" }, "⋮⋮"),
+    el("span", { class: "handle", title: t("برای جابه‌جایی بکشید") }, "⋮⋮"),
     el("input", {
-      type: "checkbox", checked: item.is_active, title: "فعال / غیرفعال",
+      type: "checkbox", checked: item.is_active, title: t("فعال / غیرفعال"),
       onchange: (e) => api("PATCH", `/api/items/${item.id}`, { is_active: e.target.checked }),
     }),
     el("span", {
@@ -265,16 +265,16 @@ function itemCard(item) {
     }, item.title),
     el("span", { class: "actions" },
       el("input", {
-        type: "color", class: "swatch", value: item.display_color, title: "رنگ این منبع",
+        type: "color", class: "swatch", value: item.display_color, title: t("رنگ این منبع"),
         onchange: (e) => api("PATCH", `/api/items/${item.id}`, { color: e.target.value }),
       }),
       item.source_type !== "none" && el("button", {
-        class: "icon", title: "باز کردن منبع",
+        class: "icon", title: t("باز کردن منبع"),
         onclick: () => api("POST", `/api/items/${item.id}/open`, {}),
       }, "↗"),
-      el("button", { class: "icon", title: "ویرایش", onclick: () => openItemDialog(item) }, "✎"),
+      el("button", { class: "icon", title: t("ویرایش"), onclick: () => openItemDialog(item) }, "✎"),
       (item.status_list === "finished" || item.archived) && el("button", {
-        class: "icon", title: item.archived ? "برگرداندن از بایگانی" : "بایگانی",
+        class: "icon", title: item.archived ? t("برگرداندن از بایگانی") : t("بایگانی"),
         onclick: () => api("POST", `/api/items/${item.id}/archive`, { archived: !item.archived }),
       }, item.archived ? "⤴" : "🗄"),
     ),
@@ -282,7 +282,7 @@ function itemCard(item) {
     el("div", { class: "meta" }, meta),
     item.source_problem && el("div", { class: "problem" }, `⚠ ${item.source_problem}`),
     searchText && el("div", { class: "hits" }, searchHits(item).sessions.slice(0, 4).map((s) =>
-      el("div", {}, `جلسهٔ ${fa(s.sequence)}: ${[s.section_text, s.note].filter(Boolean).join(" · ")}`))),
+      el("div", {}, t("جلسهٔ {0}: {1}", fa(s.sequence), [s.section_text, s.note].filter(Boolean).join(" · "))))),
   );
   return card;
 }
@@ -309,7 +309,7 @@ function reorderVisible(visibleIds, movedId) {
   api("POST", "/api/items/reorder", { ids, moved_id: movedId }).then((result) => {
     const item = itemById(movedId);
     if (result.released && item) {
-      showMessage(`جابه‌جایی دستی ${fa(result.released)} جلسه از «${item.title}» برداشته شد تا طبق اولویت تازه چیده شود.`, false);
+      showMessage(t("جابه‌جایی دستی {0} جلسه از «{1}» برداشته شد تا طبق اولویت تازه چیده شود.", fa(result.released), item.title), false);
     }
   });
 }

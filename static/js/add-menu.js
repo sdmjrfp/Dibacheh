@@ -1,13 +1,13 @@
 /* منوی «+»: انتخاب اینکه چه چیزی اضافه شود، و الگوهای آمادهٔ همان نوع. */
 
-import { $, el, state } from "./core.js";
+import { $, el, state, t } from "./core.js";
 import { openBulkDialog, openItemDialog, openTypeDialog } from "./item-dialog.js";
 
 const KINDS = [
-  { key: "study", icon: "📖", name: "درس", about: "جلسه‌ها به ترتیب صف، با مرور لایتنر", type: "study", variant: "study" },
-  { key: "routine", icon: "🔁", name: "کار روتین", about: "هر روز یا روزهای انتخابی، بدون مرور", type: "routine", variant: "study" },
-  { key: "once", icon: "✅", name: "کار یک‌باره", about: "فقط یک بار انجام می‌شود، روز مشخص یا اولین جای خالی", type: "study", variant: "once" },
-  { key: "project", icon: "🧩", name: "پروژه", about: "چند جلسه پشت سر هم، بدون مرور", type: "study", variant: "project" },
+  { key: "study", icon: "📖", name: t("درس"), about: t("جلسه‌ها به ترتیب صف، با مرور لایتنر"), type: "study", variant: "study" },
+  { key: "routine", icon: "🔁", name: t("کار روتین"), about: t("هر روز یا روزهای انتخابی، بدون مرور"), type: "routine", variant: "study" },
+  { key: "once", icon: "✅", name: t("کار یک‌باره"), about: t("فقط یک بار انجام می‌شود، روز مشخص یا اولین جای خالی"), type: "study", variant: "once" },
+  { key: "project", icon: "🧩", name: t("پروژه"), about: t("چند جلسه پشت سر هم، بدون مرور"), type: "study", variant: "project" },
 ];
 
 let firstDate = null;
@@ -19,11 +19,11 @@ export function openAddMenu(date = null) {
   $("#add-kinds").replaceChildren(
     ...KINDS.map((kind) => tile(kind.icon, kind.name, kind.about, () => chooseKind(kind), { "data-add": kind.key })),
     ...state.types.map((custom) => tile("●", custom.name,
-      custom.behavior === "study" ? "مثل درس، با مرور لایتنر" : "مثل کار روتین، بدون مرور",
+      custom.behavior === "study" ? t("مثل درس، با مرور لایتنر") : t("مثل کار روتین، بدون مرور"),
       () => { close(); openItemDialog(null, custom.behavior, firstDate, custom); },
       { style: `--c:${custom.color}`, class: "add-tile typed" })),
-    tile("📚", "چند درس با هم", "هر خط یک درس", () => { close(); openBulkDialog(); }, { "data-add": "bulk" }),
-    tile("➕", "نوع تازه", "نوع کار خودتان را با نام و رنگ دلخواه بسازید", () => { close(); openTypeDialog(); }, { "data-add": "type" }),
+    tile("📚", t("چند درس با هم"), t("هر خط یک درس"), () => { close(); openBulkDialog(); }, { "data-add": "bulk" }),
+    tile("➕", t("نوع تازه"), t("نوع کار خودتان را با نام و رنگ دلخواه بسازید"), () => { close(); openTypeDialog(); }, { "data-add": "type" }),
   );
   $("#add-dialog").showModal();
 }
@@ -52,7 +52,7 @@ function chooseKind(kind) {
   }
   $("#add-template-list").replaceChildren(
     el("button", { type: "button", id: "add-no-template", class: "add-tile", onclick: () => open() },
-      el("strong", {}, "بدون الگو"), el("span", { class: "muted small" }, "خودتان همه‌چیز را تعیین کنید")),
+      el("strong", {}, t("بدون الگو")), el("span", { class: "muted small" }, t("خودتان همه‌چیز را تعیین کنید"))),
     ...templates.map((template) => el("button", {
       type: "button", class: "add-tile", "data-template": template.id, onclick: () => open(template),
     }, el("strong", {}, template.name), el("span", { class: "muted small" }, templateSummary(template)))),
@@ -63,9 +63,9 @@ function chooseKind(kind) {
 function templateSummary(template) {
   const f = template.fields;
   const parts = [];
-  if (f.session_count) parts.push(`${Jalali.faNumber(f.session_count)} جلسه`);
-  if (f.session_minutes) parts.push(`${Jalali.faNumber(f.session_minutes)} دقیقه`);
-  if (f.review_intervals && f.review_intervals.length) parts.push(`${Jalali.faNumber(f.review_intervals.length)} مرور`);
+  if (f.session_count) parts.push(t("{0} جلسه", Jalali.faNumber(f.session_count)));
+  if (f.session_minutes) parts.push(t("{0} دقیقه", Jalali.faNumber(f.session_minutes)));
+  if (f.review_intervals && f.review_intervals.length) parts.push(t("{0} مرور", Jalali.faNumber(f.review_intervals.length)));
   return parts.join(" · ");
 }
 

@@ -1,6 +1,6 @@
 /* شمارهٔ نسخه، خبر نسخهٔ تازه، دانلود آن، و تغییرات نسخه بعد از به‌روزرسانی. */
 
-import { $, api, el, fa, state } from "./core.js";
+import { $, api, el, fa, state, t } from "./core.js";
 
 let update = null;   // نتیجهٔ بررسی نسخهٔ تازه
 let checked = false;
@@ -16,7 +16,7 @@ async function checkForUpdate() {
     if (!result.available) return;
     update = result;
     const button = $("#update-button");
-    button.textContent = `به‌روزرسانی به نسخهٔ ${fa(result.latest)}`;
+    button.textContent = t("به‌روزرسانی به نسخهٔ {0}", fa(result.latest));
     button.hidden = false;
   } catch (error) { /* اینترنت قطع است؛ مهم نیست */ }
 }
@@ -34,10 +34,10 @@ function megabytes(bytes) {
 }
 
 function openUpdateDialog() {
-  $("#update-title").textContent = `نسخهٔ تازه: ${fa(update.latest)}`;
-  $("#update-notes").textContent = update.notes || "توضیحی برای این نسخه نوشته نشده است.";
+  $("#update-title").textContent = t("نسخهٔ تازه: {0}", fa(update.latest));
+  $("#update-notes").textContent = update.notes || t("توضیحی برای این نسخه نوشته نشده است.");
   $("#update-source-note").hidden = !state.from_source;
-  $("#update-size").textContent = `حجم فایل: ${megabytes(update.asset.size)} مگابایت`;
+  $("#update-size").textContent = t("حجم فایل: {0} مگابایت", megabytes(update.asset.size));
   $("#update-download").hidden = false;
   $("#update-progress").hidden = true;
   $("#update-done").hidden = true;
@@ -53,7 +53,7 @@ async function startDownload() {
     const p = await (await fetch("/api/update/progress")).json();
     const percent = p.total ? Math.round((100 * p.received) / p.total) : 0;
     bar.querySelector("span").style.width = `${percent}%`;
-    $("#update-progress-text").textContent = `${fa(percent)}٪ · ${megabytes(p.received)} از ${megabytes(p.total)} مگابایت`;
+    $("#update-progress-text").textContent = t("{0}٪ · {1} از {2} مگابایت", fa(percent), megabytes(p.received), megabytes(p.total));
     if (p.state === "downloading") return;
     clearInterval(timer);
     if (p.state === "done") {
@@ -62,7 +62,7 @@ async function startDownload() {
       $("#update-done-path").textContent = p.path;
       $("#update-done").hidden = false;
     } else {
-      $("#update-progress-text").textContent = `دانلود نشد: ${p.error}`;
+      $("#update-progress-text").textContent = t("دانلود نشد: {0}", p.error);
       $("#update-download").hidden = false;
     }
   }, 500);
@@ -78,7 +78,7 @@ async function showWhatsNew() {
   const notes = log[state.version];
   if (!notes) return;
   const lines = notes[language()] || notes.en || notes.fa;
-  $("#whats-new-title").textContent = `تازه‌های نسخهٔ ${fa(state.version)}`;
+  $("#whats-new-title").textContent = t("تازه‌های نسخهٔ {0}", fa(state.version));
   $("#whats-new-list").replaceChildren(...lines.map((line) => el("li", {}, line)));
   $("#whats-new-dialog").showModal();
 }

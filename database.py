@@ -16,7 +16,9 @@ from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import i18n
 import platform_tools
+from i18n import _
 
 PROJECT_DIR = platform_tools.app_home()
 DATA_DIR = PROJECT_DIR / "data"
@@ -208,6 +210,12 @@ DEFAULT_SETTINGS = {
     "last_seen_version": "",
     # پوشهٔ همگام‌شده با فضای ابری (OneDrive و ...). خالی = خاموش
     "cloud_backup_folder": "",
+    # زبان، تقویم (persian یا gregorian) و اولین روز هفته (5 = شنبه، 6 = یکشنبه، 0 = دوشنبه)
+    "language": "fa",
+    "calendar": "persian",
+    "first_weekday": 5,
+    # آیا پنجرهٔ اولین اجرا (انتخاب زبان و تقویم) پاسخ داده شده است
+    "setup_done": False,
 }
 
 FONTS_DIR = DATA_DIR / "fonts"
@@ -334,7 +342,7 @@ def _update(conn, table, row_id, fields, allowed):
     """فیلدهای مجاز یک سطر را تغییر می‌دهد. نام ستون‌ها فقط از فهرست allowed می‌آید."""
     unknown = set(fields) - allowed
     if unknown:
-        raise ValueError(f"فیلد ناشناخته: {', '.join(sorted(unknown))}")
+        raise ValueError(_("فیلد ناشناخته: {0}", ', '.join(sorted(unknown))))
     if not fields:
         return
     columns = ", ".join(f"{key} = ?" for key in fields)
@@ -359,9 +367,9 @@ def _int_in(value, low, high, name):
     try:
         number = int(value)
     except (TypeError, ValueError):
-        raise ValueError(f"{name} باید عدد باشد.")
+        raise ValueError(_("{0} باید عدد باشد.", name))
     if not low <= number <= high:
-        raise ValueError(f"{name} باید بین {low} و {high} باشد.")
+        raise ValueError(_("{0} باید بین {1} و {2} باشد.", name, low, high))
     return number
 
 
@@ -371,66 +379,79 @@ def clean_setting(key, value):
     این بررسی جلوی مقدارهایی را می‌گیرد که موتور چینش را خراب می‌کنند (مثل فاصلهٔ لایتنر صفر).
     """
     if key not in DEFAULT_SETTINGS:
-        raise ValueError(f"تنظیم ناشناخته: {key}")
+        raise ValueError(_("تنظیم ناشناخته: {0}", key))
     if key == "default_cap_minutes":
-        return _int_in(value, 0, 1440, "سقف پیش‌فرض")
+        return _int_in(value, 0, 1440, _("سقف پیش‌فرض"))
     if key == "cap_tolerance_minutes":
-        return _int_in(value, 0, 600, "مقدار مجاز بیشتر از سقف")
+        return _int_in(value, 0, 600, _("مقدار مجاز بیشتر از سقف"))
     if key == "default_review_ratio":
         from fractions import Fraction
         try:
             ratio = Fraction(str(value).strip())
         except (ValueError, ZeroDivisionError):
-            raise ValueError("نسبت مرور نامعتبر است. مثال: 1/3 یا 0.5")
+            raise ValueError(_("نسبت مرور نامعتبر است. مثال: 1/3 یا 0.5"))
         if ratio <= 0:
-            raise ValueError("نسبت مرور باید بیشتر از صفر باشد.")
+            raise ValueError(_("نسبت مرور باید بیشتر از صفر باشد."))
         return str(value).strip()
     if key == "review_intervals":
         if not isinstance(value, list) or not 1 <= len(value) <= 20:
-            raise ValueError("فاصله‌های لایتنر باید بین 1 تا 20 عدد باشند.")
-        return [_int_in(v, 1, 3650, "فاصلهٔ لایتنر") for v in value]
+            raise ValueError(_("فاصله‌های لایتنر باید بین 1 تا 20 عدد باشند."))
+        return [_int_in(v, 1, 3650, _("فاصلهٔ لایتنر")) for v in value]
     if key == "weekday_caps":
         if not isinstance(value, dict):
-            raise ValueError("سقف روزهای هفته نامعتبر است.")
-        return {str(_int_in(k, 0, 6, "روز هفته")): _int_in(v, 0, 1440, "سقف روز هفته")
+            raise ValueError(_("سقف روزهای هفته نامعتبر است."))
+        return {str(_int_in(k, 0, 6, _("روز هفته"))): _int_in(v, 0, 1440, _("سقف روز هفته"))
                 for k, v in value.items() if v not in (None, "")}
     if key == "weekly_days_off":
-        return sorted({_int_in(v, 0, 6, "روز تعطیل") for v in (value or [])})
+        return sorted({_int_in(v, 0, 6, _("روز تعطیل")) for v in (value or [])})
     if key == "day_start_hour":
-        return _int_in(value, 0, 23, "ساعت شروع روز")
+        return _int_in(value, 0, 23, _("ساعت شروع روز"))
     if key == "new_item_defaults":
         value = value or {}
         category = value.get("category_id")
         return {
-            "session_minutes": _int_in(value.get("session_minutes", 60), 1, 1440, "زمان جلسهٔ پیش‌فرض"),
-            "max_new_sessions_per_day": _int_in(value.get("max_new_sessions_per_day", 1), 1, 50, "سرعت پیش‌فرض"),
+            "session_minutes": _int_in(value.get("session_minutes", 60), 1, 1440, _("زمان جلسهٔ پیش‌فرض")),
+            "max_new_sessions_per_day": _int_in(value.get("max_new_sessions_per_day", 1), 1, 50, _("سرعت پیش‌فرض")),
             "category_id": int(category) if category not in (None, "") else None,
         }
     if key == "review_cap_percent":
-        return None if value in (None, "") else _int_in(value, 1, 100, "سقف زمان مرور")
+        return None if value in (None, "") else _int_in(value, 1, 100, _("سقف زمان مرور"))
     if key == "theme":
         if value not in ("light", "dark"):
-            raise ValueError("حالت نمایش نامعتبر است.")
+            raise ValueError(_("حالت نمایش نامعتبر است."))
         return value
     if key == "font_family":
         name = str(value or "").strip() or "Vazirmatn"
         # فقط حرف، عدد، فاصله و خط تیره، چون این نام مستقیم در CSS قرار می‌گیرد
         if len(name) > 80 or not re.fullmatch(r"[\w \-.]+", name):
-            raise ValueError("نام فونت نامعتبر است.")
+            raise ValueError(_("نام فونت نامعتبر است."))
         return name
     if key == "font_size":
-        return _int_in(value, 10, 32, "اندازهٔ فونت")
-    if key in ("font_bold", "check_updates"):
+        return _int_in(value, 10, 32, _("اندازهٔ فونت"))
+    if key in ("font_bold", "check_updates", "setup_done"):
         return bool(value)
+    if key == "language":
+        if value not in i18n.LANGUAGES:
+            raise ValueError(_("زبان نامعتبر است."))
+        return value
+    if key == "calendar":
+        if value not in ("persian", "gregorian"):
+            raise ValueError(_("تقویم نامعتبر است."))
+        return value
+    if key == "first_weekday":
+        value = _int_in(value, 0, 6, _("اولین روز هفته"))
+        if value not in (5, 6, 0):
+            raise ValueError(_("اولین روز هفته باید شنبه، یکشنبه یا دوشنبه باشد."))
+        return value
     if key == "last_seen_version":
         return str(value or "")[:20]
     if key == "ui_scale":
-        return "auto" if value == "auto" else _int_in(value, 50, 200, "اندازهٔ رابط")
+        return "auto" if value == "auto" else _int_in(value, 50, 200, _("اندازهٔ رابط"))
     if key == "backup_retention":
-        return _int_in(value, 1, 365, "تعداد backup")
+        return _int_in(value, 1, 365, _("تعداد backup"))
     if key == "colors":
         if not isinstance(value, dict):
-            raise ValueError("رنگ‌ها نامعتبرند.")
+            raise ValueError(_("رنگ‌ها نامعتبرند."))
         result = dict(DEFAULT_SETTINGS["colors"])
         for kind in result:
             if kind in value:
@@ -438,11 +459,11 @@ def clean_setting(key, value):
         return result
     if key == "color_mode":
         if value not in ("kind", "source"):
-            raise ValueError("نوع رنگ‌بندی نامعتبر است.")
+            raise ValueError(_("نوع رنگ‌بندی نامعتبر است."))
         return value
     if key == "item_templates":
         if not isinstance(value, list):
-            raise ValueError("فهرست الگوها نامعتبر است.")
+            raise ValueError(_("فهرست الگوها نامعتبر است."))
         allowed = {"session_count", "session_minutes", "max_new_sessions_per_day", "review_ratio",
                    "review_intervals", "section_unit", "category_id", "item_type", "custom_type_id", "color",
                    "routine_weekdays"}
@@ -450,21 +471,21 @@ def clean_setting(key, value):
         for template in value:
             name = str(template.get("name", "")).strip()
             if not name or len(name) > 60:
-                raise ValueError("نام الگو باید بین 1 تا 60 حرف باشد.")
+                raise ValueError(_("نام الگو باید بین 1 تا 60 حرف باشد."))
             fields = template.get("fields") or {}
             kind = template.get("kind", "study")
             if kind not in ("study", "routine", "project", "once"):
-                raise ValueError("نوع الگو نامعتبر است.")
+                raise ValueError(_("نوع الگو نامعتبر است."))
             result.append({"name": name, "kind": kind, "fields": {k: v for k, v in fields.items() if k in allowed}})
         return result
     if key == "hidden_templates":
         if not isinstance(value, list):
-            raise ValueError("فهرست الگوها نامعتبر است.")
+            raise ValueError(_("فهرست الگوها نامعتبر است."))
         known = {t["id"] for t in BUILTIN_TEMPLATES}
         return sorted({str(v) for v in value} & known)
     if key == "custom_fonts":
         if not isinstance(value, list):
-            raise ValueError("فهرست فونت‌ها نامعتبر است.")
+            raise ValueError(_("فهرست فونت‌ها نامعتبر است."))
         return [{"family": clean_setting("font_family", f["family"]), "file": Path(str(f["file"])).name}
                 for f in value]
     # آدرس‌ها: vault_path، export_folder، backup_folder
@@ -475,13 +496,13 @@ def clean_color(value):
     """رنگ به شکل #rrggbb"""
     text = str(value or "").strip().lower()
     if not re.fullmatch(r"#[0-9a-f]{6}", text):
-        raise ValueError("رنگ باید به شکل #rrggbb باشد.")
+        raise ValueError(_("رنگ باید به شکل #rrggbb باشد."))
     return text
 
 
 def set_setting(conn, key, value):
     if key not in DEFAULT_SETTINGS:
-        raise ValueError(f"تنظیم ناشناخته: {key}")
+        raise ValueError(_("تنظیم ناشناخته: {0}", key))
     conn.execute(
         "INSERT INTO settings (key, value) VALUES (?, ?) "
         "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
@@ -582,7 +603,7 @@ def add_item(conn, title, session_count, session_minutes, now=None, **fields):
     """
     unknown = set(fields) - ITEM_FIELDS
     if unknown:
-        raise ValueError(f"فیلد ناشناخته: {', '.join(sorted(unknown))}")
+        raise ValueError(_("فیلد ناشناخته: {0}", ', '.join(sorted(unknown))))
     now = now or datetime.now()
     queue = conn.execute("SELECT COALESCE(MAX(queue_position), 0) + 1 FROM items").fetchone()[0]
     data = {"title": title, "queue_position": queue, "created_at": now.isoformat(timespec="seconds")}
@@ -868,7 +889,7 @@ def copy_backup_to_cloud(local_folder, cloud_folder, retention):
         return None
     root = Path(cloud_folder).expanduser()
     if not root.is_dir():
-        raise OSError(f"پوشه پیدا نشد: {root}")
+        raise OSError(_("پوشه پیدا نشد: {0}", root))
     folder = root / CLOUD_SUBFOLDER
     folder.mkdir(exist_ok=True)
     target = folder / backups[-1].name
@@ -910,13 +931,13 @@ def check_database_file(path):
         finally:
             other.close()
     except sqlite3.Error:
-        raise ValueError("این فایل دیتابیس معتبری نیست.")
+        raise ValueError(_("این فایل دیتابیس معتبری نیست."))
     if integrity_problem(path):
-        raise ValueError("این فایل دیتابیس خراب است.")
+        raise ValueError(_("این فایل دیتابیس خراب است."))
     if not {"items", "sessions", "settings"} <= tables:
-        raise ValueError("این فایل دیتابیس دیباچه نیست.")
+        raise ValueError(_("این فایل دیتابیس دیباچه نیست."))
     if version > len(MIGRATIONS):
-        raise ValueError("این فایل با نسخهٔ تازه‌تری از برنامه ساخته شده است.")
+        raise ValueError(_("این فایل با نسخهٔ تازه‌تری از برنامه ساخته شده است."))
 
 
 def safety_copy(conn, folder, now):

@@ -73,7 +73,8 @@ def main(binary):
             sys.exit("برنامه بالا نیامد")
         token = re.search(r'csrf-token" content="([^"]+)"', page).group(1)
         check_update_route()
-        assert get("/static/style.css") and get("/static/vendor/fonts/samim/Samim.woff2")
+        assert get("/static/style.css") and get("/static/vendor/fonts/samim/Samim.woff2") and get("/static/vendor/noto/devanagari.woff2")
+        assert get("/static/i18n/keys.txt") and get("/static/i18n/ja.txt") and get("/static/changelog.json")
         send("PATCH", "/api/settings", token, {"export_folder": str(work / "out"), "font_family": "Samim"})
         send("POST", "/api/items", token, {
             "title": "کتاب", "session_count": 2, "session_minutes": 60, "section_unit": "page",

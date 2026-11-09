@@ -1,5 +1,5 @@
 import { openAddMenu } from "./add-menu.js";
-import { $, $$, api, buildJalaliInput, el, fa, getPref, minutesText, readJalaliInput, renderPart, setPref, showMessage, state, typeOf } from "./core.js";
+import { $, $$, api, buildJalaliInput, el, fa, FIRST_WEEKDAY, getPref, isRTL, minutesText, readJalaliInput, renderPart, setPref, showMessage, state, t, typeOf, WEEKDAYS } from "./core.js";
 import { openItemDialog } from "./item-dialog.js";
 import { Motion, dragGhost } from "./motion.js";
 import { selectedItemId } from "./sources.js";
@@ -20,7 +20,7 @@ let orientation = getPref("orientation", "vertical");   // هر روز یک ست
 
 const hiddenKinds = new Set(getPref("hiddenKinds", []));   // نوع کارهایی که تیکشان برداشته شده
 
-const KIND_LABEL = { read: "خواندن", review: "مرور", routine: "روتین", project: "پروژه", once: "کار یک‌باره" };
+const KIND_LABEL = { read: t("خواندن"), review: t("مرور"), routine: t("روتین"), project: t("پروژه"), once: t("کار یک‌باره") };
 
 /** نوع کار برای برچسب، رنگ و فیلتر. خواندنِ پروژه و کار یک‌باره نام و رنگ خودشان را دارند. */
 function displayKind(kind, item) {
@@ -78,20 +78,20 @@ function historyByDate() {
   return map;
 }
 
-/** شنبهٔ هفتهٔ یک روز (هفتهٔ ایرانی از شنبه شروع می‌شود) */
+/** اولین روز هفتهٔ یک تاریخ. شروع هفته از تنظیمات می‌آید: شنبه، یکشنبه یا دوشنبه. */
 export function weekStart(iso) {
-  const weekday = new Date(iso + "T00:00:00Z").getUTCDay();  // 0 = یکشنبه ... 6 = شنبه
-  return Jalali.addDays(iso, -((weekday + 1) % 7));
+  const weekday = (new Date(iso + "T00:00:00Z").getUTCDay() + 6) % 7;  // 0 = دوشنبه، مثل پایتون
+  return Jalali.addDays(iso, -((weekday - FIRST_WEEKDAY + 7) % 7));
 }
 
 /** آیا این کار را می‌شود جابه‌جا کرد؟ خروجی: null یعنی بله، وگرنه دلیلش */
 function whyNotMovable(task, index) {
-  if (task.kind === "routine") return "کار روتین جابه‌جا نمی‌شود؛ اگر یک روز انجام نشود، فقط همان روز از دست می‌رود.";
+  if (task.kind === "routine") return t("کار روتین جابه‌جا نمی‌شود؛ اگر یک روز انجام نشود، فقط همان روز از دست می‌رود.");
   const info = index.get(task.session_id);
-  if (!info) return "جلسه پیدا نشد.";
+  if (!info) return t("جلسه پیدا نشد.");
   if (task.kind === "review") {
-    if (info.session.status !== "reviewing") return "این جلسه هنوز خوانده نشده؛ خواندنش را جابه‌جا کنید تا مرورها هم با آن بروند.";
-    if (!task.first_review) return "فقط مرور بعدی این جلسه جابه‌جا می‌شود؛ مرورهای بعدی خودشان با آن جابه‌جا می‌شوند.";
+    if (info.session.status !== "reviewing") return t("این جلسه هنوز خوانده نشده؛ خواندنش را جابه‌جا کنید تا مرورها هم با آن بروند.");
+    if (!task.first_review) return t("فقط مرور بعدی این جلسه جابه‌جا می‌شود؛ مرورهای بعدی خودشان با آن جابه‌جا می‌شوند.");
   }
   return null;
 }
@@ -164,7 +164,7 @@ export function renderCalendar() {
   const selected = state.items.find((item) => item.id === selectedItemId);
   const note = $("#selected-item-note");
   note.hidden = !selected;
-  if (selected) note.textContent = `روزهایی که «${selected.title}» کار دارد پررنگ شده‌اند. برای برداشتن، دوباره روی نام درس کلیک کنید.`;
+  if (selected) note.textContent = t("روزهایی که «{0}» کار دارد پررنگ شده‌اند. برای برداشتن، دوباره روی نام درس کلیک کنید.", selected.title);
 
   const context = {
     days: planDays(), index: sessionIndex(), history: historyByDate(),
@@ -188,10 +188,10 @@ export function renderCalendar() {
   } else if (calView === "week") {
     const start = weekStart(calAnchor);
     const end = Jalali.addDays(start, 6);
-    $("#cal-title").textContent = `${Jalali.formatShort(start)} تا ${Jalali.format(end)}`;
+    $("#cal-title").textContent = t("{0} تا {1}", Jalali.formatShort(start), Jalali.format(end));
     draw(() => box.replaceChildren(weekView(start, context)));
   } else if (calView === "all") {
-    $("#cal-title").textContent = `از امروز تا ${Jalali.format(viewEnd)} · ${fa(state.plan.total_days)} روز`;
+    $("#cal-title").textContent = t("از امروز تا {0} · {1} روز", Jalali.format(viewEnd), fa(state.plan.total_days));
     draw(() => box.replaceChildren(allView(viewStart, viewEnd, context)));
   } else {
     const { y, m } = Jalali.toJalali(calAnchor);
@@ -248,11 +248,11 @@ function dayColumn(iso, context, classes) {
     dayHeader(iso, day),
     el("div", { class: "tasks" },
       (context.history.get(iso) || []).filter((entry) => historyVisible(entry, context)).map((entry) => historyChip(entry, context)),
-      visibleTasks(day, context).map((t) => taskChip(t, iso, context, false))),
+      visibleTasks(day, context).map((task) => taskChip(task, iso, context, false))),
   );
-  if (iso >= state.today && isOff(iso, day)) column.append(el("p", { class: "muted small" }, "تعطیل"));
-  else if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
-  else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, "کاری نمانده"));
+  if (iso >= state.today && isOff(iso, day)) column.append(el("p", { class: "muted small" }, t("تعطیل")));
+  else if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, t("کاری ثبت نشده")));
+  else if (iso >= state.today && !day) column.append(el("p", { class: "muted small" }, t("کاری نمانده")));
   return column;
 }
 
@@ -270,8 +270,7 @@ function monthView(y, m, context) {
   const length = Jalali.monthLength(y, m);
   const offset = Math.round((new Date(first) - new Date(weekStart(first))) / 86400000);
   const grid = el("div", { class: "month" },
-    ...["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
-      .map((name) => el("div", { class: "month-head" }, name)));
+    ...WEEKDAYS.map(([, name]) => el("div", { class: "month-head" }, name)));
   for (let i = 0; i < offset; i++) grid.append(el("div", { class: "month-blank" }));
   for (let d = 1; d <= length; d++) {
     const iso = Jalali.addDays(first, d - 1);
@@ -281,7 +280,7 @@ function monthView(y, m, context) {
     const cell = el("div", {
       class: dayClasses(iso, day, "cal-day month-day"),
       "data-date": iso,
-      title: "برای دیدن کامل این هفته کلیک کنید",
+      title: t("برای دیدن کامل این هفته کلیک کنید"),
       onclick: (e) => {
         if (e.target.closest(".task")) return;
         calView = "week";
@@ -291,12 +290,12 @@ function monthView(y, m, context) {
     },
       el("div", { class: "month-day-head" },
         el("strong", {}, fa(d)),
-        context.history.has(iso) && el("span", { class: "done-count", title: "کارهای انجام‌شده" },
+        context.history.has(iso) && el("span", { class: "done-count", title: t("کارهای انجام‌شده") },
           `✓ ${fa(context.history.get(iso).length)}`),
         day && !day.is_off && el("span", { class: "muted small" }, `${fa(day.total)}/${fa(day.cap)}`),
-        isOff(iso, day) && el("span", { class: "muted small" }, "تعطیل")),
-      ...shown.map((t) => taskChip(t, iso, context, true)),
-      tasks.length > shown.length && el("span", { class: "muted small" }, `+${fa(tasks.length - shown.length)} کار دیگر`),
+        isOff(iso, day) && el("span", { class: "muted small" }, t("تعطیل"))),
+      ...shown.map((task) => taskChip(task, iso, context, true)),
+      tasks.length > shown.length && el("span", { class: "muted small" }, t("+{0} کار دیگر", fa(tasks.length - shown.length))),
     );
     grid.append(cell);
   }
@@ -309,14 +308,14 @@ function dayClasses(iso, day, base) {
   if (iso < state.today) classes.push("past");
   if (isOff(iso, day)) classes.push("off");
   if (day && day.predicted) classes.push("predicted");
-  if (selectedItemId && day && day.tasks.some((t) => t.item_id === selectedItemId)) classes.push("has-selected");
+  if (selectedItemId && day && day.tasks.some((task) => task.item_id === selectedItemId)) classes.push("has-selected");
   return classes.join(" ");
 }
 
 function dayHeader(iso, day) {
   const header = el("button", {
     class: "day-head",
-    title: iso >= state.today ? "تغییر سقف، تعطیلی، یا اضافه کردن کار به این روز" : "",
+    title: iso >= state.today ? t("تغییر سقف، تعطیلی، یا اضافه کردن کار به این روز") : "",
     onclick: (e) => { if (iso >= state.today) openDayMenu(iso, day, e.currentTarget); },
   },
     el("span", { class: "weekday" }, Jalali.weekday(iso)),
@@ -326,11 +325,11 @@ function dayHeader(iso, day) {
     // امروز: کارهای انجام‌شده هم جزو پرشدن روز حساب می‌شوند
     const used = day.total + (day.done || 0);
     const percent = Math.min(100, Math.round((100 * used) / Math.max(day.cap, 1)));
-    header.append(el("span", { class: "small muted" }, `${minutesText(used)} از ${minutesText(day.cap)}`));
-    if (day.done) header.append(el("span", { class: "small done-count" }, `✓ ${minutesText(day.done)} انجام شد`));
+    header.append(el("span", { class: "small muted" }, t("{0} از {1}", minutesText(used), minutesText(day.cap))));
+    if (day.done) header.append(el("span", { class: "small done-count" }, t("✓ {0} انجام شد", minutesText(day.done))));
     header.append(el("span", { class: `load${used > day.cap ? " over" : ""}` }, el("span", { style: `width:${percent}%` })));
   }
-  if (day && day.predicted) header.append(el("span", { class: "small muted" }, "پیش‌بینی"));
+  if (day && day.predicted) header.append(el("span", { class: "small muted" }, t("پیش‌بینی")));
   return header;
 }
 
@@ -348,11 +347,11 @@ function taskChip(task, iso, context, compact) {
 
   let label = KIND_LABEL[shownKind];
   if (task.kind === "review") label += ` ${fa(task.review_round)}`;
-  if (task.partial) label += " (ادامه)";
+  if (task.partial) label += t(" (ادامه)");
 
   // تیک سریع فقط روی کارهای امروز. کار آینده از منوی خودش تیک می‌خورد.
   const quickTick = iso === state.today && canTick(task, iso, context) && el("input", {
-    type: "checkbox", class: "tick", title: "انجام شد",
+    type: "checkbox", class: "tick", title: t("انجام شد"),
     onchange: () => markDone(task, "done"),
   });
 
@@ -365,16 +364,16 @@ function taskChip(task, iso, context, compact) {
   },
     el("div", { class: "task-title" },
       quickTick,
-      task.manual && el("span", { title: "دستی جابه‌جا شده" }, "📌 "),
+      task.manual && el("span", { title: t("دستی جابه‌جا شده") }, "📌 "),
       session && session.note && el("span", { title: session.note }, "📝 "),
-      item ? item.title : "؟"),
+      item ? item.title : t("؟")),
     !compact && el("div", { class: "task-meta" },
       el("span", {}, label),
       session && session.section_text && el("span", {}, session.section_text),
-      el("span", {}, `${fa(task.minutes)} دقیقه`),
-      task.overdue && el("span", { class: "error" }, "عقب‌افتاده")),
+      el("span", {}, t("{0} دقیقه", fa(task.minutes))),
+      task.overdue && el("span", { class: "error" }, t("عقب‌افتاده"))),
   );
-  if (compact) chip.title = `${label} · ${fa(task.minutes)} دقیقه`;
+  if (compact) chip.title = t("{0} · {1} دقیقه", label, fa(task.minutes));
   enableTaskPointer(chip, task, iso, movable);
   return chip;
 }
@@ -382,24 +381,24 @@ function taskChip(task, iso, context, compact) {
 /** کار انجام‌شده (از سابقه)، با علامت ✓ */
 function historyChip(entry, context) {
   const info = context.index.get(entry.session_id);
-  const title = info ? info.item.title : "درس حذف‌شده";
+  const title = info ? info.item.title : t("درس حذف‌شده");
   const kind = displayKind(entry.task_type, info && info.item);
   let label = KIND_LABEL[kind] || kind;
-  if (entry.result === "partial") label += " (بخشی)";
-  if (entry.result === "needs_more") label += " · نیاز به مرور بیشتر";
+  if (entry.result === "partial") label += t(" (بخشی)");
+  if (entry.result === "needs_more") label += t(" · نیاز به مرور بیشتر");
   const paint = info ? paintFor(info.item, entry.task_type) : null;
   const size = sizeStyle(entry.minutes, context);
   return el("div", {
     class: `task done kind-${kind}${size ? " sized" : ""}`, "data-flip": `h-${entry.id}`,
     style: [paint && `--c:${paint}`, size].filter(Boolean).join(";") || null,
-    title: "برای برگرداندن به حالت انجام‌نشده کلیک کنید",
+    title: t("برای برگرداندن به حالت انجام‌نشده کلیک کنید"),
     onclick: (e) => openDoneMenu(entry, title, label, e.currentTarget),
   },
     el("div", { class: "task-title" }, "✓ ", title),
     el("div", { class: "task-meta" },
       el("span", {}, label),
-      info && el("span", {}, `جلسهٔ ${fa(entry.sequence)}`),
-      el("span", {}, `${fa(entry.minutes)} دقیقه`)));
+      info && el("span", {}, t("جلسهٔ {0}", fa(entry.sequence))),
+      el("span", {}, t("{0} دقیقه", fa(entry.minutes)))));
 }
 
 /** منوی کار انجام‌شده: برگرداندن به حالت انجام‌نشده */
@@ -408,13 +407,13 @@ function openDoneMenu(entry, title, label, anchor) {
   const later = state.history.some((h) => h.session_id === entry.session_id && h.id > entry.id);
   openPopover(anchor,
     el("div", { class: "pop-title" }, `✓ ${title}`),
-    el("div", { class: "muted small" }, `${label} · ${fa(entry.minutes)} دقیقه · ${Jalali.format(entry.date)}`),
+    el("div", { class: "muted small" }, t("{0} · {1} دقیقه · {2}", label, fa(entry.minutes), Jalali.format(entry.date))),
     later
-      ? el("p", { class: "muted small" }, "بعد از این، کار دیگری از همین جلسه ثبت شده. اول آن را انجام‌نشده کنید.")
+      ? el("p", { class: "muted small" }, t("بعد از این، کار دیگری از همین جلسه ثبت شده. اول آن را انجام‌نشده کنید."))
       : el("button", {
           class: "primary",
           onclick: () => { closePopover(); api("POST", "/api/tasks/undone", { log_id: entry.id }); },
-        }, "↩ انجام نشده"),
+        }, t("↩ انجام نشده")),
   );
 }
 
@@ -485,8 +484,8 @@ function openPopover(anchor, ...content) {
   pop.hidden = false;
   const rect = anchor.getBoundingClientRect();
   const width = pop.offsetWidth;
-  // در صفحهٔ راست‌به‌چپ، منو از لبهٔ راست عنصر باز می‌شود
-  let left = rect.right - width;
+  // منو از لبهٔ ابتدای عنصر باز می‌شود: راست در فارسی و عربی، چپ در بقیه
+  let left = isRTL ? rect.right - width : rect.left;
   left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
   let top = rect.bottom + 4;
   if (top + pop.offsetHeight > window.innerHeight - 8) top = Math.max(8, rect.top - pop.offsetHeight - 4);
@@ -513,37 +512,37 @@ function openTaskMenu(task, iso, anchor) {
   const content = [
     el("div", { class: "pop-title" }, item.title),
     el("div", { class: "muted small" },
-      `${KIND_LABEL[displayKind(task.kind, item)]}${task.kind === "review" ? ` ${fa(task.review_round)}` : ""} · جلسهٔ ${fa(session.sequence)}`
-      + `${session.section_text ? ` · ${session.section_text}` : ""} · ${fa(task.minutes)} دقیقه · ${Jalali.format(iso)}`),
+      t("{0}{1} · جلسهٔ {2}", KIND_LABEL[displayKind(task.kind, item)], task.kind === "review" ? ` ${fa(task.review_round)}` : "", fa(session.sequence))
+      + t("{0} · {1} دقیقه · {2}", session.section_text ? ` · ${session.section_text}` : "", fa(task.minutes), Jalali.format(iso))),
   ];
 
   // ثبت انجام کار (همیشه با تاریخ امروز)
   if (canTick(task, iso, { index })) {
-    const early = iso > state.today ? " (امروز، زودتر از برنامه)" : "";
+    const early = iso > state.today ? t(" (امروز، زودتر از برنامه)") : "";
     if (task.kind === "review") {
       content.push(el("div", { class: "pop-row" },
-        el("button", { class: "primary", onclick: () => markDone(task, "done") }, `✓ مرور انجام شد${early}`),
-        el("button", { onclick: () => markDone(task, "needs_more") }, "↺ نیاز به مرور بیشتر")));
+        el("button", { class: "primary", onclick: () => markDone(task, "done") }, t("✓ مرور انجام شد{0}", early)),
+        el("button", { onclick: () => markDone(task, "needs_more") }, t("↺ نیاز به مرور بیشتر"))));
     } else {
-      content.push(el("button", { class: "primary", onclick: () => markDone(task, "done") }, `✓ انجام شد${early}`));
+      content.push(el("button", { class: "primary", onclick: () => markDone(task, "done") }, t("✓ انجام شد{0}", early)));
     }
     if (task.kind === "read") {
       const minutes = el("input", { type: "number", min: 1, max: task.minutes - 1, class: "num" });
-      content.push(el("div", { class: "pop-row" }, "فقط بخشی خواندم:", minutes, "دقیقه",
-        el("button", { onclick: () => minutes.value && markDone(task, "partial", Number(minutes.value)) }, "ثبت")));
+      content.push(el("div", { class: "pop-row" }, t("فقط بخشی خواندم:"), minutes, t("دقیقه"),
+        el("button", { onclick: () => minutes.value && markDone(task, "partial", Number(minutes.value)) }, t("ثبت"))));
     }
   }
 
   if (item.source_type !== "none") {
-    content.push(el("button", { onclick: () => api("POST", `/api/items/${item.id}/open`, {}) }, "↗ باز کردن منبع"));
+    content.push(el("button", { onclick: () => api("POST", `/api/items/${item.id}/open`, {}) }, t("↗ باز کردن منبع")));
   }
   if (blocked) {
     content.push(el("p", { class: "muted small" }, blocked));
   } else {
-    content.push(el("button", { onclick: () => moveTask(task, Jalali.addDays(iso, 1)) }, "به تعویق انداختن به فردا"));
+    content.push(el("button", { onclick: () => moveTask(task, Jalali.addDays(iso, 1)) }, t("به تعویق انداختن به فردا")));
     const picker = el("span", { class: "jalali-input" });
     buildJalaliInput(picker, iso);
-    content.push(el("div", { class: "pop-row" }, "انتقال به", picker,
+    content.push(el("div", { class: "pop-row" }, t("انتقال به"), picker,
       el("button", {
         onclick: () => {
           try {
@@ -551,29 +550,29 @@ function openTaskMenu(task, iso, anchor) {
             if (date) moveTask(task, date);
           } catch (error) { showMessage(error.message); }
         },
-      }, "انتقال")));
+      }, t("انتقال"))));
     if (task.manual) {
-      content.push(el("button", { onclick: () => moveTask(task, null) }, "برگشت به چینش خودکار"));
+      content.push(el("button", { onclick: () => moveTask(task, null) }, t("برگشت به چینش خودکار")));
     }
   }
   if (item.item_type === "study" && !item.no_reviews) {
     const input = el("input", {
       type: "number", min: 1, class: "num",
-      value: session.review_minutes_override || "", placeholder: "خودکار",
+      value: session.review_minutes_override || "", placeholder: t("خودکار"),
     });
-    content.push(el("div", { class: "pop-row" }, "زمان مرور این جلسه:", input, "دقیقه",
+    content.push(el("div", { class: "pop-row" }, t("زمان مرور این جلسه:"), input, t("دقیقه"),
       el("button", {
         onclick: () => api("PATCH", `/api/sessions/${session.id}`, { review_minutes_override: input.value })
           .then(closePopover),
-      }, "ذخیره")));
-    content.push(el("p", { class: "muted small" }, "خالی = از نسبت مرور. روی همهٔ مرورهای این جلسه اثر دارد."));
+      }, t("ذخیره"))));
+    content.push(el("p", { class: "muted small" }, t("خالی = از نسبت مرور. روی همهٔ مرورهای این جلسه اثر دارد.")));
   }
   // یادداشت جلسه: موقع خواندن نوشته می‌شود و موقع مرور همین‌جا دیده می‌شود
-  const note = el("textarea", { rows: 3, class: "wide-text", placeholder: "یادداشت این جلسه: نکته یا سؤال…" });
+  const note = el("textarea", { rows: 3, class: "wide-text", placeholder: t("یادداشت این جلسه: نکته یا سؤال…") });
   note.value = session.note || "";
   note.addEventListener("change", () => api("PATCH", `/api/sessions/${session.id}`, { note: note.value }));
   content.push(note);
-  content.push(el("button", { onclick: () => { closePopover(); openItemDialog(item); } }, "✎ ویرایش درس"));
+  content.push(el("button", { onclick: () => { closePopover(); openItemDialog(item); } }, t("✎ ویرایش درس")));
   openPopover(anchor, ...content);
 }
 
@@ -584,11 +583,11 @@ function openDayMenu(iso, day, anchor) {
 
   const content = [
     el("div", { class: "pop-title" }, `${Jalali.weekday(iso)} ${Jalali.format(iso)}`),
-    el("div", { class: "pop-row" }, "سقف این روز:", capInput, "دقیقه",
-      el("button", { onclick: () => setCap(Number(capInput.value)) }, "اعمال")),
+    el("div", { class: "pop-row" }, t("سقف این روز:"), capInput, t("دقیقه"),
+      el("button", { onclick: () => setCap(Number(capInput.value)) }, t("اعمال"))),
   ];
-  if (!isOff(iso, day)) content.push(el("button", { onclick: () => setCap(0) }, "تعطیل کردن این روز"));
-  if (override !== undefined) content.push(el("button", { onclick: () => setCap(null) }, "برگشت به سقف عادی"));
+  if (!isOff(iso, day)) content.push(el("button", { onclick: () => setCap(0) }, t("تعطیل کردن این روز")));
+  if (override !== undefined) content.push(el("button", { onclick: () => setCap(null) }, t("برگشت به سقف عادی")));
 
   // تعطیلی چندروزه: از همین روز تا تاریخ انتخابی
   const until = el("span", { class: "jalali-input" });
@@ -599,39 +598,39 @@ function openDayMenu(iso, day, anchor) {
       if (end) api("POST", "/api/days/range", { start: iso, end, cap_minutes: cap }).then(closePopover);
     } catch (error) { showMessage(error.message); }
   };
-  content.push(el("div", { class: "small" }, "تعطیلی چندروزه، از این روز تا:"));
+  content.push(el("div", { class: "small" }, t("تعطیلی چندروزه، از این روز تا:")));
   content.push(el("div", { class: "pop-row" }, until));
   content.push(el("div", { class: "pop-row" },
-    el("button", { onclick: () => setRange(0) }, "تعطیل کردن بازه"),
-    el("button", { onclick: () => setRange(null) }, "برداشتن تعطیلی بازه")));
+    el("button", { onclick: () => setRange(0) }, t("تعطیل کردن بازه")),
+    el("button", { onclick: () => setRange(null) }, t("برداشتن تعطیلی بازه"))));
 
   // کارهای روزهای بعد که می‌شود به این روز جلو آورد
   const index = sessionIndex();
   const candidates = [];
   for (const d of state.plan.days) {
     if (d.date <= iso) continue;
-    for (const t of d.tasks) {
-      if (!whyNotMovable(t, index)) candidates.push([t, d.date]);
+    for (const task of d.tasks) {
+      if (!whyNotMovable(task, index)) candidates.push([task, d.date]);
       if (candidates.length >= 30) break;
     }
     if (candidates.length >= 30) break;
   }
   if (candidates.length) {
-    content.push(el("div", { class: "small" }, "جلو آوردن به این روز:"));
-    content.push(el("div", { class: "pop-list" }, candidates.map(([t, date]) => {
-      const info = index.get(t.session_id);
-      return el("button", { class: `task-pick kind-${displayKind(t.kind, info.item)}`, onclick: () => moveTask(t, iso) },
-        `${info.item.title} · ${KIND_LABEL[displayKind(t.kind, info.item)]}${t.kind === "review" ? ` ${fa(t.review_round)}` : ` جلسهٔ ${fa(info.session.sequence)}`}`
-        + ` · ${fa(t.minutes)} دقیقه · الان ${Jalali.formatShort(date)}`);
+    content.push(el("div", { class: "small" }, t("جلو آوردن به این روز:")));
+    content.push(el("div", { class: "pop-list" }, candidates.map(([task, date]) => {
+      const info = index.get(task.session_id);
+      return el("button", { class: `task-pick kind-${displayKind(task.kind, info.item)}`, onclick: () => moveTask(task, iso) },
+        `${info.item.title} · ${KIND_LABEL[displayKind(task.kind, info.item)]}${task.kind === "review" ? ` ${fa(task.review_round)}` : t(" جلسهٔ {0}", fa(info.session.sequence))}`
+        + t(" · {0} دقیقه · الان {1}", fa(task.minutes), Jalali.formatShort(date)));
     })));
   }
   if (calView !== "day") {
     content.push(el("button", {
       onclick: () => { closePopover(); calView = "day"; calAnchor = iso; renderCalendar(); },
-    }, "نمای روزانهٔ این روز"));
+    }, t("نمای روزانهٔ این روز")));
   }
-  content.push(el("button", { onclick: () => openExportMenu(anchor, "day", iso) }, "⇪ خروجی این روز"));
-  content.push(el("button", { onclick: () => { closePopover(); openAddMenu(iso); } }, "+ افزودن از این روز"));
+  content.push(el("button", { onclick: () => openExportMenu(anchor, "day", iso) }, t("⇪ خروجی این روز")));
+  content.push(el("button", { onclick: () => { closePopover(); openAddMenu(iso); } }, t("+ افزودن از این روز")));
   openPopover(anchor, ...content);
 }
 
@@ -640,7 +639,7 @@ function openDayMenu(iso, day, anchor) {
 // ---------------------------------------------------------------------------
 
 function fileManager() {
-  return { mac: "Finder", windows: "File Explorer" }[state.system] || "پوشه";
+  return { mac: "Finder", windows: "File Explorer" }[state.system] || t("پوشه");
 }
 
 function openExportMenu(anchor, scope = "day", date = null) {
@@ -648,7 +647,7 @@ function openExportMenu(anchor, scope = "day", date = null) {
   const picker = el("span", { class: "jalali-input" });
   buildJalaliInput(picker, choice.date);
   const withContent = el("input", { type: "checkbox", checked: scope === "day" });
-  const scopes = [["day", "روز"], ["week", "هفته"], ["month", "ماه"]];
+  const scopes = [["day", t("روز")], ["week", t("هفته")], ["month", t("ماه")]];
   const scopeRow = el("div", { class: "tabs" }, scopes.map(([key, label]) =>
     el("button", {
       "aria-selected": String(choice.scope === key),
@@ -660,23 +659,23 @@ function openExportMenu(anchor, scope = "day", date = null) {
       },
     }, label)));
   const quick = (days) => el("button", { onclick: () => buildJalaliInput(picker, Jalali.addDays(state.today, days)) },
-    ["امروز", "فردا", "پس‌فردا"][days]);
+    [t("امروز"), t("فردا"), t("پس‌فردا")][days]);
 
   openPopover(anchor,
-    el("div", { class: "pop-title" }, "خروجی برای خواندن روی گوشی"),
+    el("div", { class: "pop-title" }, t("خروجی برای خواندن روی گوشی")),
     scopeRow,
     el("div", { class: "pop-row" }, quick(0), quick(1), quick(2)),
-    el("div", { class: "pop-row" }, "روز:", picker),
-    el("p", { class: "muted small" }, "برای هفته و ماه، هفته یا ماهی که این روز در آن است."),
-    el("label", { class: "pop-row" }, withContent, "همراه با مطالب (نوت، صفحه‌های PDF)"),
-    el("p", { class: "muted small" }, "خروجی هفتگی و ماهانهٔ همراه با مطالب ممکن است حجیم شود."),
+    el("div", { class: "pop-row" }, t("روز:"), picker),
+    el("p", { class: "muted small" }, t("برای هفته و ماه، هفته یا ماهی که این روز در آن است.")),
+    el("label", { class: "pop-row" }, withContent, t("همراه با مطالب (نوت، صفحه‌های PDF)")),
+    el("p", { class: "muted small" }, t("خروجی هفتگی و ماهانهٔ همراه با مطالب ممکن است حجیم شود.")),
     el("button", {
       class: "primary",
       onclick: async (e) => {
         let day;
         try { day = readJalaliInput(picker) || state.today; } catch (error) { showMessage(error.message); return; }
         e.currentTarget.disabled = true;
-        e.currentTarget.textContent = "در حال ساختن…";
+        e.currentTarget.textContent = t("در حال ساختن…");
         try {
           const result = await api("POST", "/api/export", { scope: choice.scope, date: day, with_content: withContent.checked });
           showExportResult(anchor, result);
@@ -684,7 +683,7 @@ function openExportMenu(anchor, scope = "day", date = null) {
           closePopover();
         }
       },
-    }, "ساختن خروجی"));
+    }, t("ساختن خروجی")));
 }
 
 async function showExportResult(anchor, result) {
@@ -698,22 +697,22 @@ async function showExportResult(anchor, result) {
   const reveal = () => api("POST", "/api/export/reveal", { name: result.name });
 
   openPopover(anchor,
-    el("div", { class: "pop-title" }, "✓ خروجی ذخیره شد"),
+    el("div", { class: "pop-title" }, t("✓ خروجی ذخیره شد")),
     el("div", { class: "small path", dir: "ltr" }, result.path),
-    el("div", { class: "muted small" }, `حجم: ${fa(Math.max(1, Math.round(result.size / 1024)))} کیلوبایت`),
+    el("div", { class: "muted small" }, t("حجم: {0} کیلوبایت", fa(Math.max(1, Math.round(result.size / 1024))))),
     canShare && el("button", {
       class: "primary",
       onclick: async () => {
         try {
           await navigator.share({ files: [file], title: result.name });
         } catch (error) {
-          if (error.name !== "AbortError") { showMessage(`پنجرهٔ Share باز نشد؛ فایل در ${fileManager()} نشان داده می‌شود.`); reveal(); }
+          if (error.name !== "AbortError") { showMessage(t("پنجرهٔ Share باز نشد؛ فایل در {0} نشان داده می‌شود.", fileManager())); reveal(); }
         }
       },
-    }, "اشتراک‌گذاری… (تلگرام و برنامه‌های دیگر)"),
-    el("button", { onclick: reveal }, `نمایش در ${fileManager()} (برای کشیدن به تلگرام)`),
-    el("button", { onclick: () => api("POST", "/api/export/open", { name: result.name }) }, "باز کردن فایل"),
-    !canShare && el("p", { class: "muted small" }, `این مرورگر پنجرهٔ Share را برای فایل پشتیبانی نمی‌کند. فایل را از ${fileManager()} به تلگرام بکشید.`),
+    }, t("اشتراک‌گذاری… (تلگرام و برنامه‌های دیگر)")),
+    el("button", { onclick: reveal }, t("نمایش در {0} (برای کشیدن به تلگرام)", fileManager())),
+    el("button", { onclick: () => api("POST", "/api/export/open", { name: result.name }) }, t("باز کردن فایل")),
+    !canShare && el("p", { class: "muted small" }, t("این مرورگر پنجرهٔ Share را برای فایل پشتیبانی نمی‌کند. فایل را از {0} به تلگرام بکشید.", fileManager())),
   );
 }
 
@@ -757,6 +756,10 @@ $("#cal-prev").addEventListener("click", () => shiftCalendar(-1));
 $("#cal-next").addEventListener("click", () => shiftCalendar(1));
 
 $("#export-button").addEventListener("click", (e) => openExportMenu(e.currentTarget, "day"));
+
+// پیکان‌ها در جهت خواندن زبان
+$("#cal-prev").textContent = isRTL ? "→" : "←";
+$("#cal-next").textContent = isRTL ? "←" : "→";
 
 $("#cal-today").addEventListener("click", () => { calAnchor = state.today; renderCalendar(); });
 

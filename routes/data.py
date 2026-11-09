@@ -11,6 +11,7 @@ import platform_tools
 import reports
 import sources
 from errors import UserError
+from i18n import _
 from services import data as data_service
 from webutil import body, get_db, json_ready, parse_date, state_data, state_response, today
 
@@ -25,10 +26,10 @@ def export_file(name):
     """فقط فایلی که خود برنامه در پوشهٔ خروجی ساخته؛ نه هر آدرس دلخواه."""
     if (not isinstance(name, str) or "/" in name or "\\" in name or name.startswith(".")
             or not name.endswith((".html", ".zip"))):
-        raise UserError("نام فایل نامعتبر است.")
+        raise UserError(_("نام فایل نامعتبر است."))
     path = export_folder() / name
     if not path.is_file():
-        raise UserError("فایل خروجی پیدا نشد.")
+        raise UserError(_("فایل خروجی پیدا نشد."))
     return path
 
 
@@ -38,7 +39,7 @@ def api_export():
     data = body()
     scope = data.get("scope", "day")
     if scope not in ("day", "week", "month"):
-        raise UserError("نوع خروجی نامعتبر است.")
+        raise UserError(_("نوع خروجی نامعتبر است."))
     day = parse_date(data.get("date")) or today()
     # خروجی روزانه به‌طور پیش‌فرض مطالب را هم دارد؛ هفتگی و ماهانه فقط فهرست کارها
     with_content = bool(data.get("with_content", scope == "day"))
@@ -71,7 +72,7 @@ def _period(value):
     if value in (None, ""):
         return "week"
     if value not in ("week", "month", "all"):
-        raise UserError("بازهٔ گزارش نامعتبر است.")
+        raise UserError(_("بازهٔ گزارش نامعتبر است."))
     return value
 
 
@@ -114,7 +115,7 @@ def api_restore_backup():
 
 def cloud_backups(settings):
     if not settings["cloud_backup_folder"]:
-        raise UserError("پوشهٔ ابری انتخاب نشده است.")
+        raise UserError(_("پوشهٔ ابری انتخاب نشده است."))
     return Path(settings["cloud_backup_folder"]).expanduser() / database.CLOUD_SUBFOLDER
 
 
@@ -133,11 +134,11 @@ def api_cloud_backups():
 def api_cloud_backup_now():
     settings = database.get_settings(get_db())
     if not settings["cloud_backup_folder"]:
-        raise UserError("پوشهٔ ابری انتخاب نشده است.")
+        raise UserError(_("پوشهٔ ابری انتخاب نشده است."))
     try:
         path = database.copy_backup_to_cloud(config.backups_dir(settings), settings["cloud_backup_folder"], settings["backup_retention"])
     except OSError as error:
-        raise UserError(f"کپی نشد: {error}")
+        raise UserError(_("کپی نشد: {0}", error))
     return jsonify({"copied": bool(path)})
 
 
@@ -151,7 +152,7 @@ def api_export_data():
 @bp.route("/api/data/import", methods=["POST"])
 def api_import_data():
     """فایل zip داده‌ها را با Browse می‌گیرد و جای داده‌های فعلی می‌گذارد."""
-    chosen = sources.browse("file", "فایل داده‌های دیباچه را انتخاب کنید (zip)")
+    chosen = sources.browse("file", _("فایل داده‌های دیباچه را انتخاب کنید (zip)"))
     if chosen is None:
         return jsonify({"cancelled": True})
     conn = get_db()

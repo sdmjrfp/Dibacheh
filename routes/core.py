@@ -6,9 +6,12 @@ import threading
 from flask import Blueprint, abort, current_app, jsonify, render_template, request
 
 import config
+import database
+import i18n
 import platform_tools
 import undo
 from errors import UserError
+from i18n import _
 from webutil import body, build_state, get_db, json_ready, parse_date, state_data, state_response
 
 bp = Blueprint("core", __name__)
@@ -17,7 +20,11 @@ bp = Blueprint("core", __name__)
 @bp.route("/")
 def index():
     """صفحهٔ اصلی داشبورد."""
-    return render_template("index.html", csrf_token=config.CSRF_TOKEN)
+    settings = database.get_settings(get_db())
+    language = settings["language"]
+    return render_template("index.html", csrf_token=config.CSRF_TOKEN, language=language,
+                           direction=i18n.LANGUAGES[language][1], calendar=settings["calendar"],
+                           first_weekday=settings["first_weekday"])
 
 
 @bp.route("/api/state")
@@ -36,7 +43,7 @@ def api_plan_range():
     """روزهای یک بازه از برنامه؛ برای روزهای دور که همراه وضعیت فرستاده نمی‌شوند."""
     start, end = parse_date(request.args.get("start")), parse_date(request.args.get("end"))
     if start is None or end is None:
-        raise UserError("بازهٔ تاریخ نامعتبر است.")
+        raise UserError(_("بازهٔ تاریخ نامعتبر است."))
     days = [d for d in state_data()["plan"]["days"] if start <= d["date"] <= end]
     return jsonify(json_ready(days))
 
@@ -45,12 +52,12 @@ def api_plan_range():
 def api_undo():
     """یک مرحله به عقب. وضعیت فعلی در فهرست «بازگرداندن» می‌رود تا بشود دوباره جلو رفت."""
     if not undo.stack:
-        raise UserError("تغییری برای برگرداندن نیست.")
+        raise UserError(_("تغییری برای برگرداندن نیست."))
     label, snapshot = undo.stack.pop()
     undo.redo_stack.append((label, undo.snapshot(get_db())))
     undo.restore(get_db(), snapshot)
     state = build_state()
-    state["undone"] = label
+    state["undone"] = _(label)
     return jsonify(state)
 
 
@@ -58,12 +65,12 @@ def api_undo():
 def api_redo():
     """تغییری را که برگردانده شده بود دوباره انجام می‌دهد."""
     if not undo.redo_stack:
-        raise UserError("تغییری برای بازگرداندن نیست.")
+        raise UserError(_("تغییری برای بازگرداندن نیست."))
     label, snapshot = undo.redo_stack.pop()
     undo.stack.append((label, undo.snapshot(get_db())))
     undo.restore(get_db(), snapshot)
     state = build_state()
-    state["redone"] = label
+    state["redone"] = _(label)
     return jsonify(state)
 
 

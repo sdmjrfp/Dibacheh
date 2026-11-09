@@ -14,13 +14,64 @@ import { Motion } from "./motion.js";
 
 export const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
+// زبان و تقویم را سرور روی <html> گذاشته است. با عوض شدنشان صفحه دوباره بار می‌شود.
+const root = document.documentElement;
+
+export const LANGUAGE = root.lang || "fa";
+
+export const isRTL = root.dir === "rtl";
+
+// اولین روز هفته، با شمارهٔ پایتون (0 = دوشنبه، 5 = شنبه)
+export const FIRST_WEEKDAY = Number(root.dataset.firstWeekday || 5);
+
+Jalali.configure({ calendar: root.dataset.calendar, locale: LANGUAGE });
+
+const translations = new Map();
+
+if (LANGUAGE !== "fa") {
+  try {
+    const read = async (name) => (await (await fetch(`/static/i18n/${name}.txt`)).text()).split("\n");
+    const [keys, values] = await Promise.all([read("keys"), read(LANGUAGE)]);
+    keys.forEach((key, i) => {
+      if (values[i]) translations.set(key.replaceAll("\\n", "\n"), values[i].replaceAll("\\n", "\n"));
+    });
+  } catch (error) { /* بدون ترجمه: متن فارسی نشان داده می‌شود */ }
+}
+
+/** متن به زبان فعلی. متن اصلی فارسی است: t("{0} روز", n) */
+export function t(text, ...args) {
+  const template = translations.get(text) ?? text;
+  return template.replace(/\{(\d+)\}/g, (whole, index) => (args[index] === undefined ? whole : args[index]));
+}
+
+/** متن‌های ثابت صفحه (templates/index.html) */
+function translatePage() {
+  if (LANGUAGE === "fa") return;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.textContent.replace(/\s+/g, " ").trim();
+    if (text && translations.has(text)) node.textContent = ` ${translations.get(text)} `;
+  }
+  for (const element of document.querySelectorAll("[title], [placeholder], [aria-label]")) {
+    for (const name of ["title", "placeholder", "aria-label"]) {
+      const value = element.getAttribute(name);
+      if (value && translations.has(value)) element.setAttribute(name, translations.get(value));
+    }
+  }
+  document.title = t(document.title);
+}
+
+translatePage();
+
 export const fa = Jalali.faNumber;
 
 export let state = null;
 
-// ترتیب روزهای هفتهٔ ایرانی، با شمارهٔ روز در پایتون (0 = دوشنبه)
-export const WEEKDAYS = [[5, "شنبه"], [6, "یکشنبه"], [0, "دوشنبه"], [1, "سه‌شنبه"],
-                  [2, "چهارشنبه"], [3, "پنجشنبه"], [4, "جمعه"]];
+// روزهای هفته به ترتیب نمایش، با شمارهٔ روز در پایتون (0 = دوشنبه)
+export const WEEKDAYS = Array.from({ length: 7 }, (_, i) => {
+  const number = (FIRST_WEEKDAY + i) % 7;
+  return [number, Jalali.weekdayName(number)];
+});
 
 // ---------------------------------------------------------------------------
 // ابزارهای کوچک
@@ -82,7 +133,7 @@ export async function api(method, url, body) {
   const response = await fetch(url, options);
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    showMessage(data.error || "خطایی پیش آمد.");
+    showMessage(data.error || t("خطایی پیش آمد."));
     const error = new Error(data.error || response.status);
     error.expected = true;   // به کاربر نشان داده شد و در گزارش خطا ثبت نمی‌شود
     throw error;
@@ -97,8 +148,8 @@ export async function api(method, url, body) {
 export function minutesText(total) {
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
-  if (!hours) return `${fa(minutes)} دقیقه`;
-  return minutes ? `${fa(hours)} ساعت و ${fa(minutes)} دقیقه` : `${fa(hours)} ساعت`;
+  if (!hours) return t("{0} دقیقه", fa(minutes));
+  return minutes ? t("{0} ساعت و {1} دقیقه", fa(hours), fa(minutes)) : t("{0} ساعت", fa(hours));
 }
 
 export function itemById(id) {
@@ -106,32 +157,32 @@ export function itemById(id) {
 }
 
 export function typeOf(item) {
-  return state.types.find((t) => t.id === item.custom_type_id) || null;
+  return state.types.find((type) => type.id === item.custom_type_id) || null;
 }
 
 // ---------------------------------------------------------------------------
-// ورودی تاریخ شمسی
+// ورودی تاریخ
 // ---------------------------------------------------------------------------
 
 export function buildJalaliInput(holder, iso) {
   const parts = iso ? Jalali.toJalali(iso) : null;
-  const year = el("input", { type: "number", min: 1300, max: 1500, value: parts ? parts.y : "", placeholder: "سال" });
-  const month = el("select", {}, el("option", { value: "" }, "ماه"),
+  const year = el("input", { type: "number", min: Jalali.YEARS[0], max: Jalali.YEARS[1], value: parts ? parts.y : "", placeholder: t("سال") });
+  const month = el("select", {}, el("option", { value: "" }, t("ماه")),
     ...Jalali.MONTHS.map((name, i) => el("option", { value: i + 1, selected: parts && parts.m === i + 1 }, name)));
-  const day = el("select", {}, el("option", { value: "" }, "روز"),
+  const day = el("select", {}, el("option", { value: "" }, t("روز")),
     ...Array.from({ length: 31 }, (_, i) =>
       el("option", { value: i + 1, selected: parts && parts.d === i + 1 }, fa(i + 1))));
-  const clear = el("button", { type: "button", class: "icon", title: "پاک کردن",
+  const clear = el("button", { type: "button", class: "icon", title: t("پاک کردن"),
     onclick: () => { year.value = ""; month.value = ""; day.value = ""; } }, "×");
   holder.replaceChildren(year, month, day, clear);
 }
 
-/** مقدار ورودی تاریخ شمسی به شکل "2026-11-05"، یا null. */
+/** مقدار ورودی تاریخ به شکل "2026-11-05"، یا null. */
 export function readJalaliInput(holder) {
   const [year, month, day] = $$("input, select", holder).map((x) => x.value);
   if (!year && !month && !day) return null;
   const iso = Jalali.fromJalali(Number(year), Number(month), Number(day));
-  if (!iso) throw new Error("تاریخ شمسی نامعتبر است.");
+  if (!iso) throw new Error(t("تاریخ نامعتبر است."));
   return iso;
 }
 

@@ -359,7 +359,7 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
                 if st["manual_review"] <= date and read_ok:
                     manual.append((st["manual_review"], 0, _review_key(st), st))
             manual.sort(key=lambda m: (m[0], m[1], m[2]))
-            for _, is_read, _, st in manual:
+            for _date, is_read, _key, st in manual:
                 if is_read:
                     if day.fits(st["read_left"]):
                         place(day, st, "read", st["read_left"])
@@ -426,8 +426,7 @@ def build_plan(items, sessions, settings, day_overrides, today, horizon_days=365
     else:
         if remaining > 0:
             warnings.append(
-                f"برنامه تا {horizon_days} روز بعد تمام نشد. "
-                "ممکن است سقف روزها خیلی کم باشد یا همهٔ روزها تعطیل باشند."
+                _("برنامه تا {0} روز بعد تمام نشد. ممکن است سقف روزها خیلی کم باشد یا همهٔ روزها تعطیل باشند.", horizon_days)
             )
 
     # درسی که هیچ کاری در برنامه ندارد، تاریخ پایان ندارد.

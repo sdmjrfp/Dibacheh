@@ -9,6 +9,7 @@ import database
 import scheduler
 import undo
 from errors import UserError
+from i18n import _
 from services import state as state_service
 from services.parsing import parse_date, positive_int  # noqa: F401 (برای مسیرها)
 
@@ -43,7 +44,7 @@ def json_ready(value):
 def body():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
-        raise UserError("درخواست نامعتبر است.")
+        raise UserError(_("درخواست نامعتبر است."))
     return data
 
 

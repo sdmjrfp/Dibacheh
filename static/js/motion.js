@@ -110,7 +110,7 @@ export function sortable(list, options) {
     let index = 0;
     for (const s of siblings) {
       const r = s.getBoundingClientRect();
-      const before = axis === "y" ? (r.top + r.height / 2 < e.clientY) : (r.left + r.width / 2 > e.clientX);  // افقی: راست‌به‌چپ
+      const before = axis === "y" ? (r.top + r.height / 2 < e.clientY) : (document.documentElement.dir === "rtl" ? r.left + r.width / 2 > e.clientX : r.left + r.width / 2 < e.clientX);
       if (before) index += 1;
     }
     const current = siblings.indexOf(drag.card.nextElementSibling);

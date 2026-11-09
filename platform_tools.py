@@ -15,6 +15,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from i18n import _
+
 
 class BrowseUnavailable(Exception):
     """پنجرهٔ انتخاب فایل روی این سیستم در دسترس نیست."""
@@ -129,7 +131,7 @@ def choose(kind="file", prompt="یک فایل انتخاب کنید"):
     """
     command = browse_command(kind, prompt)
     if command is None:
-        raise BrowseUnavailable("برای انتخاب فایل، بستهٔ zenity یا kdialog را نصب کنید.")
+        raise BrowseUnavailable(_("برای انتخاب فایل، بستهٔ zenity یا kdialog را نصب کنید."))
     result = subprocess.run(
         command, capture_output=True, encoding="utf-8", errors="replace",
         env={**run_env(), "DIBACHEH_PROMPT": prompt},

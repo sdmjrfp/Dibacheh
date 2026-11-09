@@ -118,7 +118,7 @@ def test_bundled_fonts_exist_with_licenses(client):
     state = client.get("/api/state").get_json()
     root = Path(app_module.app.static_folder) / "vendor" / "fonts"
     assert len(state["bundled_fonts"]) >= 5
-    for font in state["bundled_fonts"]:
+    for font in [f for f in state["bundled_fonts"] if f["regular"]]:
         assert (root / font["regular"]).is_file()
         assert (root / font["regular"]).parent.joinpath("LICENSE.txt").is_file()
         if font["bold"]:

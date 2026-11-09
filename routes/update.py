@@ -8,6 +8,7 @@ import config
 import database
 import platform_tools
 from errors import UserError
+from i18n import _
 from services import update
 from webutil import body, get_db
 
@@ -26,7 +27,7 @@ def api_update_check():
 def api_update_download():
     result = update.check(config.VERSION, body().get("lang", "fa"))
     if not result.get("available"):
-        raise UserError("نسخهٔ تازه‌ای برای دانلود نیست.")
+        raise UserError(_("نسخهٔ تازه‌ای برای دانلود نیست."))
     update.start_download(result["asset"])
     return jsonify(update.progress)
 
@@ -39,7 +40,7 @@ def api_update_progress():
 def _downloaded_file():
     path = update.progress.get("path")
     if update.progress.get("state") != "done" or not path or not Path(path).is_file():
-        raise UserError("فایل دانلودشده پیدا نشد.")
+        raise UserError(_("فایل دانلودشده پیدا نشد."))
     return Path(path)
 
 

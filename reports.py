@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 import jalali
 import scheduler
+from i18n import _
 
 
 def _log_rows(conn, since):
@@ -38,7 +39,7 @@ def stats(conn, items, categories, now, days=371):
         weeks.append(week)
 
     groups = {c["id"]: {"name": c["name"], "total": 0, "read": 0, "items": 0} for c in categories}
-    groups[None] = {"name": "بدون دسته", "total": 0, "read": 0, "items": 0}
+    groups[None] = {"name": _("بدون دسته"), "total": 0, "read": 0, "items": 0}
     for item in items:
         if item["item_type"] != "study":
             continue
@@ -52,7 +53,7 @@ def stats(conn, items, categories, now, days=371):
     # 12 ماه شمسی اخیر
     months = []
     cursor = now
-    for _ in range(12):
+    for _month in range(12):
         first, last = jalali.month_bounds(cursor)
         month = {"start": first, "read": 0, "review": 0, "routine": 0}
         for entry in per_day.values():
@@ -88,7 +89,7 @@ def score(minutes_done, active_days, planned_minutes, work_days, reviews_done, o
     on_time = 1 if reviews_done + overdue == 0 else reviews_done / (reviews_done + overdue)
     parts = {"regularity": round(40 * regularity), "volume": round(40 * volume), "on_time": round(20 * on_time)}
     total = sum(parts.values())
-    return {"total": total, "label": next(text for floor, text in SCORE_LABELS if total >= floor), **parts}
+    return {"total": total, "label": _(next(text for floor, text in SCORE_LABELS if total >= floor)), **parts}
 
 
 def period_score(state, start, end, totals, active_days, reviews_done, overdue):
@@ -166,6 +167,6 @@ def summary(conn, state, period, day):
         "totals": totals,
         "done_count": done_count,
         "active_days": len(active_days),
-        "overdue": [{"title": titles.get(i, "؟"), "count": n} for i, n in overdue.items()],
+        "overdue": [{"title": titles.get(i, _("؟")), "count": n} for i, n in overdue.items()],
         "next_minutes": next_minutes,
     }

@@ -1,6 +1,6 @@
 /* پنجرهٔ درس، نوع کار تازه و افزودن گروهی. */
 
-import { $, $$, api, buildJalaliInput, el, fa, itemById, readJalaliInput, showMessage, state, typeOf, WEEKDAYS } from "./core.js";
+import { $, $$, api, buildJalaliInput, el, fa, itemById, readJalaliInput, showMessage, state, t, typeOf, WEEKDAYS } from "./core.js";
 import { categoryOptions } from "./sources.js";
 
 export let editing = null;
@@ -12,10 +12,10 @@ let pickedSource = null;
 let headingsCache = [];
 
 const SESSION_STATUS = {
-  unread: "خوانده‌نشده",
-  reading: "نیمه‌خوانده",
-  reviewing: "در حال مرور",
-  finished: "تمام‌شده",
+  unread: t("خوانده‌نشده"),
+  reading: t("نیمه‌خوانده"),
+  reviewing: t("در حال مرور"),
+  finished: t("تمام‌شده"),
 };
 
 // ---------------------------------------------------------------------------
@@ -39,14 +39,14 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
   pickedSource = null;
   headingsCache = [];
   const isRoutine = editing.type === "routine";
-  const variantName = { once: "کار یک‌باره", project: "پروژه" }[editing.variant];
-  const typeName = customType ? customType.name : (variantName || (isRoutine ? "کار روتین" : "درس"));
-  $("#item-dialog-title").textContent = (item ? `ویرایش ${typeName}` : `${typeName} جدید`)
-    + (!item && firstDate ? ` از ${Jalali.format(firstDate)}` : "");
+  const variantName = { once: t("کار یک‌باره"), project: t("پروژه") }[editing.variant];
+  const typeName = customType ? customType.name : (variantName || (isRoutine ? t("کار روتین") : t("درس")));
+  $("#item-dialog-title").textContent = (item ? t("ویرایش {0}", typeName) : t("{0} جدید", typeName))
+    + (!item && firstDate ? t(" از {0}", Jalali.format(firstDate)) : "");
 
   const defaults = state.settings.new_item_defaults || {};
   fields.title.value = item ? item.title : "";
-  fields.category_id.replaceChildren(...categoryOptions(item ? item.category_id : defaults.category_id, "بدون دسته"));
+  fields.category_id.replaceChildren(...categoryOptions(item ? item.category_id : defaults.category_id, t("بدون دسته")));
   fields.is_active.checked = item ? item.is_active : true;
   fields.color.value = item ? item.display_color : state.palette[state.items.length % state.palette.length];
   fields.session_count.value = isRoutine ? 10 : 1;
@@ -54,7 +54,7 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
   fields.session_minutes.value = isRoutine ? 10 : (defaults.session_minutes || 60);
   fields.max_new_sessions_per_day.value = item ? item.max_new_sessions_per_day : (defaults.max_new_sessions_per_day || 1);
   fields.review_ratio.value = item && item.review_ratio ? item.review_ratio : "";
-  fields.review_intervals.value = item && item.review_intervals ? item.review_intervals.join("، ") : "";
+  fields.review_intervals.value = item && item.review_intervals ? item.review_intervals.join(t("، ")) : "";
   fields.source_type.value = item ? (item.source_type === "vault" ? "file" : item.source_type) : "none";
   fields.source_url.value = item && item.source_type === "url" ? item.source_path_or_url : "";
   $("#source-path").textContent = item && ["vault", "file"].includes(item.source_type) ? item.source_path_or_url : "";
@@ -126,7 +126,7 @@ $("#browse-button").addEventListener("click", async () => {
   if (result.cancelled) return;
   pickedSource = result;
   $("#source-path").textContent = result.source_type === "vault"
-    ? `${result.source_path_or_url}  (داخل والت)` : result.source_path_or_url;
+    ? t("{0}  (داخل والت)", result.source_path_or_url) : result.source_path_or_url;
   $("#source-problem").hidden = true;
   showOutline(result.outline);
 });
@@ -151,7 +151,7 @@ function showOutline(outline) {
   const levels = [...new Set(outline.entries.map((e) => e.level))].sort();
   const count = (level) => outline.entries.filter((e) => e.level === level).length;
   const select = el("select", {}, levels.map((l) =>
-    el("option", { value: l }, `سطح ${fa(l)}: ${fa(count(l))} ${outline.unit === "heading" ? "عنوان" : "فصل"}`)));
+    el("option", { value: l }, t("سطح {0}: {1} {2}", fa(l), fa(count(l)), outline.unit === "heading" ? t("عنوان") : t("فصل")))));
   const status = el("span", { class: "muted" });
   const apply = async () => {
     const sections = outlineSections(outline, Number(select.value));
@@ -159,18 +159,18 @@ function showOutline(outline) {
     updateDialogVisibility();
     if (editing.id) {
       await api("POST", `/api/items/${editing.id}/split`, { sections, section_unit: outline.unit });
-      status.textContent = `جلسه‌های خوانده‌نشده با ${fa(sections.length)} بخش عوض شدند.`;
+      status.textContent = t("جلسه‌های خوانده‌نشده با {0} بخش عوض شدند.", fa(sections.length));
     } else {
       editing.sections = sections;
       fields.session_count.value = sections.length;
       fields.session_count.disabled = true;
-      status.textContent = `${fa(sections.length)} جلسه ساخته می‌شود.`;
+      status.textContent = t("{0} جلسه ساخته می‌شود.", fa(sections.length));
     }
   };
   box.replaceChildren(
-    el("div", {}, outline.unit === "heading" ? "این نوت عنوان دارد. می‌شود هر عنوان یک جلسه باشد." : "این PDF فهرست مطالب دارد. می‌شود هر فصل یک جلسه باشد."),
+    el("div", {}, outline.unit === "heading" ? t("این نوت عنوان دارد. می‌شود هر عنوان یک جلسه باشد.") : t("این PDF فهرست مطالب دارد. می‌شود هر فصل یک جلسه باشد.")),
     el("div", { class: "pop-row" }, select,
-      el("button", { type: "button", onclick: apply }, "ساختن جلسه‌ها از فایل"), status));
+      el("button", { type: "button", onclick: apply }, t("ساختن جلسه‌ها از فایل")), status));
 }
 
 // ---------- وابستگی‌ها
@@ -180,8 +180,8 @@ function renderRequires() {
   $("#requires-list").replaceChildren(...list.map((req, i) => {
     const other = itemById(req.id);
     return el("li", {},
-      el("span", {}, `بعد از ${req.until === "finished" ? "پایان مرورهای" : "پایان خواندن"} «${other ? other.title : "؟"}»`),
-      el("button", { type: "button", class: "danger", onclick: () => { list.splice(i, 1); renderRequires(); } }, "حذف"));
+      el("span", {}, t("بعد از {0} «{1}»", req.until === "finished" ? t("پایان مرورهای") : t("پایان خواندن"), other ? other.title : t("؟"))),
+      el("button", { type: "button", class: "danger", onclick: () => { list.splice(i, 1); renderRequires(); } }, t("حذف")));
   }));
   const taken = new Set(list.map((r) => r.id));
   const options = state.items.filter((i) => i.item_type === "study" && i.id !== editing.id && !taken.has(i.id));
@@ -205,9 +205,9 @@ function templateKind() {
 }
 
 function renderTemplateSelect() {
-  const templates = state.templates.filter((t) => t.kind === templateKind());
-  $("#template-select").replaceChildren(el("option", { value: "" }, templates.length ? "از روی الگو…" : "الگویی ذخیره نشده"),
-    ...templates.map((t) => el("option", { value: t.id }, t.name)));
+  const templates = state.templates.filter((template) => template.kind === templateKind());
+  $("#template-select").replaceChildren(el("option", { value: "" }, templates.length ? t("از روی الگو…") : t("الگویی ذخیره نشده")),
+    ...templates.map((template) => el("option", { value: template.id }, template.name)));
 }
 
 function applyTemplate(template) {
@@ -216,7 +216,7 @@ function applyTemplate(template) {
   if (f.session_minutes) fields.session_minutes.value = f.session_minutes;
   if (f.max_new_sessions_per_day) fields.max_new_sessions_per_day.value = f.max_new_sessions_per_day;
   fields.review_ratio.value = f.review_ratio || "";
-  fields.review_intervals.value = (f.review_intervals || []).join("، ");
+  fields.review_intervals.value = (f.review_intervals || []).join(t("، "));
   fields.section_unit.value = f.section_unit || "text";
   if (f.category_id !== undefined) fields.category_id.value = f.category_id || "";
   if (f.color) fields.color.value = f.color;
@@ -226,12 +226,12 @@ function applyTemplate(template) {
 }
 
 $("#template-select").addEventListener("change", (e) => {
-  const template = state.templates.find((t) => t.id === e.target.value);
+  const template = state.templates.find((item) => item.id === e.target.value);
   if (template) applyTemplate(template);
 });
 
 $("#template-save").addEventListener("click", async () => {
-  const name = prompt("نام الگو:");
+  const name = prompt(t("نام الگو:"));
   if (!name || !name.trim()) return;
   const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
   const template = {
@@ -250,7 +250,7 @@ $("#template-save").addEventListener("click", async () => {
   };
   await api("PATCH", "/api/settings", { item_templates: [...(state.settings.item_templates || []), template] });
   renderTemplateSelect();
-  showMessage(`الگوی «${template.name}» ذخیره شد.`, false);
+  showMessage(t("الگوی «{0}» ذخیره شد.", template.name), false);
 });
 
 /** اطلاعات فرم را به شکلی که سرور می‌خواهد جمع می‌کند. */
@@ -287,7 +287,7 @@ function collectForm() {
     data.source_type = pickedSource.source_type;
     data.source_path_or_url = pickedSource.source_path_or_url;
   } else if (!editing.id || !["vault", "file"].includes(itemById(editing.id).source_type)) {
-    throw new Error("برای منبع فایل، اول Browse کنید و فایل را انتخاب کنید.");
+    throw new Error(t("برای منبع فایل، اول Browse کنید و فایل را انتخاب کنید."));
   }
   if (!editing.id) {
     data.session_count = editing.variant === "once" ? 1 : Number(fields.session_count.value);
@@ -326,13 +326,13 @@ $("#resplit-button").addEventListener("click", () => {
 });
 
 $("#reset-item").addEventListener("click", () => {
-  if (!confirm("همهٔ جلسه‌های این درس به حالت خوانده‌نشده برمی‌گردند و درس به انتهای صف می‌رود. سابقهٔ قبلی می‌ماند. ادامه می‌دهید؟")) return;
+  if (!confirm(t("همهٔ جلسه‌های این درس به حالت خوانده‌نشده برمی‌گردند و درس به انتهای صف می‌رود. سابقهٔ قبلی می‌ماند. ادامه می‌دهید؟"))) return;
   api("POST", `/api/items/${editing.id}/reset`, {});
 });
 
 $("#remove-reviews").addEventListener("click", async () => {
   const item = itemById(editing.id);
-  if (!confirm(`همهٔ مرورهای «${item.title}» حذف شود؟ جلسه‌ها از این به بعد با خواندن تمام می‌شوند و سابقهٔ کارهای انجام‌شده می‌ماند.`)) return;
+  if (!confirm(t("همهٔ مرورهای «{0}» حذف شود؟ جلسه‌ها از این به بعد با خواندن تمام می‌شوند و سابقهٔ کارهای انجام‌شده می‌ماند.", item.title))) return;
   await api("DELETE", `/api/items/${editing.id}/reviews`);
   updateDialogVisibility();
 });
@@ -344,7 +344,7 @@ $("#restore-reviews").addEventListener("click", async () => {
 
 $("#delete-item").addEventListener("click", async () => {
   const item = itemById(editing.id);
-  if (!confirm(`«${item.title}» با همهٔ جلسه‌ها و سابقه‌اش حذف شود؟ فایل منبع روی کامپیوتر دست نمی‌خورد. این کار برگشت ندارد.`)) return;
+  if (!confirm(t("«{0}» با همهٔ جلسه‌ها و سابقه‌اش حذف شود؟ فایل منبع روی کامپیوتر دست نمی‌خورد. این کار برگشت ندارد.", item.title))) return;
   await api("DELETE", `/api/items/${editing.id}`);
   $("#item-dialog").close();
 });
@@ -368,20 +368,20 @@ function sectionCell(item, session) {
   if (item.section_unit === "page" || item.section_unit === "time") {
     return el("div", { class: "range" },
       el("input", { value: session.section_start || "", dir: "ltr", onchange: save("section_start") }),
-      el("span", {}, "تا"),
+      el("span", {}, t("تا")),
       el("input", { value: session.section_end || "", dir: "ltr", onchange: save("section_end") }));
   }
   if (item.section_unit === "heading") {
     const options = (selected) => [el("option", { value: "" }, "—"),
       ...headingsCache.map((h) => el("option", { value: h.text, selected: h.text === selected },
         `${"  ".repeat(h.level - 1)}${h.text}`))];
-    if (!headingsCache.length) return el("span", { class: "muted" }, "عنوانی در فایل Markdown پیدا نشد.");
+    if (!headingsCache.length) return el("span", { class: "muted" }, t("عنوانی در فایل Markdown پیدا نشد."));
     return el("div", { class: "range" },
       el("select", { onchange: save("section_start") }, options(session.section_start)),
-      el("span", {}, "تا"),
+      el("span", {}, t("تا")),
       el("select", { onchange: save("section_end") }, options(session.section_end)));
   }
-  return el("input", { value: session.section_label || "", placeholder: "مثلاً فصل ۱", onchange: save("section_label") });
+  return el("input", { value: session.section_label || "", placeholder: t("مثلاً فصل ۱"), onchange: save("section_label") });
 }
 
 let sessionsKey = "";
@@ -396,8 +396,8 @@ export function renderSessions(force = false) {
   $("#range-problems").replaceChildren(...item.range_problems.map((p) => el("li", {}, p)));
   $("#sessions-body").replaceChildren(...item.sessions.map((s) => {
     let status = SESSION_STATUS[s.status];
-    if (s.status === "reviewing") status += ` (جعبهٔ ${fa(s.leitner_box)})`;
-    if (s.status === "reading") status += ` (${fa(s.minutes_done)} دقیقه)`;
+    if (s.status === "reviewing") status += t(" (جعبهٔ {0})", fa(s.leitner_box));
+    if (s.status === "reading") status += t(" ({0} دقیقه)", fa(s.minutes_done));
     return el("tr", { class: s.status === "unread" ? "" : "done" },
       el("td", {}, fa(s.sequence)),
       el("td", {}, status),
@@ -408,11 +408,11 @@ export function renderSessions(force = false) {
       })),
       el("td", {}, item.item_type === "routine" ? "—" : el("input", {
         class: "num", type: "number", min: 1, value: s.review_minutes_override || "",
-        placeholder: "خودکار", title: "زمان مرور همین جلسه. خالی = از نسبت مرور",
+        placeholder: t("خودکار"), title: t("زمان مرور همین جلسه. خالی = از نسبت مرور"),
         onchange: (e) => saveSession(s.id, { review_minutes_override: e.target.value }),
       })),
       el("td", {}, el("input", {
-        value: s.note || "", placeholder: "یادداشت…",
+        value: s.note || "", placeholder: t("یادداشت…"),
         onchange: (e) => saveSession(s.id, { note: e.target.value }),
       })),
     );
@@ -442,9 +442,9 @@ $("#type-form").addEventListener("submit", async (e) => {
 $("#close-type").addEventListener("click", () => $("#type-dialog").close());
 
 $("#quit-button").addEventListener("click", async () => {
-  if (!confirm("برنامه بسته شود؟")) return;
+  if (!confirm(t("برنامه بسته شود؟"))) return;
   await api("POST", "/api/quit", {});
-  document.body.replaceChildren(el("p", { class: "quit-note" }, "برنامه بسته شد. می‌توانید این صفحه را ببندید."));
+  document.body.replaceChildren(el("p", { class: "quit-note" }, t("برنامه بسته شد. می‌توانید این صفحه را ببندید.")));
 });
 
 // ---------------------------------------------------------------------------
@@ -454,9 +454,9 @@ $("#quit-button").addEventListener("click", async () => {
 export function openBulkDialog() {
   const f = $("#bulk-form").elements;
   f.text.value = "";
-  f.category_id.replaceChildren(...categoryOptions("", "بدون دسته"));
-  f.custom_type_id.replaceChildren(el("option", { value: "" }, "درس"),
-    ...state.types.map((t) => el("option", { value: t.id }, t.name)));
+  f.category_id.replaceChildren(...categoryOptions("", t("بدون دسته")));
+  f.custom_type_id.replaceChildren(el("option", { value: "" }, t("درس")),
+    ...state.types.map((type) => el("option", { value: type.id }, type.name)));
   $("#bulk-dialog").showModal();
 }
 

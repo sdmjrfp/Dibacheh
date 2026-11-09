@@ -1,6 +1,6 @@
 /* جداکنندهٔ بین منابع درسی و برنامه. */
 
-import { $ } from "./core.js";
+import { $, isRTL } from "./core.js";
 
 // ---------------------------------------------------------------------------
 // جداکنندهٔ بین منابع درسی و برنامه
@@ -53,8 +53,8 @@ function currentSourcesWidth() {
   splitter.addEventListener("pointermove", (e) => {
     if (!splitter.classList.contains("active")) return;
     // لبهٔ راست ستون منابع ثابت است؛ پهنا = فاصلهٔ آن تا جای ماوس
-    const right = $(".sources").getBoundingClientRect().right;
-    setSourcesWidth(right - e.clientX, false);
+    const box = $(".sources").getBoundingClientRect();
+    setSourcesWidth(isRTL ? box.right - e.clientX : e.clientX - box.left, false);
   });
   const stop = () => {
     if (!splitter.classList.contains("active")) return;
@@ -71,8 +71,10 @@ function currentSourcesWidth() {
   // با صفحه‌کلید هم کار می‌کند: کلیدهای چپ و راست
   splitter.addEventListener("keydown", (e) => {
     const step = e.shiftKey ? 80 : 20;
-    if (e.key === "ArrowLeft") setSourcesWidth(currentSourcesWidth() + step);
-    else if (e.key === "ArrowRight") setSourcesWidth(currentSourcesWidth() - step);
+    const wider = isRTL ? "ArrowLeft" : "ArrowRight";
+    const narrower = isRTL ? "ArrowRight" : "ArrowLeft";
+    if (e.key === wider) setSourcesWidth(currentSourcesWidth() + step);
+    else if (e.key === narrower) setSourcesWidth(currentSourcesWidth() - step);
     else return;
     e.preventDefault();
   });

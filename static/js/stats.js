@@ -1,5 +1,5 @@
 import { weekStart } from "./calendar.js";
-import { $, api, el, fa, minutesText, showMessage, state } from "./core.js";
+import { $, api, el, fa, isRTL, minutesText, showMessage, state, t } from "./core.js";
 import { svg } from "./settings.js";
 
 /* پنجرهٔ گزارش: خلاصهٔ هفته، نمودار ۱۲ هفتهٔ اخیر، نقشهٔ فعالیت سالانه و پیشرفت دسته‌ها.
@@ -8,7 +8,7 @@ import { svg } from "./settings.js";
    رنگ خواندن، مرور و روتین همان رنگ‌های تقویم است.
 */
 
-const KINDS = [["read", "خواندن"], ["review", "مرور"], ["routine", "روتین"]];
+const KINDS = [["read", t("خواندن")], ["review", t("مرور")], ["routine", t("روتین")]];
 
 let reportPeriod = "week";
 
@@ -51,67 +51,66 @@ function statTile(value, label) {
 function periodInfo(w) {
   if (w.period === "week") {
     return {
-      title: `هفتهٔ ${Jalali.formatShort(w.start)} تا ${Jalali.format(w.end)}`,
-      previous: Jalali.addDays(w.start, -1), next: Jalali.addDays(w.end, 1), nextLabel: "برنامهٔ هفتهٔ بعد",
+      title: t("هفتهٔ {0} تا {1}", Jalali.formatShort(w.start), Jalali.format(w.end)),
+      previous: Jalali.addDays(w.start, -1), next: Jalali.addDays(w.end, 1), nextLabel: t("برنامهٔ هفتهٔ بعد"),
     };
   }
   if (w.period === "month") {
     const { y, m } = Jalali.toJalali(w.start);
     return {
       title: `${Jalali.MONTHS[m - 1]} ${fa(y)}`,
-      previous: Jalali.addDays(w.start, -1), next: Jalali.addDays(w.end, 1), nextLabel: "برنامهٔ ماه بعد",
+      previous: Jalali.addDays(w.start, -1), next: Jalali.addDays(w.end, 1), nextLabel: t("برنامهٔ ماه بعد"),
     };
   }
-  return { title: `از ${Jalali.format(w.start)} تا امروز`, nextLabel: "کار باقی‌مانده" };
+  return { title: t("از {0} تا امروز", Jalali.format(w.start)), nextLabel: t("کار باقی‌مانده") };
 }
 
 /** نمرهٔ این بازه، با سهم هر بخش */
 function scoreCard(score) {
   const part = (label, value, max) => el("div", { class: "score-part" },
-    el("span", { class: "small" }, `${label}: ${fa(value)} از ${fa(max)}`),
+    el("span", { class: "small" }, t("{0}: {1} از {2}", label, fa(value), fa(max))),
     el("div", { class: "progress" }, el("span", { style: `width:${Math.round((100 * value) / max)}%` })));
   return el("div", { class: "score-card" },
-    el("div", { class: "score-total" }, el("strong", {}, fa(score.total)), el("span", { class: "muted small" }, `از ${fa(100)}`), el("span", {}, score.label)),
+    el("div", { class: "score-total" }, el("strong", {}, fa(score.total)), el("span", { class: "muted small" }, t("از {0}", fa(100))), el("span", {}, score.label)),
     el("div", { class: "score-parts" },
-      part("منظم بودن", score.regularity, 40),
-      part("حجم کار", score.volume, 40),
-      part("مرور سر وقت", score.on_time, 20)));
+      part(t("منظم بودن"), score.regularity, 40),
+      part(t("حجم کار"), score.volume, 40),
+      part(t("مرور سر وقت"), score.on_time, 20)));
 }
 
 function summarySection(w) {
-  const t = w.totals;
-  const total = t.read + t.review + t.routine;
+  const total = w.totals.read + w.totals.review + w.totals.routine;
   const info = periodInfo(w);
   const reachedNow = !info.next || info.next > state.today;
   return el("section", { class: "stats-section" },
     el("div", { class: "panel-head" },
       el("h3", {}, info.title),
       el("span", { class: "spacer" }),
-      info.previous && el("button", { type: "button", class: "icon", title: "قبلی", onclick: () => openStats(w.period, info.previous) }, "→"),
-      info.previous && el("button", { type: "button", class: "icon", title: "بعدی", disabled: reachedNow, onclick: () => openStats(w.period, info.next) }, "←"),
+      info.previous && el("button", { type: "button", class: "icon", title: t("قبلی"), onclick: () => openStats(w.period, info.previous) }, isRTL ? "→" : "←"),
+      info.previous && el("button", { type: "button", class: "icon", title: t("بعدی"), disabled: reachedNow, onclick: () => openStats(w.period, info.next) }, isRTL ? "←" : "→"),
       el("button", {
         type: "button",
         onclick: async () => {
           const result = await api("POST", "/api/export/report", { period: w.period, date: reportDate });
           await api("POST", "/api/export/reveal", { name: result.name });
-          showMessage(`گزارش ذخیره شد: ${result.name}`, false);
+          showMessage(t("گزارش ذخیره شد: {0}", result.name), false);
         },
-      }, "⇪ خروجی گزارش")),
+      }, t("⇪ خروجی گزارش"))),
     w.score && scoreCard(w.score),
     el("div", { class: "stat-row" },
-      statTile(minutesText(total), "زمان مطالعه"),
-      statTile(fa(w.done_count), "کار انجام‌شده"),
-      statTile(w.period === "all" ? fa(w.active_days) : `${fa(w.active_days)} از ${fa(w.length)}`, "روز فعال"),
+      statTile(minutesText(total), t("زمان مطالعه")),
+      statTile(fa(w.done_count), t("کار انجام‌شده")),
+      statTile(w.period === "all" ? fa(w.active_days) : t("{0} از {1}", fa(w.active_days), fa(w.length)), t("روز فعال")),
       statTile(minutesText(w.next_minutes), info.nextLabel)),
     w.courses.length
       ? el("table", { class: "sessions" },
-          el("thead", {}, el("tr", {}, ...["درس", "خواندن", "مرور", "روتین"].map((h) => el("th", {}, h)))),
+          el("thead", {}, el("tr", {}, ...[t("درس"), t("خواندن"), t("مرور"), t("روتین")].map((h) => el("th", {}, h)))),
           el("tbody", {}, w.courses.map((c) => el("tr", {},
             el("td", {}, c.title), el("td", {}, fa(c.read)), el("td", {}, fa(c.review)), el("td", {}, fa(c.routine))))))
-      : el("p", { class: "muted" }, "در این بازه کاری ثبت نشده."),
+      : el("p", { class: "muted" }, t("در این بازه کاری ثبت نشده.")),
     w.overdue.length
-      ? el("p", {}, `عقب‌افتاده: ${w.overdue.map((o) => `${o.title} (${fa(o.count)})`).join("، ")}`)
-      : el("p", { class: "muted small" }, "کار عقب‌افتاده‌ای نیست."),
+      ? el("p", {}, t("عقب‌افتاده: {0}", w.overdue.map((o) => `${o.title} (${fa(o.count)})`).join(t("، "))))
+      : el("p", { class: "muted small" }, t("کار عقب‌افتاده‌ای نیست.")),
   );
 }
 
@@ -124,10 +123,10 @@ function stackedChart(weeks, name, label, every) {
   const y = (m) => top + plot - (plot * m) / nice;
   const slot = (W - left - right) / weeks.length;
   const barW = Math.min(30, slot - 8);
-  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "bars-chart", role: "img", "aria-label": `زمان مطالعهٔ ۱۲ ${name} اخیر` });
+  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "bars-chart", role: "img", "aria-label": t("زمان مطالعهٔ ۱۲ {0} اخیر", name) });
   for (const m of [nice / 2, nice]) {
     chart.append(svg("line", { class: "grid", x1: left, x2: W - right, y1: y(m), y2: y(m) }),
-      svg("text", { class: "axis-text", x: W - right + 6, y: y(m) + 4, "text-anchor": "end" }, `${fa(Math.round(m / 60))} ساعت`));
+      svg("text", { class: "axis-text", x: W - right + 6, y: y(m) + 4, "text-anchor": "end" }, t("{0} ساعت", fa(Math.round(m / 60)))));
   }
   chart.append(svg("line", { class: "baseline", x1: left, x2: W - right, y1: y(0), y2: y(0) }));
   // زمان از راست به چپ جلو می‌رود، مثل تقویم راست‌به‌چپ
@@ -146,7 +145,7 @@ function stackedChart(weeks, name, label, every) {
     group.append(svg("rect", { x: x - 4, y: top, width: barW + 8, height: plot, fill: "transparent" }));
     attachTip(group, [
       [label(w), ""],
-      ...KINDS.map(([kind, label]) => [`${fa(w[kind])} دقیقه`, label]),
+      ...KINDS.map(([kind, label]) => [t("{0} دقیقه", fa(w[kind])), label]),
     ]);
     chart.append(group);
     if (i % every === 0) {
@@ -170,7 +169,7 @@ function activityMap(days) {
   const level = (m) => (!m ? 0 : 1 + steps.filter((s) => m > s).length);
   const cell = 13, gap = 3, weeks = 53, labelH = 16;
   const W = weeks * (cell + gap), H = labelH + 7 * (cell + gap);
-  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "heat-chart", role: "img", "aria-label": "نقشهٔ فعالیت یک سال اخیر" });
+  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "heat-chart", role: "img", "aria-label": t("نقشهٔ فعالیت یک سال اخیر") });
   const firstWeek = Jalali.addDays(weekStart(state.today), -7 * (weeks - 1));
   let lastMonth = null;
   for (let w = 0; w < weeks; w++) {
@@ -186,13 +185,13 @@ function activityMap(days) {
       if (iso > state.today) continue;
       const value = minutes.get(iso) || 0;
       const rect = svg("rect", { x, y: labelH + d * (cell + gap), width: cell, height: cell, rx: 3, class: `heat l${level(value)}` });
-      attachTip(rect, [[value ? minutesText(value) : "بدون مطالعه", ""], [Jalali.format(iso), ""]]);
+      attachTip(rect, [[value ? minutesText(value) : t("بدون مطالعه"), ""], [Jalali.format(iso), ""]]);
       chart.append(rect);
     }
   }
   return el("div", { class: "heat-wrap" }, chart,
-    el("div", { class: "chart-legend" }, "کمتر",
-      ...[0, 1, 2, 3, 4].map((l) => el("i", { class: `heat-key l${l}` })), "بیشتر"));
+    el("div", { class: "chart-legend" }, t("کمتر"),
+      ...[0, 1, 2, 3, 4].map((l) => el("i", { class: `heat-key l${l}` })), t("بیشتر")));
 }
 
 function categoriesSection(categories) {
@@ -201,19 +200,19 @@ function categoriesSection(categories) {
     return el("div", { class: "cat-row" },
       el("span", {}, c.name),
       el("div", { class: "progress" }, el("span", { style: `width:${percent}%` })),
-      el("span", { class: "muted small" }, `${fa(percent)}٪ · ${fa(c.items)} درس`));
+      el("span", { class: "muted small" }, t("{0}٪ · {1} درس", fa(percent), fa(c.items))));
   }));
 }
 
 /** نمودار با جدول همان داده‌ها */
 function chartSection(rows, name, label, every, hasWork) {
   return el("section", { class: "stats-section" },
-    el("h3", {}, `زمان مطالعهٔ ۱۲ ${name} اخیر`),
-    hasWork ? stackedChart(rows, name, label, every) : el("p", { class: "muted" }, "بعد از ثبت اولین کار، نمودار اینجا می‌آید."),
+    el("h3", {}, t("زمان مطالعهٔ ۱۲ {0} اخیر", name)),
+    hasWork ? stackedChart(rows, name, label, every) : el("p", { class: "muted" }, t("بعد از ثبت اولین کار، نمودار اینجا می‌آید.")),
     chartLegend(),
-    el("details", {}, el("summary", { class: "small" }, "نمایش به شکل جدول"),
+    el("details", {}, el("summary", { class: "small" }, t("نمایش به شکل جدول")),
       el("table", { class: "sessions" },
-        el("thead", {}, el("tr", {}, ...[name, "خواندن", "مرور", "روتین"].map((h) => el("th", {}, h)))),
+        el("thead", {}, el("tr", {}, ...[name, t("خواندن"), t("مرور"), t("روتین")].map((h) => el("th", {}, h)))),
         el("tbody", {}, rows.map((r) => el("tr", {},
           el("td", {}, label(r)), el("td", {}, fa(r.read)), el("td", {}, fa(r.review)), el("td", {}, fa(r.routine))))))));
 }
@@ -223,7 +222,7 @@ function monthLabel(row) {
 }
 
 function renderReportTabs() {
-  const tabs = [["week", "هفتگی"], ["month", "ماهانه"], ["all", "کلی"]];
+  const tabs = [["week", t("هفتگی")], ["month", t("ماهانه")], ["all", t("کلی")]];
   $("#report-tabs").replaceChildren(...tabs.map(([key, label]) =>
     el("button", { type: "button", role: "tab", "aria-selected": String(reportPeriod === key), onclick: () => openStats(key) }, label)));
 }
@@ -238,13 +237,13 @@ async function openStats(period = reportPeriod, date = null) {
   const hasWork = data.days.length > 0;
   const sections = [summarySection(data.summary)];
   if (period === "week") {
-    sections.push(chartSection(data.weeks, "هفته", (w) => Jalali.formatShort(w.start), 3, hasWork));
+    sections.push(chartSection(data.weeks, t("هفته"), (w) => Jalali.formatShort(w.start), 3, hasWork));
   } else if (period === "month") {
-    sections.push(chartSection(data.months, "ماه", monthLabel, 1, hasWork));
+    sections.push(chartSection(data.months, t("ماه"), monthLabel, 1, hasWork));
   } else {
-    sections.push(el("section", { class: "stats-section" }, el("h3", {}, "نقشهٔ فعالیت یک سال اخیر"), activityMap(data.days)));
+    sections.push(el("section", { class: "stats-section" }, el("h3", {}, t("نقشهٔ فعالیت یک سال اخیر")), activityMap(data.days)));
     if (data.categories.length) {
-      sections.push(el("section", { class: "stats-section" }, el("h3", {}, "پیشرفت خواندن هر دسته"), categoriesSection(data.categories)));
+      sections.push(el("section", { class: "stats-section" }, el("h3", {}, t("پیشرفت خواندن هر دسته")), categoriesSection(data.categories)));
     }
   }
   renderReportTabs();

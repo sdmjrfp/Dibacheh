@@ -9,6 +9,7 @@ from pathlib import Path
 import database
 import sources
 from errors import UserError
+from i18n import _
 
 FONT_SUFFIXES = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2"}
 
@@ -16,7 +17,7 @@ FONT_SUFFIXES = {".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", "
 def restore_backup(conn, folder, name, safety_folder=None):
     """یک backup را برمی‌گرداند. قبلش یک کپی جدا از وضعیت فعلی گرفته می‌شود."""
     if name not in {b["name"] for b in database.list_backups(folder)}:
-        raise UserError("این backup پیدا نشد.")
+        raise UserError(_("این backup پیدا نشد."))
     try:
         database.check_database_file(folder / name)
     except ValueError as error:
@@ -50,7 +51,7 @@ def import_data(conn, chosen, backups):
     try:
         with zipfile.ZipFile(chosen) as archive, tempfile.TemporaryDirectory() as work:
             if "dibacheh.sqlite3" not in archive.namelist():
-                raise UserError("این فایل دادهٔ دیباچه ندارد.")
+                raise UserError(_("این فایل دادهٔ دیباچه ندارد."))
             copy = Path(work) / "incoming.sqlite3"
             copy.write_bytes(archive.read("dibacheh.sqlite3"))
             try:
@@ -65,19 +66,19 @@ def import_data(conn, chosen, backups):
                 if name.startswith("fonts/") and Path(name).suffix.lower() in FONT_SUFFIXES:
                     (database.FONTS_DIR / Path(name).name).write_bytes(archive.read(name))
     except zipfile.BadZipFile:
-        raise UserError("این فایل zip معتبر نیست.")
+        raise UserError(_("این فایل zip معتبر نیست."))
 
 
 def add_font(conn, chosen):
     """یک فایل فونت را با Browse انتخاب می‌کند و کپی‌اش را در data/fonts می‌گذارد."""
     source = Path(chosen)
     if source.suffix.lower() not in FONT_SUFFIXES:
-        raise UserError("این فایل فونت نیست. فقط ttf، otf، woff و woff2.")
+        raise UserError(_("این فایل فونت نیست. فقط ttf، otf، woff و woff2."))
     try:
         family = sources.font_family_name(source)
         family = database.clean_setting("font_family", family)
     except Exception:
-        raise UserError("نام این فونت خوانده نشد.")
+        raise UserError(_("نام این فونت خوانده نشد."))
     database.FONTS_DIR.mkdir(parents=True, exist_ok=True)
     target = database.FONTS_DIR / source.name
     target.write_bytes(source.read_bytes())

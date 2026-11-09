@@ -7,6 +7,7 @@ from flask import Blueprint, abort, jsonify, send_file
 import database
 import sources
 from errors import UserError
+from i18n import _
 from services import data as data_service
 from webutil import body, build_state, get_db, state_response
 
@@ -24,15 +25,15 @@ def api_browse():
     kind = body().get("kind", "file")
     if kind == "folder":
         # برای پوشهٔ خروجی و backup در تنظیمات: فقط آدرس برمی‌گردد، ذخیره با دکمهٔ «ذخیره»
-        path = sources.browse("folder", "یک پوشه انتخاب کنید")
+        path = sources.browse("folder", _("یک پوشه انتخاب کنید"))
         return jsonify({"cancelled": True} if path is None else {"path": path})
     if kind == "vault":
-        path = sources.browse("folder", "پوشهٔ والت Obsidian را انتخاب کنید")
+        path = sources.browse("folder", _("پوشهٔ والت Obsidian را انتخاب کنید"))
         if path is None:
             return jsonify({"cancelled": True})
         database.set_setting(conn, "vault_path", path)
         return state_response()
-    path = sources.browse("file", "فایل منبع را انتخاب کنید")
+    path = sources.browse("file", _("فایل منبع را انتخاب کنید"))
     if path is None:
         return jsonify({"cancelled": True})
     source_type, stored = sources.classify_path(path, database.get_settings(conn)["vault_path"])
@@ -43,7 +44,7 @@ def api_browse():
 def api_add_category():
     name = str(body().get("name", "")).strip()
     if not name:
-        raise UserError("نام دسته خالی است.")
+        raise UserError(_("نام دسته خالی است."))
     database.add_category(get_db(), name)
     return state_response()
 
@@ -52,7 +53,7 @@ def api_add_category():
 def api_rename_category(category_id):
     name = str(body().get("name", "")).strip()
     if not name:
-        raise UserError("نام دسته خالی است.")
+        raise UserError(_("نام دسته خالی است."))
     database.rename_category(get_db(), category_id, name)
     return state_response()
 
@@ -69,7 +70,7 @@ def api_reorder_categories():
     ids = body().get("ids")
     existing = {c["id"] for c in database.list_categories(conn)}
     if not isinstance(ids, list) or set(ids) != existing:
-        raise UserError("ترتیب دسته‌ها نامعتبر است.")
+        raise UserError(_("ترتیب دسته‌ها نامعتبر است."))
     database.reorder_categories(conn, ids)
     return state_response()
 
@@ -92,7 +93,7 @@ def api_settings():
 @bp.route("/api/fonts/add", methods=["POST"])
 def api_add_font():
     """یک فایل فونت را با Browse انتخاب می‌کند و کپی‌اش را در data/fonts می‌گذارد."""
-    chosen = sources.browse("file", "فایل فونت را انتخاب کنید (ttf، otf، woff یا woff2)")
+    chosen = sources.browse("file", _("فایل فونت را انتخاب کنید (ttf، otf، woff یا woff2)"))
     if chosen is None:
         return jsonify({"cancelled": True})
     family = data_service.add_font(get_db(), chosen)
@@ -125,7 +126,7 @@ def serve_font(name):
 def _type_fields(data):
     name = str(data.get("name", "")).strip()
     if not name or len(name) > 40:
-        raise UserError("نام نوع کار باید بین 1 تا 40 حرف باشد.")
+        raise UserError(_("نام نوع کار باید بین 1 تا 40 حرف باشد."))
     try:
         color = database.clean_color(data.get("color", "#8b5cf6"))
     except ValueError as error:
@@ -139,7 +140,7 @@ def api_add_type():
     name, color = _type_fields(data)
     behavior = data.get("behavior", "study")
     if behavior not in ("study", "routine"):
-        raise UserError("رفتار نوع کار نامعتبر است.")
+        raise UserError(_("رفتار نوع کار نامعتبر است."))
     database.add_type(get_db(), name, behavior, color)
     return state_response()
 
