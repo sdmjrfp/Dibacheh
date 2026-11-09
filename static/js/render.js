@@ -3,6 +3,7 @@
 import { renderCalendar } from "./calendar.js";
 import { $, el, fa, showMessage, state } from "./core.js";
 import { editing, renderSessions } from "./item-dialog.js";
+import { applyScale } from "./layout.js";
 import { renderAddButtons, renderCategoryTabs, renderItems, renderTabs, renderWorkload } from "./sources.js";
 
 // ---------------------------------------------------------------------------
@@ -21,6 +22,8 @@ export function renderNow() {
   const root = document.documentElement.style;
   root.setProperty("--font", `"${state.settings.font_family || "Vazirmatn"}", "Vazirmatn", system-ui, Tahoma, sans-serif`);
   root.setProperty("--font-size", `${state.settings.font_size || 16}px`);
+  root.setProperty("--font-weight", state.settings.font_bold ? "600" : "400");
+  applyScale();
   // رنگ کارها در تقویم، از تنظیمات
   const colors = state.settings.colors || {};
   for (const kind of ["read", "review", "routine"]) if (colors[kind]) root.setProperty(`--c-${kind}`, colors[kind]);

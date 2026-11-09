@@ -47,6 +47,20 @@ export const $ = (selector, root = document) => root.querySelector(selector);
 
 export const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
+/** انتخاب‌های کوچک کاربر در همین مرورگر. اگر حافظهٔ مرورگر بسته باشد، مقدار پیش‌فرض می‌ماند. */
+export function getPref(name, fallback) {
+  try {
+    const value = localStorage.getItem(`dibacheh.${name}`);
+    return value === null ? fallback : JSON.parse(value);
+  } catch (error) {
+    return fallback;
+  }
+}
+
+export function setPref(name, value) {
+  try { localStorage.setItem(`dibacheh.${name}`, JSON.stringify(value)); } catch (error) { /* حالت خصوصی */ }
+}
+
 let messageTimer = null;
 
 export function showMessage(text, isError = true) {

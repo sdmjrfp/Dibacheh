@@ -168,6 +168,9 @@ DEFAULT_SETTINGS = {
     "theme": "light",
     "font_family": "Vazirmatn",
     "font_size": 16,
+    "font_bold": False,
+    # اندازهٔ رابط: "auto" (از روی پهنای پنجره) یا درصد از 50 تا 200
+    "ui_scale": "auto",
     "vault_path": "",
     "backup_folder": "data/backups",
     "backup_retention": 30,
@@ -391,6 +394,10 @@ def clean_setting(key, value):
         return name
     if key == "font_size":
         return _int_in(value, 10, 32, "اندازهٔ فونت")
+    if key == "font_bold":
+        return bool(value)
+    if key == "ui_scale":
+        return "auto" if value == "auto" else _int_in(value, 50, 200, "اندازهٔ رابط")
     if key == "backup_retention":
         return _int_in(value, 1, 365, "تعداد backup")
     if key == "colors":

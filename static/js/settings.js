@@ -39,6 +39,8 @@ function openSettings() {
   updateColorMode();
   sf.theme.value = s.theme;
   sf.font_size.value = s.font_size;
+  sf.font_bold.checked = Boolean(s.font_bold);
+  sf.ui_scale.value = String(s.ui_scale);
   sf.vault_path.value = s.vault_path || "";
   sf.export_folder.value = s.export_folder || "";
   sf.backup_folder.value = s.backup_folder || "";
@@ -461,6 +463,8 @@ function collectSettings() {
     color_mode: sf.color_mode.value,
     theme: sf.theme.value,
     font_size: Number(sf.font_size.value),
+    font_bold: sf.font_bold.checked,
+    ui_scale: sf.ui_scale.value === "auto" ? "auto" : Number(sf.ui_scale.value),
     font_family: sf.font_family.value.trim(),
     vault_path: sf.vault_path.value.trim(),
     export_folder: sf.export_folder.value.trim(),

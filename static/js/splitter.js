@@ -12,14 +12,16 @@ import { $ } from "./core.js";
 
 const SPLIT_KEY = "dibacheh.sourcesWidth";
 
-const SPLIT_DEFAULT = 620;
+// پیش‌فرض: سهمی از پهنای برنامه، تا در هر اندازهٔ پنجره ستون برنامه جا داشته باشد
+const SPLIT_SHARE = 0.3;
 
-const SPLIT_MIN = 360;
+const SPLIT_MIN = 300;       // کمترین پهنای ستون منابع
 
-          // کمترین پهنای ستون منابع
-const CALENDAR_MIN = 480;
+const CALENDAR_MIN = 420;    // کمترین پهنای ستون برنامه
 
-       // کمترین پهنای ستون برنامه
+function defaultWidth() {
+  return $(".layout").clientWidth * SPLIT_SHARE;
+}
 
 function setSourcesWidth(width, save = true) {
   const layout = $(".layout");
@@ -40,7 +42,7 @@ function currentSourcesWidth() {
   const splitter = $("#splitter");
   let saved = null;
   try { saved = Number(localStorage.getItem(SPLIT_KEY)); } catch (e) { /* بدون حافظه */ }
-  setSourcesWidth(saved || SPLIT_DEFAULT, false);
+  setSourcesWidth(saved || defaultWidth(), false);
 
   splitter.addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -62,7 +64,10 @@ function currentSourcesWidth() {
   };
   splitter.addEventListener("pointerup", stop);
   splitter.addEventListener("pointercancel", stop);
-  splitter.addEventListener("dblclick", () => setSourcesWidth(SPLIT_DEFAULT));
+  splitter.addEventListener("dblclick", () => {
+    try { localStorage.removeItem(SPLIT_KEY); } catch (e) { /* بدون حافظه */ }
+    setSourcesWidth(defaultWidth(), false);
+  });
   // با صفحه‌کلید هم کار می‌کند: کلیدهای چپ و راست
   splitter.addEventListener("keydown", (e) => {
     const step = e.shiftKey ? 80 : 20;
@@ -72,5 +77,10 @@ function currentSourcesWidth() {
     e.preventDefault();
   });
   // اگر پنجره کوچک شد، ستون برنامه از حداقل کمتر نشود
-  window.addEventListener("resize", () => setSourcesWidth(currentSourcesWidth(), false));
+  window.addEventListener("resize", () => {
+    if (document.body.dataset.layout !== "side") return;
+    let width = null;
+    try { width = Number(localStorage.getItem(SPLIT_KEY)); } catch (e) { /* بدون حافظه */ }
+    setSourcesWidth(width || defaultWidth(), false);
+  });
 })();

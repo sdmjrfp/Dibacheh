@@ -67,3 +67,11 @@ def test_appearance_settings_are_saved(client):
     assert (state["settings"]["theme"], state["settings"]["font_family"], state["settings"]["font_size"]) == \
         ("dark", "B Nazanin", 18)
 
+
+
+def test_ui_scale_and_bold(client):
+    state = patch(client, ui_scale=50, font_bold=True).get_json()
+    assert state["settings"]["ui_scale"] == 50 and state["settings"]["font_bold"] is True
+    assert patch(client, ui_scale="auto").get_json()["settings"]["ui_scale"] == "auto"
+    assert patch(client, ui_scale=201).status_code == 400
+    assert patch(client, ui_scale=49).status_code == 400

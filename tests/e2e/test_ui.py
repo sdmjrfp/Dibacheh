@@ -380,3 +380,88 @@ def test_remove_reviews_button(app):
     assert page.is_visible("#restore-reviews")
     page.click("#close-item")
     assert page.locator(".task.kind-review").count() == 0
+
+
+def test_all_view_shows_plan_until_last_review(app):
+    app.add("اول", count=2)
+    page = app.reload().page
+    total = page.evaluate("fetch('/api/state').then(r => r.json()).then(s => s.plan.total_days)")
+    page.click("#view-all")
+    app.settle()
+    assert page.locator(".all-day").count() == total
+    assert page.locator(".all-day .task.kind-review").count() == 8
+
+
+def test_kind_filter_hides_and_remembers(app):
+    app.add("اول", count=1)
+    page = app.reload().page
+    page.click("#view-all")
+    app.settle()
+    assert page.locator(".task.kind-review").count() == 4
+    page.uncheck(".legend-toggle.kind-review input")
+    assert page.locator(".task.kind-review").count() == 0
+    assert page.locator(".task.kind-read").count() == 1
+    page.reload()
+    page.wait_for_selector("#today:not(:empty)")
+    page.click("#view-all")
+    app.settle()
+    assert page.locator(".task.kind-review").count() == 0
+
+
+def test_horizontal_orientation(app):
+    app.add("اول")
+    page = app.reload().page
+    page.click("#orient-horizontal")
+    day = page.locator(".week .cal-day")
+    first, second = day.nth(0).bounding_box(), day.nth(1).bounding_box()
+    assert second["y"] > first["y"]
+    assert abs(second["x"] - first["x"]) < 2
+    page.click("#orient-vertical")
+    assert day.nth(1).bounding_box()["y"] == day.nth(0).bounding_box()["y"]
+
+
+def test_task_size_follows_minutes(app):
+    app.add("بلند", minutes=100)
+    app.add("کوتاه", minutes=10)
+    page = app.reload().page
+    long, short = page.locator(".cal-day.today .task.sized").nth(0), page.locator(".cal-day.today .task.sized").nth(1)
+    assert long.bounding_box()["height"] > short.bounding_box()["height"] * 1.5
+
+
+def test_day_header_text_stays_inside_narrow_column(app):
+    app.add("اول", count=6)
+    page = app.reload().page
+    page.set_viewport_size({"width": 1000, "height": 700})
+    app.settle()
+    overflow = page.evaluate("[...document.querySelectorAll('.day-head')].filter(e => e.scrollWidth > e.clientWidth + 1).length")
+    assert overflow == 0
+
+
+def test_layout_modes(app):
+    page = app.page
+    assert page.is_visible(".sources") and page.is_visible(".calendar")
+    page.click('#layout-tabs [data-layout="plan"]')
+    assert page.is_hidden(".sources") and page.is_visible(".calendar")
+    width = page.locator(".calendar").bounding_box()["width"]
+    assert width > 1400
+    page.click('#layout-tabs [data-layout="sources"]')
+    assert page.is_visible(".sources") and page.is_hidden(".calendar")
+    page.click('#layout-tabs [data-layout="stack"]')
+    assert page.locator(".calendar").bounding_box()["y"] != page.locator(".sources").bounding_box()["y"]
+    page.reload()
+    page.wait_for_selector("#today:not(:empty)")
+    assert page.get_attribute("body", "data-layout") == "stack"
+
+
+def test_ui_scale_auto_by_window_width_and_manual(app):
+    page = app.page
+    size = lambda: page.evaluate("parseFloat(getComputedStyle(document.documentElement).fontSize)")
+    page.set_viewport_size({"width": 2400, "height": 1200})
+    page.wait_for_timeout(100)
+    assert size() == 16
+    page.set_viewport_size({"width": 1366, "height": 650})
+    page.wait_for_timeout(100)
+    assert size() == 16 * 0.8
+    app.call("PATCH", "/api/settings", {"ui_scale": 150})
+    app.reload()
+    assert size() == 24

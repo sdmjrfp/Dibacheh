@@ -2,6 +2,7 @@
 
 import "./calendar.js";
 import "./item-dialog.js";
+import "./layout.js";
 import "./settings.js";
 import "./sources.js";
 import "./splitter.js";

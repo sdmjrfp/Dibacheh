@@ -13,6 +13,12 @@
     <h1>دیباچه</h1>
     <span id="today" class="muted"></span>
     <span class="spacer"></span>
+    <div id="layout-tabs" class="tabs" role="tablist" aria-label="چیدمان">
+      <button data-layout="side" role="tab" title="کارها و برنامه کنار هم">◫ کنار هم</button>
+      <button data-layout="stack" role="tab" title="کارها و برنامه زیر هم">☰ زیر هم</button>
+      <button data-layout="sources" role="tab" title="فقط کارها و منابع، بزرگ">فقط کارها</button>
+      <button data-layout="plan" role="tab" title="فقط برنامه، بزرگ">فقط برنامه</button>
+    </div>
     <button id="undo-button" disabled title="برگرداندن آخرین تغییر">↶ برگرداندن <span class="count"></span></button>
     <button id="redo-button" disabled title="بازگرداندن">↷ بازگرداندن <span class="count"></span></button>
     <button id="stats-button" title="آمار و گزارش هفتگی">📊 گزارش</button>
@@ -62,6 +68,11 @@
           <button id="view-day" role="tab">روزانه</button>
           <button id="view-week" role="tab">هفتگی</button>
           <button id="view-month" role="tab">ماهانه</button>
+          <button id="view-all" role="tab" title="از امروز تا آخرین کار و آخرین مرور">کلی</button>
+        </div>
+        <div class="tabs" role="tablist" aria-label="جهت برنامه">
+          <button id="orient-vertical" role="tab" title="هر روز یک ستون">⇅ عمودی</button>
+          <button id="orient-horizontal" role="tab" title="هر روز یک سطر">⇄ افقی</button>
         </div>
         <button id="cal-prev" class="icon" title="قبلی">→</button>
         <button id="cal-today">امروز</button>
@@ -70,11 +81,8 @@
         <span class="spacer"></span>
         <button id="export-button" title="خروجی HTML برای خواندن روی گوشی و فرستادن">⇪ خروجی</button>
         <span class="legend">
-          <span id="legend-kinds" class="legend-group">
-            <span class="kind-routine">روتین</span>
-            <span class="kind-review">مرور</span>
-            <span class="kind-read">خواندن</span>
-          </span>
+          <!-- تیک هر نوع: آن نوع کار در برنامه نشان داده شود یا نه -->
+          <span id="legend-kinds" class="legend-group"></span>
           <span id="legend-source" class="muted small" hidden>هر درس با رنگ خودش · خط‌چین = مرور</span>
           <span class="muted small">📌 = دستی جابه‌جا شده</span>
         </span>
@@ -342,7 +350,17 @@
           <label>اندازهٔ فونت <span class="with-unit"><input name="font_size" type="number" min="10" max="32" class="num"> پیکسل</span></label>
           <label>فونت
             <select name="font_family"></select></label>
+          <label class="check"><input type="checkbox" name="font_bold"> متن پررنگ (Bold)</label>
+          <label>اندازهٔ رابط
+            <select name="ui_scale">
+              <option value="auto">خودکار</option>
+              <option value="50">۵۰٪</option><option value="60">۶۰٪</option><option value="70">۷۰٪</option>
+              <option value="75">۷۵٪</option><option value="80">۸۰٪</option><option value="90">۹۰٪</option>
+              <option value="100">۱۰۰٪</option><option value="110">۱۱۰٪</option><option value="125">۱۲۵٪</option>
+              <option value="150">۱۵۰٪</option><option value="175">۱۷۵٪</option><option value="200">۲۰۰٪</option>
+            </select></label>
         </div>
+        <p class="muted small">در حالت خودکار، برنامه از روی پهنای پنجره اندازه را تنظیم می‌کند تا در Full HD و HD هم جا شود.</p>
         <p id="font-sample" class="explain">نمونهٔ متن با این فونت: یادگیری هر روز، کمی بیشتر. ۱۲۳۴۵</p>
         <div class="pop-row">
           <button type="button" id="font-add">+ افزودن فایل فونت…</button>

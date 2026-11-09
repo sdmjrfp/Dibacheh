@@ -1,4 +1,4 @@
-import { $, $$, api, buildJalaliInput, el, fa, minutesText, readJalaliInput, renderPart, showMessage, state, typeOf } from "./core.js";
+import { $, $$, api, buildJalaliInput, el, fa, getPref, minutesText, readJalaliInput, renderPart, setPref, showMessage, state, typeOf } from "./core.js";
 import { openItemDialog } from "./item-dialog.js";
 import { Motion, dragGhost } from "./motion.js";
 import { selectedItemId } from "./sources.js";
@@ -11,14 +11,20 @@ import { selectedItemId } from "./sources.js";
    تقویم عمداً هیچ گزینهٔ حذفی ندارد.
 */
 
-let calView = "week";
+let calView = "week";       // "day"، "week"، "month" یا "all"
 
-     // "day"، "week" یا "month"
-let calAnchor = null;
+let calAnchor = null;       // یک روز از هفته یا ماهی که نشان داده می‌شود
 
-     // یک روز از هفته یا ماهی که نشان داده می‌شود
+let orientation = getPref("orientation", "vertical");   // هر روز یک ستون، یا هر روز یک سطر
 
-const KIND_LABEL = { read: "خواندن", review: "مرور", routine: "روتین" };
+const hiddenKinds = new Set(getPref("hiddenKinds", []));   // نوع کارهایی که تیکشان برداشته شده
+
+const KIND_LABEL = { read: "خواندن", review: "مرور", routine: "روتین", project: "پروژه", once: "کار یک‌باره" };
+
+/** نوع کار برای برچسب، رنگ و فیلتر. خواندنِ پروژه و کار یک‌باره نام و رنگ خودشان را دارند. */
+function displayKind(kind, item) {
+  return kind === "read" && item && item.variant !== "study" ? item.variant : kind;
+}
 
 // ---------------------------------------------------------------------------
 // داده‌های کمکی
@@ -100,9 +106,45 @@ function viewRange() {
     const start = weekStart(calAnchor);
     return [start, Jalali.addDays(start, 6)];
   }
+  if (calView === "all") return [state.today, Jalali.addDays(state.today, Math.max(state.plan.total_days, 1) - 1)];
   const { y, m } = Jalali.toJalali(calAnchor);
   const first = Jalali.fromJalali(y, m, 1);
   return [first, Jalali.addDays(first, Jalali.monthLength(y, m) - 1)];
+}
+
+/** تیک‌های راهنمای رنگ: هر نوع کار در برنامه نشان داده شود یا نه */
+function renderLegend() {
+  const kinds = ["read", "review", "routine"];
+  for (const variant of ["project", "once"]) {
+    if (state.items.some((item) => item.variant === variant)) kinds.splice(1, 0, variant);
+  }
+  renderPart("legend", [kinds, [...hiddenKinds]], () => {
+    $("#legend-kinds").replaceChildren(...kinds.map((kind) =>
+      el("label", { class: `legend-toggle kind-${kind}` },
+        el("input", {
+          type: "checkbox", checked: !hiddenKinds.has(kind),
+          onchange: (e) => {
+            if (e.target.checked) hiddenKinds.delete(kind);
+            else hiddenKinds.add(kind);
+            setPref("hiddenKinds", [...hiddenKinds]);
+            renderCalendar();
+          },
+        }),
+        KIND_LABEL[kind])));
+  });
+}
+
+/** بزرگ‌ترین زمان کار در این نما، برای اینکه اندازهٔ هر کار نسبت به بقیه باشد */
+function largestTask(context, start, end) {
+  let largest = 1;
+  for (const day of context.days.values()) {
+    if (day.date < start || day.date > end) continue;
+    for (const task of day.tasks) largest = Math.max(largest, task.minutes);
+  }
+  for (const entries of context.history.values()) {
+    for (const entry of entries) if (entry.date >= start && entry.date <= end) largest = Math.max(largest, entry.minutes);
+  }
+  return largest;
 }
 
 export function renderCalendar() {
@@ -110,6 +152,13 @@ export function renderCalendar() {
   $("#view-day").setAttribute("aria-selected", String(calView === "day"));
   $("#view-week").setAttribute("aria-selected", String(calView === "week"));
   $("#view-month").setAttribute("aria-selected", String(calView === "month"));
+  $("#view-all").setAttribute("aria-selected", String(calView === "all"));
+  $("#orient-vertical").setAttribute("aria-selected", String(orientation === "vertical"));
+  $("#orient-horizontal").setAttribute("aria-selected", String(orientation === "horizontal"));
+  $("#orient-vertical").disabled = calView === "month";
+  $("#orient-horizontal").disabled = calView === "month";
+  for (const id of ["#cal-prev", "#cal-today", "#cal-next"]) $(id).hidden = calView === "all";
+  renderLegend();
 
   const selected = state.items.find((item) => item.id === selectedItemId);
   const note = $("#selected-item-note");
@@ -122,24 +171,27 @@ export function renderCalendar() {
   const box = $("#calendar");
   const [viewStart, viewEnd] = viewRange();
   loadFarDays(viewStart, viewEnd);
+  context.largest = largestTask(context, viewStart, viewEnd);
   const draw = (fn) => renderPart("calendar", [
-    calView, calAnchor, viewStart, viewEnd, selectedItemId, state.today, state.settings.colors, state.settings.color_mode,
+    calView, calAnchor, viewStart, viewEnd, orientation, [...hiddenKinds], selectedItemId, state.today, state.settings.colors, state.settings.color_mode,
     Object.entries(state.day_overrides).filter(([date]) => date >= viewStart && date <= viewEnd),
     state.types, state.history.filter((h) => h.date >= viewStart && h.date <= viewEnd),
     [...context.days.values()].filter((d) => d.date >= viewStart && d.date <= viewEnd),
     [...context.index.values()].map(({ item, session }) => [item.id, item.title, item.display_color, session.section_text, session.note, session.status]),
   ], fn);
   // راهنمای رنگ: در رنگ‌بندی بر اساس منبع، هر درس رنگ خودش را دارد
-  $("#legend-kinds").hidden = state.settings.color_mode === "source";
   $("#legend-source").hidden = state.settings.color_mode !== "source";
   if (calView === "day") {
     $("#cal-title").textContent = `${Jalali.weekday(calAnchor)} ${Jalali.format(calAnchor)}`;
-    draw(() => box.replaceChildren(el("div", { class: "day-view" }, dayColumn(calAnchor, context, "cal-day day-column"))));
+    draw(() => box.replaceChildren(el("div", { class: `day-view ${orientation}` }, dayColumn(calAnchor, context, "cal-day day-column"))));
   } else if (calView === "week") {
     const start = weekStart(calAnchor);
     const end = Jalali.addDays(start, 6);
     $("#cal-title").textContent = `${Jalali.formatShort(start)} تا ${Jalali.format(end)}`;
     draw(() => box.replaceChildren(weekView(start, context)));
+  } else if (calView === "all") {
+    $("#cal-title").textContent = `از امروز تا ${Jalali.format(viewEnd)} · ${fa(state.plan.total_days)} روز`;
+    draw(() => box.replaceChildren(allView(viewStart, viewEnd, context)));
   } else {
     const { y, m } = Jalali.toJalali(calAnchor);
     $("#cal-title").textContent = `${Jalali.MONTHS[m - 1]} ${fa(y)}`;
@@ -147,8 +199,17 @@ export function renderCalendar() {
   }
 }
 
+/** کل برنامه، از امروز تا آخرین کار و آخرین مرور */
+function allView(start, end, context) {
+  const grid = el("div", { class: `all-days ${orientation}` });
+  for (let iso = start; iso <= end; iso = Jalali.addDays(iso, 1)) {
+    grid.append(dayColumn(iso, context, "cal-day all-day"));
+  }
+  return grid;
+}
+
 function weekView(start, context) {
-  const grid = el("div", { class: "week" });
+  const grid = el("div", { class: `week ${orientation}` });
   for (let i = 0; i < 7; i++) {
     grid.append(dayColumn(Jalali.addDays(start, i), context, "cal-day week-day"));
   }
@@ -160,14 +221,33 @@ function isOff(iso, day) {
   return day ? day.is_off : state.day_overrides[iso] === 0;
 }
 
+function visibleTasks(day, context) {
+  if (!day) return [];
+  return day.tasks.filter((task) => {
+    const info = context.index.get(task.session_id);
+    return !hiddenKinds.has(displayKind(task.kind, info && info.item));
+  });
+}
+
+function historyVisible(entry, context) {
+  const info = context.index.get(entry.session_id);
+  return !hiddenKinds.has(displayKind(entry.task_type, info && info.item));
+}
+
+/** اندازهٔ کار نسبت به بزرگ‌ترین کار این نما، فقط در نمای روزانه و هفتگی */
+function sizeStyle(minutes, context) {
+  if (calView !== "day" && calView !== "week") return null;
+  return `--w:${(minutes / context.largest).toFixed(3)}`;
+}
+
 /** ستون کامل یک روز، برای نمای هفتگی و روزانه */
 function dayColumn(iso, context, classes) {
   const day = context.days.get(iso);
   const column = el("div", { class: dayClasses(iso, day, classes), "data-date": iso },
     dayHeader(iso, day),
     el("div", { class: "tasks" },
-      (context.history.get(iso) || []).map((entry) => historyChip(entry, context)),
-      day ? day.tasks.map((t) => taskChip(t, iso, context, false)) : []),
+      (context.history.get(iso) || []).filter((entry) => historyVisible(entry, context)).map((entry) => historyChip(entry, context)),
+      visibleTasks(day, context).map((t) => taskChip(t, iso, context, false))),
   );
   if (iso >= state.today && isOff(iso, day)) column.append(el("p", { class: "muted small" }, "تعطیل"));
   else if (iso < state.today && !context.history.has(iso)) column.append(el("p", { class: "muted small" }, "کاری ثبت نشده"));
@@ -195,7 +275,7 @@ function monthView(y, m, context) {
   for (let d = 1; d <= length; d++) {
     const iso = Jalali.addDays(first, d - 1);
     const day = context.days.get(iso);
-    const tasks = day ? day.tasks : [];
+    const tasks = visibleTasks(day, context);
     const shown = tasks.slice(0, 5);
     const cell = el("div", {
       class: dayClasses(iso, day, "cal-day month-day"),
@@ -257,13 +337,15 @@ function taskChip(task, iso, context, compact) {
   const info = context.index.get(task.session_id);
   const item = info ? info.item : null;
   const session = info ? info.session : null;
-  const classes = ["task", `kind-${task.kind}`];
+  const shownKind = displayKind(task.kind, item);
+  const classes = ["task", `kind-${shownKind}`];
+  if (!compact && calView !== "all") classes.push("sized");
   if (selectedItemId && task.item_id === selectedItemId) classes.push("selected");
   if (selectedItemId && task.item_id !== selectedItemId) classes.push("dim");
   if (task.overdue) classes.push("overdue");
   const movable = !whyNotMovable(task, context.index);
 
-  let label = KIND_LABEL[task.kind];
+  let label = KIND_LABEL[shownKind];
   if (task.kind === "review") label += ` ${fa(task.review_round)}`;
   if (task.partial) label += " (ادامه)";
 
@@ -274,7 +356,8 @@ function taskChip(task, iso, context, compact) {
   });
 
   const paint = paintFor(item, task.kind);
-  const style = paint ? `--c:${paint}` : null;
+  const size = compact ? null : sizeStyle(task.minutes, context);
+  const style = [paint && `--c:${paint}`, size].filter(Boolean).join(";") || null;
   const chip = el("div", {
     class: classes.join(" "), style, "data-session": task.session_id, "data-kind": task.kind,
     "data-flip": taskKey(task),
@@ -299,13 +382,15 @@ function taskChip(task, iso, context, compact) {
 function historyChip(entry, context) {
   const info = context.index.get(entry.session_id);
   const title = info ? info.item.title : "درس حذف‌شده";
-  const kind = entry.task_type;
+  const kind = displayKind(entry.task_type, info && info.item);
   let label = KIND_LABEL[kind] || kind;
   if (entry.result === "partial") label += " (بخشی)";
   if (entry.result === "needs_more") label += " · نیاز به مرور بیشتر";
-  const paint = info ? paintFor(info.item, kind) : null;
+  const paint = info ? paintFor(info.item, entry.task_type) : null;
+  const size = sizeStyle(entry.minutes, context);
   return el("div", {
-    class: `task done kind-${kind}`, "data-flip": `h-${entry.id}`, style: paint ? `--c:${paint}` : null,
+    class: `task done kind-${kind}${size ? " sized" : ""}`, "data-flip": `h-${entry.id}`,
+    style: [paint && `--c:${paint}`, size].filter(Boolean).join(";") || null,
     title: "برای برگرداندن به حالت انجام‌نشده کلیک کنید",
     onclick: (e) => openDoneMenu(entry, title, label, e.currentTarget),
   },
@@ -427,7 +512,7 @@ function openTaskMenu(task, iso, anchor) {
   const content = [
     el("div", { class: "pop-title" }, item.title),
     el("div", { class: "muted small" },
-      `${KIND_LABEL[task.kind]}${task.kind === "review" ? ` ${fa(task.review_round)}` : ""} · جلسهٔ ${fa(session.sequence)}`
+      `${KIND_LABEL[displayKind(task.kind, item)]}${task.kind === "review" ? ` ${fa(task.review_round)}` : ""} · جلسهٔ ${fa(session.sequence)}`
       + `${session.section_text ? ` · ${session.section_text}` : ""} · ${fa(task.minutes)} دقیقه · ${Jalali.format(iso)}`),
   ];
 
@@ -534,8 +619,8 @@ function openDayMenu(iso, day, anchor) {
     content.push(el("div", { class: "small" }, "جلو آوردن به این روز:"));
     content.push(el("div", { class: "pop-list" }, candidates.map(([t, date]) => {
       const info = index.get(t.session_id);
-      return el("button", { class: `task-pick kind-${t.kind}`, onclick: () => moveTask(t, iso) },
-        `${info.item.title} · ${KIND_LABEL[t.kind]}${t.kind === "review" ? ` ${fa(t.review_round)}` : ` جلسهٔ ${fa(info.session.sequence)}`}`
+      return el("button", { class: `task-pick kind-${displayKind(t.kind, info.item)}`, onclick: () => moveTask(t, iso) },
+        `${info.item.title} · ${KIND_LABEL[displayKind(t.kind, info.item)]}${t.kind === "review" ? ` ${fa(t.review_round)}` : ` جلسهٔ ${fa(info.session.sequence)}`}`
         + ` · ${fa(t.minutes)} دقیقه · الان ${Jalali.formatShort(date)}`);
     })));
   }
@@ -657,6 +742,16 @@ $("#view-day").addEventListener("click", () => { calView = "day"; renderCalendar
 $("#view-week").addEventListener("click", () => { calView = "week"; renderCalendar(); });
 
 $("#view-month").addEventListener("click", () => { calView = "month"; renderCalendar(); });
+
+$("#view-all").addEventListener("click", () => { calView = "all"; renderCalendar(); });
+
+for (const [id, value] of [["#orient-vertical", "vertical"], ["#orient-horizontal", "horizontal"]]) {
+  $(id).addEventListener("click", () => {
+    orientation = value;
+    setPref("orientation", value);
+    renderCalendar();
+  });
+}
 
 $("#cal-prev").addEventListener("click", () => shiftCalendar(-1));
 
