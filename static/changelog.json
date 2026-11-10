@@ -1,4 +1,14 @@
 {
+  "1.4.3": {
+    "fa": [
+      "هر پنجره با کلیک بیرون آن، Esc یا دکمهٔ بستن بسته می‌شود",
+      "اگر در پنجرهٔ درس، کاربر یا تنظیمات چیزی عوض شده باشد، قبل از بستن می‌پرسد ذخیره شود یا نه"
+    ],
+    "en": [
+      "Every window closes when you click outside it, press Esc or press its close button",
+      "If something changed in the lesson, user or settings window, it asks whether to save before closing"
+    ]
+  },
   "1.4.2": {
     "fa": [
       "لوگو و آیکون تازهٔ برنامه",
