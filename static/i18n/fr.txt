@@ -741,3 +741,4 @@ Retirer une tâche non faite
 Noter une tâche en retard comme faite
 Sans révision : les séances se terminent à la lecture.
 Les valeurs partent des réglages généraux. Si vous ne les changez pas, cette leçon suit toujours les réglages généraux.
+Enregistrer les modifications ?

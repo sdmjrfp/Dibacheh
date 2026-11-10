@@ -122,6 +122,8 @@ static/js/render.js    کشیدن صفحه با تغییرهای جزئی
 static/js/sources.js   فهرست منابع درسی و تب دسته‌ها
 static/js/item-dialog.js  پنجرهٔ درس
 static/js/settings.js  پنجرهٔ تنظیمات و گزارش خطا
+static/js/review-editor.js  نوار نسبت مرور، الگوها و نمودار لایتنر؛ مشترک بین تنظیمات و پنجرهٔ درس
+static/js/dialogs.js   بستن هر پنجره با کلیک بیرون، Esc یا دکمهٔ بستن؛ اگر فرمش عوض شده، اول می‌پرسد. پنجرهٔ تازه باید closeOnOutside بگیرد. بخشی که فوراً ذخیره می‌شود data-untracked می‌گیرد
 static/js/calendar.js  تقویم روزانه، هفتگی و ماهانه، منوی کار و روز، خروجی
 static/js/stats.js     پنجرهٔ گزارش و نمودارها (SVG دستی)
 static/js/motion.js    انیمیشن FLIP و کشیدن (sortable و dragGhost)

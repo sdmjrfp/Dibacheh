@@ -1,6 +1,7 @@
 /* پنجرهٔ درس، نوع کار تازه و افزودن گروهی. */
 
 import { $, $$, api, buildJalaliInput, el, fa, itemById, readJalaliInput, showMessage, state, t, typeOf, WEEKDAYS } from "./core.js";
+import { closeOnOutside, formSnapshot } from "./dialogs.js";
 import { createReviewEditor, ratioToPercent } from "./review-editor.js";
 import { categoryOptions } from "./sources.js";
 
@@ -338,7 +339,11 @@ form.addEventListener("submit", async (e) => {
   $("#item-dialog").close();
 });
 
-$("#close-item").addEventListener("click", () => $("#item-dialog").close());
+closeOnOutside($("#item-dialog"), {
+  snapshot: () => formSnapshot(form, () => editing && [reviewEditor.intervals(), editing.requires, editing.sections]),
+  save: () => form.requestSubmit(),
+  closeButton: $("#close-item"),
+});
 
 $("#item-dialog").addEventListener("close", () => { editing = null; });
 
@@ -451,7 +456,9 @@ $("#type-form").addEventListener("submit", async (e) => {
   $("#type-dialog").close();
 });
 
-$("#close-type").addEventListener("click", () => $("#type-dialog").close());
+closeOnOutside($("#type-dialog"), {
+  snapshot: () => formSnapshot($("#type-form")), save: () => $("#type-form").requestSubmit(), closeButton: $("#close-type"),
+});
 
 $("#quit-button").addEventListener("click", async () => {
   if (!confirm(t("برنامه بسته شود؟"))) return;
@@ -483,4 +490,6 @@ $("#bulk-form").addEventListener("submit", async (e) => {
   $("#bulk-dialog").close();
 });
 
-$("#close-bulk").addEventListener("click", () => $("#bulk-dialog").close());
+closeOnOutside($("#bulk-dialog"), {
+  snapshot: () => formSnapshot($("#bulk-form")), save: () => $("#bulk-form").requestSubmit(), closeButton: $("#close-bulk"),
+});

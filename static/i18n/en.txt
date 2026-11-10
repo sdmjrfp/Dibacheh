@@ -741,3 +741,4 @@ Remove not-done task
 Log an overdue task as done
 No reviews: sessions finish when they are read.
 Values start from the general settings. If you leave them unchanged, this lesson always follows the general settings.
+Save your changes?

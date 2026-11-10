@@ -437,7 +437,7 @@ def test_settings_closes_on_outside_click_when_unchanged(app):
     page.wait_for_selector("#settings-dialog[open]")
     click_outside_settings(page)
     assert page.is_hidden("#settings-dialog")
-    assert page.is_hidden("#settings-confirm")
+    assert page.is_hidden("#close-confirm")
 
 
 def test_settings_asks_on_outside_click_when_changed(app):
@@ -445,17 +445,17 @@ def test_settings_asks_on_outside_click_when_changed(app):
     page.click("#settings-button")
     page.fill('#settings-form [name="default_cap_minutes"]', "77")
     click_outside_settings(page)
-    assert page.is_visible("#settings-confirm")
-    page.click("#settings-confirm-continue")
-    assert page.is_visible("#settings-dialog") and page.is_hidden("#settings-confirm")
+    assert page.is_visible("#close-confirm")
+    page.click("#close-confirm-continue")
+    assert page.is_visible("#settings-dialog") and page.is_hidden("#close-confirm")
     click_outside_settings(page)
-    page.click("#settings-confirm-discard")
+    page.click("#close-confirm-discard")
     assert page.is_hidden("#settings-dialog")
     assert app.call("GET", "/api/state")["settings"]["default_cap_minutes"] == 120
     page.click("#settings-button")
     page.fill('#settings-form [name="default_cap_minutes"]', "77")
     click_outside_settings(page)
-    page.click("#settings-confirm-save")
+    page.click("#close-confirm-save")
     app.settle()
     assert page.is_hidden("#settings-dialog")
     assert app.call("GET", "/api/state")["settings"]["default_cap_minutes"] == 77
@@ -945,3 +945,80 @@ def test_lesson_review_editor_matches_settings_and_saves_only_custom_values(app)
     app.settle()
     item = app.call("GET", "/api/state")["items"][0]
     assert item["review_intervals"] == [1, 2, 4, 7] and item["review_ratio"] == "50/100"
+
+
+def test_lesson_window_closes_on_outside_click_and_asks_when_changed(app):
+    app.add("ریاضی")
+    page = app.reload().page
+    page.click('.item:has-text("ریاضی") button[title="ویرایش"]')
+    page.wait_for_selector("#item-dialog[open]")
+    click_outside_settings(page)
+    assert page.is_hidden("#item-dialog") and page.is_hidden("#close-confirm")
+
+    page.click('.item:has-text("ریاضی") button[title="ویرایش"]')
+    page.fill('#item-form [name="title"]', "هندسه")
+    click_outside_settings(page)
+    assert page.is_visible("#close-confirm")
+    page.click("#close-confirm-continue")
+    assert page.is_visible("#item-dialog")
+    page.click("#close-item")
+    page.click("#close-confirm-discard")
+    assert page.is_hidden("#item-dialog")
+    assert app.call("GET", "/api/state")["items"][0]["title"] == "ریاضی"
+
+    page.click('.item:has-text("ریاضی") button[title="ویرایش"]')
+    page.fill('#item-form [name="title"]', "هندسه")
+    page.keyboard.press("Escape")
+    page.click("#close-confirm-save")
+    app.settle()
+    assert page.is_hidden("#item-dialog")
+    assert app.call("GET", "/api/state")["items"][0]["title"] == "هندسه"
+
+
+def test_lesson_window_asks_when_only_review_chart_changed(app):
+    app.add("ریاضی")
+    page = app.reload().page
+    page.click('.item:has-text("ریاضی") button[title="ویرایش"]')
+    page.click("#item-reviews .interval-add")
+    click_outside_settings(page)
+    assert page.is_visible("#close-confirm")
+    page.click("#close-confirm-discard")
+
+
+def test_report_add_and_profile_windows_close_on_outside_click(app):
+    page = app.page
+    page.click("#stats-button")
+    page.wait_for_selector("#stats-dialog[open]")
+    click_outside_settings(page)
+    assert page.is_hidden("#stats-dialog")
+
+    page.click("#add-button")
+    page.wait_for_selector("#add-dialog[open]")
+    click_outside_settings(page)
+    assert page.is_hidden("#add-dialog")
+
+    page.click("#profile-button")
+    page.click(".profile-edit")
+    page.wait_for_selector("#profile-dialog[open]")
+    click_outside_settings(page)
+    assert page.is_hidden("#profile-dialog") and page.is_hidden("#close-confirm")
+
+    page.click("#profile-button")
+    page.click(".profile-edit")
+    page.click('#profile-avatars [data-avatar="a3"]')
+    click_outside_settings(page)
+    assert page.is_visible("#close-confirm")
+    page.click("#close-confirm-discard")
+    assert page.is_hidden("#profile-dialog")
+
+
+def test_new_type_window_asks_when_changed(app):
+    page = app.page
+    page.click("#add-button")
+    page.click('[data-add="type"]')
+    page.fill('#type-form [name="name"]', "زبان")
+    click_outside_settings(page)
+    page.click("#close-confirm-save")
+    app.settle()
+    assert page.is_hidden("#type-dialog")
+    assert [t["name"] for t in app.call("GET", "/api/state")["types"]] == ["زبان"]

@@ -1,6 +1,7 @@
 /* منوی «+»: انتخاب اینکه چه چیزی اضافه شود، و الگوهای آمادهٔ همان نوع. */
 
 import { $, el, state, t } from "./core.js";
+import { closeOnOutside } from "./dialogs.js";
 import { openBulkDialog, openItemDialog, openTypeDialog } from "./item-dialog.js";
 
 const KINDS = [
@@ -71,4 +72,4 @@ function templateSummary(template) {
 
 $("#add-button").addEventListener("click", () => openAddMenu());
 
-$("#close-add").addEventListener("click", close);
+closeOnOutside($("#add-dialog"), { closeButton: $("#close-add") });

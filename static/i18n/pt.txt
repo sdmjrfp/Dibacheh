@@ -741,3 +741,4 @@ Remover tarefa não feita
 Registrar tarefa atrasada como feita
 Sem revisões: as sessões terminam ao serem lidas.
 Os valores começam das configurações gerais. Se não os alterar, esta lição sempre segue as configurações gerais.
+Salvar as alterações?

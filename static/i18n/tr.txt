@@ -741,3 +741,4 @@ Yapılmayan görevi silme
 Gecikmiş görevi yapıldı olarak kaydetme
 Tekrarsız: oturumlar okununca biter.
 Değerler genel ayarlardan başlar. Değiştirmezseniz bu ders her zaman genel ayarları izler.
+Değişiklikler kaydedilsin mi?

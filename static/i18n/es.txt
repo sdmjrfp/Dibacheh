@@ -741,3 +741,4 @@ Quitar tarea no hecha
 Registrar tarea atrasada como hecha
 Sin repasos: las sesiones terminan al leerse.
 Los valores parten de los ajustes generales. Si no los cambias, esta lección siempre sigue los ajustes generales.
+¿Guardar los cambios?

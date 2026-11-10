@@ -1,6 +1,7 @@
 /* شمارهٔ نسخه، خبر نسخهٔ تازه، دانلود آن، و تغییرات نسخه بعد از به‌روزرسانی. */
 
 import { $, api, el, fa, state, t } from "./core.js";
+import { closeOnOutside } from "./dialogs.js";
 
 let update = null;   // نتیجهٔ بررسی نسخهٔ تازه
 let checked = false;
@@ -87,5 +88,5 @@ $("#update-button").addEventListener("click", openUpdateDialog);
 $("#update-download").addEventListener("click", startDownload);
 $("#update-open").addEventListener("click", () => api("POST", "/api/update/open", {}));
 $("#update-reveal").addEventListener("click", () => api("POST", "/api/update/reveal", {}));
-$("#close-update").addEventListener("click", () => $("#update-dialog").close());
-$("#close-whats-new").addEventListener("click", () => $("#whats-new-dialog").close());
+closeOnOutside($("#update-dialog"), { closeButton: $("#close-update") });
+closeOnOutside($("#whats-new-dialog"), { closeButton: $("#close-whats-new") });

@@ -282,7 +282,7 @@
             <span id="source-path" class="path" dir="ltr"></span>
           </div>
           <p id="source-problem" class="error small" hidden></p>
-          <div id="outline-box" class="explain" hidden></div>
+          <div id="outline-box" class="explain" hidden data-untracked></div>
           <div class="source-row">
             <label>نوع بخش هر جلسه
               <select name="section_unit">
@@ -299,7 +299,7 @@
         </fieldset>
       </div>
 
-      <div id="sessions-box" data-when="edit">
+      <div id="sessions-box" data-when="edit" data-untracked>
         <h3>جلسه‌ها</h3>
         <ul id="range-problems" class="error small"></ul>
         <table class="sessions">
@@ -366,13 +366,13 @@
     </form>
   </dialog>
 
-  <!-- پرسش هنگام بستن تنظیمات تغییرکرده -->
-  <dialog id="settings-confirm" class="dialog">
-    <p>تنظیمات تغییر کرده است. ذخیره شود؟</p>
+  <!-- پرسش هنگام بستن پنجره‌ای که چیزی در آن عوض شده (static/js/dialogs.js) -->
+  <dialog id="close-confirm" class="dialog">
+    <p>تغییرها ذخیره شوند؟</p>
     <div class="dialog-actions">
-      <button type="button" id="settings-confirm-save" class="primary">ذخیره</button>
-      <button type="button" id="settings-confirm-discard">ذخیره نشود</button>
-      <button type="button" id="settings-confirm-continue">ادامهٔ ویرایش</button>
+      <button type="button" id="close-confirm-save" class="primary">ذخیره</button>
+      <button type="button" id="close-confirm-discard">ذخیره نشود</button>
+      <button type="button" id="close-confirm-continue">ادامهٔ ویرایش</button>
     </div>
   </dialog>
 

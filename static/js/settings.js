@@ -1,6 +1,7 @@
 /* پنجرهٔ تنظیمات و گزارش خطا. */
 
 import { $, $$, api, CSRF, el, fa, itemById, showMessage, state, t, WEEKDAYS } from "./core.js";
+import { closeOnOutside } from "./dialogs.js";
 import { createReviewEditor } from "./review-editor.js";
 import { categoryOptions } from "./sources.js";
 
@@ -62,7 +63,6 @@ function openSettings() {
   renderTemplateSettings();
   renderBackups();
   renderFontSettings(s.font_family);
-  settingsBaseline = settingsSnapshot();
   $("#settings-dialog").showModal();
   reviewEditor.updateExplain();
   reviewEditor.refresh();
@@ -351,11 +351,7 @@ for (const button of $$("[data-browse]", settingsForm)) {
 
 $("#settings-button").addEventListener("click", openSettings);
 
-$("#close-settings").addEventListener("click", tryCloseSettings);
-
-// ---------- بستن با کلیک بیرون پنجره یا Esc: اگر چیزی عوض شده، اول می‌پرسد
-
-let settingsBaseline = "";
+// ---------- بستن با کلیک بیرون پنجره، Esc یا دکمهٔ بستن: اگر چیزی عوض شده، اول می‌پرسد
 
 /** همهٔ مقدارهای فرم، برای فهمیدن اینکه چیزی عوض شده یا نه */
 function settingsSnapshot() {
@@ -365,42 +361,6 @@ function settingsSnapshot() {
   return JSON.stringify([collectSettings(), types, sources]);
 }
 
-function tryCloseSettings() {
-  if (settingsSnapshot() === settingsBaseline) $("#settings-dialog").close();
-  else $("#settings-confirm").showModal();
-}
-
-/** آیا این رویداد بیرون کادر پنجره (روی پس‌زمینهٔ تیره) بوده است؟ */
-function onBackdrop(e) {
-  const dialog = $("#settings-dialog");
-  if (e.target !== dialog) return false;
-  const box = dialog.getBoundingClientRect();
-  return e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom;
-}
-
-// کشیدن نقطهٔ نمودار که بیرون پنجره رها شود، کلیک بیرون حساب نمی‌شود
-let pressedOnBackdrop = false;
-
-$("#settings-dialog").addEventListener("pointerdown", (e) => { pressedOnBackdrop = onBackdrop(e); });
-
-$("#settings-dialog").addEventListener("click", (e) => {
-  if (pressedOnBackdrop && onBackdrop(e)) tryCloseSettings();
-  pressedOnBackdrop = false;
+closeOnOutside($("#settings-dialog"), {
+  snapshot: settingsSnapshot, save: () => settingsForm.requestSubmit(), closeButton: $("#close-settings"),
 });
-
-$("#settings-dialog").addEventListener("cancel", (e) => {
-  e.preventDefault();
-  tryCloseSettings();
-});
-
-$("#settings-confirm-save").addEventListener("click", () => {
-  $("#settings-confirm").close();
-  settingsForm.requestSubmit();
-});
-
-$("#settings-confirm-discard").addEventListener("click", () => {
-  $("#settings-confirm").close();
-  $("#settings-dialog").close();
-});
-
-$("#settings-confirm-continue").addEventListener("click", () => $("#settings-confirm").close());

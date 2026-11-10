@@ -1,5 +1,6 @@
 import { weekStart } from "./calendar.js";
 import { $, api, el, fa, isRTL, minutesText, showMessage, state, t } from "./core.js";
+import { closeOnOutside } from "./dialogs.js";
 import { svg } from "./review-editor.js";
 
 /* پنجرهٔ گزارش: خلاصهٔ هفته، نمودار ۱۲ هفتهٔ اخیر، نقشهٔ فعالیت سالانه و پیشرفت دسته‌ها.
@@ -255,4 +256,4 @@ async function openStats(period = reportPeriod, date = null) {
 
 $("#stats-button").addEventListener("click", () => openStats("week"));
 
-$("#close-stats").addEventListener("click", () => $("#stats-dialog").close());
+closeOnOutside($("#stats-dialog"), { closeButton: $("#close-stats") });

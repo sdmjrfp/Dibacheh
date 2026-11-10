@@ -1,6 +1,7 @@
 /* کاربران: صفحهٔ ورود، فهرست بالای صفحه و پنجرهٔ پروفایل. */
 
 import { $, api, el, showMessage, t } from "./core.js";
+import { closeOnOutside, formSnapshot } from "./dialogs.js";
 
 // تصویرهای آماده: بدون فایل و بدون اینترنت
 const AVATARS = {
@@ -222,7 +223,11 @@ $("#profile-delete").addEventListener("click", async () => {
   window.location.reload();
 });
 
-$("#close-profile").addEventListener("click", () => $("#profile-dialog").close());
+closeOnOutside($("#profile-dialog"), {
+  snapshot: () => formSnapshot($("#profile-form"), () => editing && [editing.avatar, editing.photo, editing.removePhoto]),
+  save: () => $("#profile-form").requestSubmit(),
+  closeButton: $("#close-profile"),
+});
 
 $("#profile-button").addEventListener("click", (e) => {
   e.stopPropagation();
