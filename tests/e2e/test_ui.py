@@ -694,7 +694,7 @@ def test_whats_new_shows_once_after_update(app):
     page.wait_for_selector("#whats-new-dialog[open]")
     assert "ناعدد" not in page.inner_text("#whats-new-title")
     assert re.search(r"[۰-۹]\.[۰-۹]\.[۰-۹]", page.inner_text("#whats-new-title"))
-    assert page.locator("#whats-new-list li").count() > 3
+    assert page.locator("#whats-new-list li").count() > 0
     page.click("#close-whats-new")
     app.settle()
     page = app.open().page

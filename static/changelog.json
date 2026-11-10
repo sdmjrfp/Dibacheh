@@ -1,4 +1,16 @@
 {
+  "1.4.2": {
+    "fa": [
+      "لوگو و آیکون تازهٔ برنامه",
+      "بخش مرور در پنجرهٔ درس مثل تنظیمات اصلی شد: نوار نسبت مرور، الگوهای آماده و نمودار لایتنر",
+      "تصویرهای آمادهٔ پروفایل بزرگ‌تر شدند"
+    ],
+    "en": [
+      "New logo and app icon",
+      "The review section of the lesson window now matches Settings: the review ratio slider, ready-made patterns and the Leitner chart",
+      "Larger ready-made profile pictures"
+    ]
+  },
   "1.4.1": {
     "fa": [
       "چند کاربر روی یک کامپیوتر، با عکس یا تصویر آماده و رمز دلخواه؛ هر کاربر داده‌های جدا دارد",
