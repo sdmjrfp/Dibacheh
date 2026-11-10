@@ -1,6 +1,7 @@
 /* پنجرهٔ درس، نوع کار تازه و افزودن گروهی. */
 
 import { $, $$, api, buildJalaliInput, el, fa, itemById, readJalaliInput, showMessage, state, t, typeOf, WEEKDAYS } from "./core.js";
+import { createReviewEditor, ratioToPercent } from "./review-editor.js";
 import { categoryOptions } from "./sources.js";
 
 export let editing = null;
@@ -53,10 +54,9 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
   buildJalaliInput($('.jalali-input[data-name="once_date"]'), !item && editing.variant === "once" ? firstDate : null);
   fields.session_minutes.value = isRoutine ? 10 : (defaults.session_minutes || 60);
   fields.max_new_sessions_per_day.value = item ? item.max_new_sessions_per_day : (defaults.max_new_sessions_per_day || 1);
-  fields.review_ratio.value = item && item.review_ratio ? item.review_ratio : "";
-  fields.review_intervals.value = item && item.review_intervals ? item.review_intervals.join(t("، ")) : "";
-  fields.review_ratio.disabled = false;
-  fields.review_intervals.disabled = false;
+  // خالی یعنی تنظیم کلی؛ ویرایشگر همیشه مقدار واقعی را نشان می‌دهد
+  reviewEditor.set((item && item.review_ratio) || state.settings.default_review_ratio,
+    (item && item.review_intervals) || state.settings.review_intervals);
   fields.has_reviews.checked = !(item && item.no_reviews);
   fields.source_type.value = item ? (item.source_type === "vault" ? "file" : item.source_type) : "none";
   fields.source_url.value = item && item.source_type === "url" ? item.source_path_or_url : "";
@@ -96,6 +96,7 @@ export function openItemDialog(item, type = "study", firstDate = null, customTyp
     renderSessions(true);
   }
   $("#item-dialog").showModal();
+  reviewEditor.refresh();
 }
 
 /** نشان دادن و پنهان کردن بخش‌های فرم بر اساس نوع کار و انتخاب‌ها. */
@@ -118,19 +119,26 @@ function updateDialogVisibility() {
   $("#source-path").hidden = source !== "file";
 }
 
-/** تیک «مرور دارد»: بدون آن، نسبت و فاصله‌ها غیرفعال است و «بدون مرور» نوشته می‌شود. مقدارها نگه داشته می‌شوند. */
+/** تیک «مرور دارد»: بدون آن، ویرایشگر مرور خاموش می‌شود و «بدون مرور» نوشته می‌شود. مقدارها نگه داشته می‌شوند. */
 function updateReviewFields() {
   const on = fields.has_reviews.checked;
-  for (const [field, hint] of [[fields.review_ratio, "1/3"], [fields.review_intervals, t("1، 3، 7، 30")]]) {
-    if (!on && !field.disabled) field.dataset.kept = field.value;
-    if (on && field.disabled) field.value = field.dataset.kept || "";
-    if (!on) field.value = "";
-    field.disabled = !on;
-    field.placeholder = on ? hint : t("بدون مرور");
-  }
+  reviewEditor.setEnabled(on);
+  $("#no-reviews-note").hidden = on;
 }
 
 fields.has_reviews.addEventListener("change", updateReviewFields);
+
+const reviewEditor = createReviewEditor($("#item-reviews"), { cap: () => state.settings.default_cap_minutes });
+
+/** مقدار اختصاصی این درس؛ null اگر همان تنظیم کلی باشد، تا درس از تنظیم کلی پیروی کند */
+function customRatio() {
+  return reviewEditor.percent() === ratioToPercent(state.settings.default_review_ratio) ? null : reviewEditor.ratio();
+}
+
+function customIntervals() {
+  const days = reviewEditor.intervals();
+  return days.join() === state.settings.review_intervals.join() ? null : days;
+}
 
 fields.section_unit.addEventListener("change", updateDialogVisibility);
 
@@ -230,8 +238,8 @@ function applyTemplate(template) {
   if (f.session_count) fields.session_count.value = f.session_count;
   if (f.session_minutes) fields.session_minutes.value = f.session_minutes;
   if (f.max_new_sessions_per_day) fields.max_new_sessions_per_day.value = f.max_new_sessions_per_day;
-  fields.review_ratio.value = f.review_ratio || "";
-  fields.review_intervals.value = (f.review_intervals || []).join(t("، "));
+  reviewEditor.set(f.review_ratio || state.settings.default_review_ratio,
+    f.review_intervals && f.review_intervals.length ? f.review_intervals : state.settings.review_intervals);
   fields.section_unit.value = f.section_unit || "text";
   if (f.category_id !== undefined) fields.category_id.value = f.category_id || "";
   if (f.color) fields.color.value = f.color;
@@ -248,7 +256,6 @@ $("#template-select").addEventListener("change", (e) => {
 $("#template-save").addEventListener("click", async () => {
   const name = prompt(t("نام الگو:"));
   if (!name || !name.trim()) return;
-  const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
   const template = {
     name: name.trim(),
     kind: templateKind(),
@@ -256,8 +263,8 @@ $("#template-save").addEventListener("click", async () => {
       session_count: Number(fields.session_count.value),
       session_minutes: Number(fields.session_minutes.value),
       max_new_sessions_per_day: Number(fields.max_new_sessions_per_day.value),
-      review_ratio: fields.review_ratio.value.trim(),
-      review_intervals: intervals,
+      review_ratio: customRatio() || "",
+      review_intervals: customIntervals() || [],
       section_unit: fields.section_unit.value,
       category_id: fields.category_id.value ? Number(fields.category_id.value) : null,
       routine_weekdays: $$("#routine-weekdays input:checked").map((x) => Number(x.value)),
@@ -285,9 +292,8 @@ function collectForm() {
     data.max_new_sessions_per_day = Number(fields.max_new_sessions_per_day.value);
     if (editing.variant === "study") data.no_reviews = !fields.has_reviews.checked;
     if (fields.has_reviews.checked) {
-      data.review_ratio = fields.review_ratio.value.trim();
-      const intervals = fields.review_intervals.value.split(/[،,\s]+/).filter(Boolean).map(Number);
-      data.review_intervals = intervals.length ? intervals : null;
+      data.review_ratio = customRatio() || "";
+      data.review_intervals = customIntervals();
     }
     data.target_date = readJalaliInput($('.jalali-input[data-name="target_date"]'));
     data.requires = editing.requires;

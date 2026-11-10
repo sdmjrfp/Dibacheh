@@ -739,3 +739,5 @@ Escolha um arquivo de dados ou backup do Dibacheh (zip ou sqlite3)
 Para alterar este perfil, entre primeiro com esse usuário.
 Remover tarefa não feita
 Registrar tarefa atrasada como feita
+Sem revisões: as sessões terminam ao serem lidas.
+Os valores começam das configurações gerais. Se não os alterar, esta lição sempre segue as configurações gerais.

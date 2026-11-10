@@ -739,3 +739,5 @@ Pilih berkas data atau cadangan Dibacheh (zip atau sqlite3)
 Untuk mengubah profil ini, masuk dulu sebagai pengguna itu.
 Hapus tugas yang belum dikerjakan
 Catat tugas terlambat sebagai selesai
+Tanpa ulasan: sesi selesai saat dibaca.
+Nilai dimulai dari pengaturan umum. Jika tidak diubah, pelajaran ini selalu mengikuti pengaturan umum.

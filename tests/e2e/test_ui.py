@@ -270,23 +270,24 @@ def test_day_menu_vacation(app):
 def test_settings_slider_chart_and_save(app):
     page = app.page
     page.click("#settings-button")
-    assert "۳۳٪" in page.inner_text("#ratio-value")
-    page.locator('[name="ratio_percent"]').fill("50")
-    assert "۳۰ دقیقه" in page.inner_text("#ratio-explain")
-    assert page.locator("#interval-chart .point").count() == 4
-    page.click("#interval-remove")
-    assert page.locator("#interval-chart .point").count() == 3
-    assert page.locator("#interval-explain li").count() == 3
-    before = page.inner_text("#chart-length-label")
-    page.click("#chart-longer")
-    assert page.inner_text("#chart-length-label") != before
+    box = page.locator("#settings-reviews")
+    assert "۳۳٪" in box.locator(".ratio-value").inner_text()
+    box.locator(".ratio-input").fill("50")
+    assert "۳۰ دقیقه" in box.locator(".ratio-explain").inner_text()
+    assert box.locator(".interval-chart .point").count() == 4
+    box.locator(".interval-remove").click()
+    assert box.locator(".interval-chart .point").count() == 3
+    assert box.locator(".interval-explain li").count() == 3
+    before = box.locator(".chart-length-label").inner_text()
+    box.locator(".chart-longer").click()
+    assert box.locator(".chart-length-label").inner_text() != before
     # کشیدن واقعی نقطه روی نمودار
-    point = page.locator('#interval-chart .point[data-index="1"] circle').bounding_box()
+    point = box.locator('.interval-chart .point[data-index="1"] circle').bounding_box()
     page.mouse.move(point["x"] + 5, point["y"] + 5)
     page.mouse.down()
     page.mouse.move(point["x"] - 40, point["y"] + 5, steps=6)
     page.mouse.up()
-    page.locator("#interval-presets button").nth(1).click()
+    box.locator(".interval-presets button").nth(1).click()
     page.select_option('[name="font_family"]', "Shabnam")
     page.click('#settings-form button[type="submit"]')
     app.settle()
@@ -385,8 +386,8 @@ def test_review_checkbox_turns_reviews_off_and_on(app):
     page.click(".item .actions button.icon")
     assert page.is_checked('#item-form [name="has_reviews"]')
     page.uncheck('#item-form [name="has_reviews"]')
-    assert page.is_disabled('#item-form [name="review_ratio"]')
-    assert page.get_attribute('#item-form [name="review_ratio"]', "placeholder") == "بدون مرور"
+    assert page.is_disabled("#item-reviews .ratio-input")
+    assert page.is_visible("#no-reviews-note")
     page.click("#save-item")
     app.settle()
     assert page.locator(".task.kind-review").count() == 0
@@ -394,7 +395,7 @@ def test_review_checkbox_turns_reviews_off_and_on(app):
     page.click(".item .actions button.icon")
     assert not page.is_checked('#item-form [name="has_reviews"]')
     page.check('#item-form [name="has_reviews"]')
-    assert page.is_enabled('#item-form [name="review_ratio"]')
+    assert page.is_enabled("#item-reviews .ratio-input")
     page.click("#save-item")
     app.settle()
     assert app.call("GET", "/api/state")["items"][0]["no_reviews"] is False
@@ -571,7 +572,9 @@ def test_study_template_fills_the_form(app):
     page.click('[data-template="study-10"]')
     fields = page.locator("#item-form")
     assert fields.locator('[name="session_count"]').input_value() == "10"
-    assert fields.locator('[name="review_intervals"]').input_value() == "1، 3، 6"
+    assert page.locator("#item-reviews .interval-chart .point").count() == 3
+    days = [text.split(" ")[0] for text in page.locator("#item-reviews .interval-explain li").all_inner_texts()]
+    assert days == ["۱", "۳", "۶"]
     page.fill('#item-form [name="title"]', "فشرده")
     page.click("#save-item")
     app.settle()
@@ -585,7 +588,7 @@ def test_once_task_on_chosen_day_has_no_reviews(app):
     page.click("#add-button")
     page.click('[data-add="once"]')
     assert page.is_hidden("#item-form [data-sessions]")
-    assert page.is_hidden('#item-form [name="review_ratio"]')
+    assert page.is_hidden("#item-reviews")
     page.fill('#item-form [name="title"]', "ثبت‌نام")
     page.click("#save-item")
     app.settle()
@@ -920,3 +923,25 @@ def test_forgot_password_new_user_from_login_screen(browser, tmp_path):
     finally:
         process.kill()
         process.wait()
+
+
+def test_lesson_review_editor_matches_settings_and_saves_only_custom_values(app):
+    app.add("الف")
+    page = app.reload().page
+    page.click(".item .actions button.icon")
+    box = page.locator("#item-reviews")
+    assert box.locator(".interval-chart .point").count() == 4
+    assert box.locator(".interval-presets button").count() == 5
+    assert "۳۳٪" in box.locator(".ratio-value").inner_text()
+    assert "undefined" not in box.inner_text()
+    page.click("#save-item")
+    app.settle()
+    item = app.call("GET", "/api/state")["items"][0]
+    assert item["review_intervals"] is None and item["review_ratio"] is None
+    page.click(".item .actions button.icon")
+    box.locator(".interval-presets button").nth(1).click()
+    box.locator(".ratio-input").fill("50")
+    page.click("#save-item")
+    app.settle()
+    item = app.call("GET", "/api/state")["items"][0]
+    assert item["review_intervals"] == [1, 2, 4, 7] and item["review_ratio"] == "50/100"

@@ -739,3 +739,5 @@ Elige un archivo de datos o copia de Dibacheh (zip o sqlite3)
 Para cambiar este perfil, entra primero con ese usuario.
 Quitar tarea no hecha
 Registrar tarea atrasada como hecha
+Sin repasos: las sesiones terminan al leerse.
+Los valores parten de los ajustes generales. Si no los cambias, esta lección siempre sigue los ajustes generales.

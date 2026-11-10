@@ -739,3 +739,5 @@ Dibacheh veri veya yedek dosyasını seçin (zip veya sqlite3)
 Bu profili değiştirmek için önce o kullanıcıyla girin.
 Yapılmayan görevi silme
 Gecikmiş görevi yapıldı olarak kaydetme
+Tekrarsız: oturumlar okununca biter.
+Değerler genel ayarlardan başlar. Değiştirmezseniz bu ders her zaman genel ayarları izler.

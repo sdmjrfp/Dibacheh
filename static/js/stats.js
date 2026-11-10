@@ -1,6 +1,6 @@
 import { weekStart } from "./calendar.js";
 import { $, api, el, fa, isRTL, minutesText, showMessage, state, t } from "./core.js";
-import { svg } from "./settings.js";
+import { svg } from "./review-editor.js";
 
 /* پنجرهٔ گزارش: خلاصهٔ هفته، نمودار ۱۲ هفتهٔ اخیر، نقشهٔ فعالیت سالانه و پیشرفت دسته‌ها.
 

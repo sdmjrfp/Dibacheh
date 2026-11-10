@@ -739,3 +739,5 @@ Dibacheh-Daten- oder Backup-Datei wählen (zip oder sqlite3)
 Um dieses Profil zu ändern, melden Sie sich zuerst als dieser Benutzer an.
 Nicht erledigte Aufgabe entfernen
 Überfällige Aufgabe als erledigt eintragen
+Ohne Wiederholung: Einheiten enden mit dem Lesen.
+Die Werte starten bei den allgemeinen Einstellungen. Wenn Sie sie nicht ändern, folgt diese Lektion immer den allgemeinen Einstellungen.

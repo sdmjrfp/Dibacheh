@@ -236,13 +236,13 @@
         <label data-only="study">سرعت: حداکثر جلسهٔ جدید در روز
           <input name="max_new_sessions_per_day" type="number" min="1" value="1">
         </label>
-        <label data-only="study" data-reviews class="check span-2"><input type="checkbox" name="has_reviews" checked> این درس مرور دارد</label>
-        <label data-only="study" data-reviews>نسبت مرور (خالی = تنظیم کلی)
-          <input name="review_ratio" placeholder="1/3" autocomplete="off">
-        </label>
-        <label data-only="study" data-reviews class="span-2">فاصله‌های لایتنر اختصاصی، به روز (خالی = تنظیم کلی)
-          <input name="review_intervals" placeholder="1، 3، 7، 30" autocomplete="off">
-        </label>
+        <fieldset class="span-2" data-only="study" data-reviews>
+          <legend>مرور</legend>
+          <label class="check"><input type="checkbox" name="has_reviews" checked> این درس مرور دارد</label>
+          <p id="no-reviews-note" class="muted small" hidden>بدون مرور: جلسه‌ها با خواندن تمام می‌شوند.</p>
+          <div id="item-reviews"></div>
+          <p class="muted small">مقدارها از تنظیمات کلی شروع می‌شوند. اگر عوضشان نکنید، این درس همیشه از تنظیمات کلی پیروی می‌کند.</p>
+        </fieldset>
 
         <fieldset class="span-2" data-only="routine">
           <legend>زمان‌بندی کار روتین</legend>
@@ -414,32 +414,8 @@
       </fieldset>
 
       <fieldset>
-        <legend>زمان مرور</legend>
-        <div class="slider-row">
-          <input name="ratio_percent" type="range" min="5" max="100" step="1">
-          <output id="ratio-value" class="big-number"></output>
-        </div>
-        <p id="ratio-explain" class="explain"></p>
-      </fieldset>
-
-      <fieldset>
-        <legend>فاصله‌های لایتنر</legend>
-        <p class="muted small">هر نقطه یک مرور است. نقطه‌ها را به چپ و راست بکشید. برای حذف یک مرور خاص، × کنارش در فهرست پایین را بزنید.</p>
-        <div id="interval-presets" class="presets"></div>
-        <div class="interval-wrap">
-          <div id="interval-chart" class="interval-chart"></div>
-          <!-- طول نمودار: یک ماه یک ماه -->
-          <div class="chart-length">
-            <button type="button" id="chart-longer" class="icon" title="یک ماه بیشتر">+</button>
-            <span id="chart-length-label"></span>
-            <button type="button" id="chart-shorter" class="icon" title="یک ماه کمتر">−</button>
-          </div>
-        </div>
-        <div class="pop-row">
-          <button type="button" id="interval-add">+ یک مرور دیگر</button>
-          <button type="button" id="interval-remove">− حذف یک مرور</button>
-        </div>
-        <ol id="interval-explain" class="explain"></ol>
+        <legend>مرور</legend>
+        <div id="settings-reviews"></div>
         <p class="muted small">با تغییر فاصله‌ها، تاریخ همهٔ مرورها (جز درس‌هایی که فاصلهٔ اختصاصی دارند) دوباره حساب می‌شود.</p>
       </fieldset>
 
