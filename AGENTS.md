@@ -249,6 +249,8 @@ gh release edit v1.2.0 --notes-file notes.md --draft=false --latest
 
 `Dibacheh.app` داخل پوشهٔ پروژه با `zsh tools/build_app.sh` ساخته می‌شود، در Git نیست و با سورس و `data/` پروژه کار می‌کند. این همان نسخه‌ای است که صاحب پروژه روزانه استفاده می‌کند. شناسهٔ آن با نسخهٔ نصبی یکی است، پس هر دو را هم‌زمان باز نکنید.
 
+**لوگو و آیکون:** لوگوی اصلی `docs/logo.png` است. اگر عوض شد، `python tools/make_icon.py --from-logo` را اجرا کنید. این دستور `tools/icon.png` (آیکون برنامه روی هر چهار سیستم)، `static/icon.png` (آیکون زبانهٔ مرورگر) و `docs/social-preview.png` را می‌سازد. فایل آخر را صاحب پروژه باید دستی در GitHub بگذارد: Settings > General > Social preview.
+
 ---
 
 ## ۷. تله‌هایی که قبلاً به آن‌ها خورده‌ایم

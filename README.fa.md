@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.png" width="360" alt="Dibacheh"></p>
+
 # دیباچه
 
 [English](README.md) · [فارسی](README.fa.md) · [简体中文](README.zh.md) · [Español](README.es.md) · [العربية](README.ar.md) · [हिन्दी](README.hi.md) · [Português](README.pt.md) · [Français](README.fr.md) · [Русский](README.ru.md) · [Bahasa Indonesia](README.id.md) · [Deutsch](README.de.md) · [Türkçe](README.tr.md) · [日本語](README.ja.md)
